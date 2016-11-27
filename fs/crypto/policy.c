@@ -16,19 +16,29 @@
 #include "fscrypt_private.h"
 
 /*
- * check whether an encryption policy is consistent with an encryption context
+ * check whether the policy is consistent with the encryption context
+ * for the inode
  */
-static bool is_encryption_context_consistent_with_policy(
-				const struct fscrypt_context *ctx,
+static int is_encryption_context_consistent_with_policy(struct inode *inode,
 				const struct fscrypt_policy *policy)
 {
-	return memcmp(ctx->master_key_descriptor, policy->master_key_descriptor,
-		      FS_KEY_DESCRIPTOR_SIZE) == 0 &&
-		(ctx->flags == policy->flags) &&
-		(ctx->contents_encryption_mode ==
-		 policy->contents_encryption_mode) &&
-		(ctx->filenames_encryption_mode ==
-		 policy->filenames_encryption_mode);
+	struct fscrypt_context ctx;
+	int res;
+
+	if (!inode->i_sb->s_cop->get_context)
+		return 0;
+
+	res = inode->i_sb->s_cop->get_context(inode, &ctx, sizeof(ctx));
+	if (res != sizeof(ctx))
+		return 0;
+
+	return (memcmp(ctx.master_key_descriptor, policy->master_key_descriptor,
+			FS_KEY_DESCRIPTOR_SIZE) == 0 &&
+			(ctx.flags == policy->flags) &&
+			(ctx.contents_encryption_mode ==
+			 policy->contents_encryption_mode) &&
+			(ctx.filenames_encryption_mode ==
+			 policy->filenames_encryption_mode));
 }
 
 static int create_encryption_context_from_policy(struct inode *inode,
@@ -177,15 +187,13 @@ int fscrypt_ioctl_set_policy(struct file *filp, const void __user *arg)
 			ret = -ENOTEMPTY;
 		else
 			ret = create_encryption_context_from_policy(inode,
-							    &policy);
-	} else if (ret == sizeof(ctx) &&
-		   is_encryption_context_consistent_with_policy(&ctx,
-								&policy)) {
-		/* The file already uses the same encryption policy. */
-		ret = 0;
-	} else if (ret >= 0 || ret == -ERANGE) {
-		/* The file already uses a different encryption policy. */
-		ret = -EEXIST;
+								    &policy);
+	} else if (!is_encryption_context_consistent_with_policy(inode,
+								 &policy)) {
+		printk(KERN_WARNING
+		       "%s: Policy inconsistent with encryption context\n",
+		       __func__);
+		ret = -EINVAL;
 	}
 
 	inode_unlock(inode);
