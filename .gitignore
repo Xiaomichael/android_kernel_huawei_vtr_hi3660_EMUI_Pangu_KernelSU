@@ -6,16 +6,94 @@ log*.txt
 build_KSU_*.sh
 *.img
 *.gz
+*.bz2
+*.lzma
+*.xz
+*.lz4
+*.lzo
+*.patch
+*.gcno
+*.ll
+modules.builtin
+Module.symvers
+*.dwo
+*.su
+*.c.[012]*.*
 *.zip
 kernel_log*.txt
-arch/arm64/configs/*_test_defconfig
-include/uapi/linux/netfilter/xt_CONNMARK.h
-include/uapi/linux/netfilter/xt_DSCP.h
-include/uapi/linux/netfilter/xt_RATEEST.h
-include/uapi/linux/netfilter_ipv4/ipt_ECN.h
-include/uapi/linux/netfilter_ipv4/ipt_TTL.h
-include/uapi/linux/netfilter_ipv6/ip6t_HL.h
-net/netfilter/xt_DSCP.c
-net/netfilter/xt_HL.c
-net/netfilter/xt_RATEEST.c
-net/netfilter/xt_TCPMSS.c
+
+#
+# Top-level generic files
+#
+/tags
+/TAGS
+/linux
+/vmlinux
+/vmlinux.32
+/vmlinux-gdb.py
+/vmlinuz
+/System.map
+/Module.markers
+
+#
+# Debian directory (make deb-pkg)
+#
+/debian/
+
+#
+# tar directory (make tar*-pkg)
+#
+/tar-install/
+
+#
+# git files that we don't want to ignore even if they are dot-files
+#
+!.gitignore
+!.mailmap
+!.cocciconfig
+
+#
+# Generated include files
+#
+include/config
+include/generated
+arch/*/include/generated
+
+# stgit generated dirs
+patches-*
+
+# quilt's files
+patches
+series
+
+# cscope files
+cscope.*
+ncscope.*
+
+# gnu global files
+GPATH
+GRTAGS
+GSYMS
+GTAGS
+
+# id-utils files
+ID
+
+*.orig
+*~
+\#*#
+
+#
+# Leavings from module signing
+#
+extra_certificates
+signing_key.pem
+signing_key.priv
+signing_key.x509
+x509.genkey
+
+# Kconfig presets
+all.config
+
+# Kdevelop4
+*.kdev4
