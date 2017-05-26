@@ -34,6 +34,7 @@
 #include "key.h"
 #include "sta_info.h"
 #include "debug.h"
+#include <linux/rcupdate.h>
 
 extern const struct cfg80211_ops mac80211_config_ops;
 
@@ -1041,8 +1042,6 @@ struct ieee80211_rx_agg {
 
 enum sdata_queue_type {
 	IEEE80211_SDATA_QUEUE_TYPE_FRAME	= 0,
-	IEEE80211_SDATA_QUEUE_AGG_START		= 1,
-	IEEE80211_SDATA_QUEUE_AGG_STOP		= 2,
 	IEEE80211_SDATA_QUEUE_RX_AGG_START	= 3,
 	IEEE80211_SDATA_QUEUE_RX_AGG_STOP	= 4,
 };
@@ -1416,6 +1415,27 @@ struct ieee80211_ra_tid {
 	u16 tid;
 };
 
+static inline struct ieee80211_supported_band *
+ieee80211_get_sband(struct ieee80211_sub_if_data *sdata)
+{
+	struct ieee80211_local *local = sdata->local;
+	struct ieee80211_chanctx_conf *chanctx_conf;
+	enum nl80211_band band;
+
+	rcu_read_lock();
+	chanctx_conf = rcu_dereference(sdata->vif.chanctx_conf);
+
+	if (WARN_ON(!chanctx_conf)) {
+		rcu_read_unlock();
+		return NULL;
+	}
+
+	band = chanctx_conf->def.chan->band;
+	rcu_read_unlock();
+
+	return local->hw.wiphy->bands[band];
+}
+
 /* this struct holds the value parsing from channel switch IE  */
 struct ieee80211_csa_ie {
 	struct cfg80211_chan_def chandef;
@@ -1759,8 +1779,10 @@ int __ieee80211_stop_tx_ba_session(struct sta_info *sta, u16 tid,
 				   enum ieee80211_agg_stop_reason reason);
 int ___ieee80211_stop_tx_ba_session(struct sta_info *sta, u16 tid,
 				    enum ieee80211_agg_stop_reason reason);
-void ieee80211_start_tx_ba_cb(struct ieee80211_vif *vif, u8 *ra, u16 tid);
-void ieee80211_stop_tx_ba_cb(struct ieee80211_vif *vif, u8 *ra, u8 tid);
+void ieee80211_start_tx_ba_cb(struct sta_info *sta, int tid,
+			      struct tid_ampdu_tx *tid_tx);
+void ieee80211_stop_tx_ba_cb(struct sta_info *sta, int tid,
+			     struct tid_ampdu_tx *tid_tx);
 void ieee80211_ba_session_work(struct work_struct *work);
 void ieee80211_tx_ba_session_handle_start(struct sta_info *sta, int tid);
 void ieee80211_release_reorder_timeout(struct sta_info *sta, int tid);
