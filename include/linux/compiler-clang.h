@@ -26,6 +26,11 @@
  */
 #undef inline
 #define inline inline __attribute__((unused)) notrace
+
+/* Clang doesn't have a way to turn it off per-function, yet. */
+#ifdef __noretpoline
+#undef __noretpoline
+
 #define randomized_struct_fields_start	struct {
 #define randomized_struct_fields_end	};
 
