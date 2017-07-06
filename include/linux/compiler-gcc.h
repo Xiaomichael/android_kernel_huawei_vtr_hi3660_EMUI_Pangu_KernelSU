@@ -89,12 +89,20 @@
  * of extern inline functions at link time.
  * A lot of inline functions can cause havoc with function tracing.
  */
-#if !defined(CONFIG_ARCH_SUPPORTS_OPTIMIZED_INLINING) ||		\
+#if !defined(CONFIG_ARCH_SUPPORTS_OPTIMIZED_INLINING) ||        \
     !defined(CONFIG_OPTIMIZE_INLINING) || (__GNUC__ < 4)
 #define inline \
-	inline __attribute__((always_inline, unused)) notrace __gnu_inline
+    inline __attribute__((always_inline, unused)) notrace __gnu_inline
+#define __inline__ __inline__  __attribute__((always_inline, unused)) notrace __gnu_inline
+#define __inline __inline      __attribute__((always_inline, unused)) notrace __gnu_inline
 #else
-#define inline inline		__attribute__((unused)) notrace __gnu_inline
+#define inline inline      __attribute__((unused)) notrace __gnu_inline
+#define __inline__ __inline__  __attribute__((unused)) notrace __gnu_inline
+#define __inline __inline      __attribute__((unused)) notrace __gnu_inline
+#endif
+
+#define __always_inline inline __attribute__((always_inline))
+#define noinline        __attribute__((noinline))
 #endif
 
 #define __inline__ inline
