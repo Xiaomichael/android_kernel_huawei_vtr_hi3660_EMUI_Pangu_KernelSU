@@ -2159,7 +2159,15 @@ static void bond_miimon_commit(struct bonding *bond)
 			continue;
 
 		case BOND_LINK_UP:
-			bond_update_speed_duplex(slave);
+			if (bond_update_speed_duplex(slave) &&
+			    bond_needs_speed_duplex(bond)) {
+				slave->link = BOND_LINK_DOWN;
+				if (net_ratelimit())
+					netdev_warn(bond->dev,
+						    "failed to get link speed/duplex for %s\n",
+						    slave->dev->name);
+				continue;
+			}
 			bond_set_slave_link_state(slave, BOND_LINK_UP,
 						  BOND_SLAVE_NOTIFY_NOW);
 			slave->last_link_up = jiffies;
