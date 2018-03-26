@@ -1310,8 +1310,18 @@ static void dw_mci_setup_bus(struct dw_mci_slot *slot, bool force_clkinit)
 	u32 retry_times = 1;
 	u32 i = 0;
 	u32 id = (u32)(slot->id);
+	u32 sdmmc_cmd_bits = 0;
 
-	if (slot->clock != host->current_speed || force_clkinit) {
+	/* We must continue to set bit 28 in CMD until the change is complete */
+	if (host->state == STATE_WAITING_CMD11_DONE)
+		sdmmc_cmd_bits |= SDMMC_CMD_VOLT_SWITCH;
+
+	slot->mmc->actual_clock = 0;
+
+	if (!slot->clock) {
+		mci_writel(host, CLKENA, 0);
+		mci_send_cmd(slot, sdmmc_cmd_bits, 0);
+	} else if (slot->clock != host->current_speed || force_clkinit) {
 		div = host->bus_hz / slot->clock;
 		if (host->bus_hz % slot->clock && host->bus_hz > slot->clock)
 			/*
@@ -1361,7 +1371,10 @@ retry:
 		if (ret && retry_times)
 			goto reset;
 
+		/* keep the last clock value that was requested from core */
 		host->current_speed = slot->clock;
+		slot->mmc->actual_clock = div ? ((host->bus_hz / div) >> 1) :
+					  host->bus_hz;
 reset:
 		if (ret && retry_times) {
 			udelay(100);
