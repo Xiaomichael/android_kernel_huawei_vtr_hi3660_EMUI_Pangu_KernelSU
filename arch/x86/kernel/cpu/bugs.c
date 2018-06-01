@@ -26,6 +26,39 @@ static void __init spectre_v2_select_mitigation(void);
 static void __init ssb_select_mitigation(void);
 static void __init l1tf_select_mitigation(void);
 
+#ifndef MSR_IA32_SPEC_CTRL
+#define MSR_IA32_SPEC_CTRL              0x00000048
+#endif
+
+#ifndef MSR_AMD64_VIRT_SPEC_CTRL
+#define MSR_AMD64_VIRT_SPEC_CTRL        0xc001011f
+#endif
+
+#ifndef MSR_AMD64_LS_CFG
+#define MSR_AMD64_LS_CFG                0xc0011020
+#endif
+
+#ifndef SPEC_CTRL_IBRS
+#define SPEC_CTRL_IBRS                  (1 << 0)
+#endif
+
+#ifndef SPEC_CTRL_STIBP
+#define SPEC_CTRL_STIBP                 (1 << 1)
+#endif
+
+#ifndef SPEC_CTRL_SSBD
+#define SPEC_CTRL_SSBD                  (1 << 2)
+#endif
+
+#ifndef SPEC_CTRL_RDS
+#define SPEC_CTRL_RDS                   SPEC_CTRL_SSBD
+#endif
+
+static void x86_spec_ctrl_set(u64 val)
+{
+    wrmsrl(MSR_IA32_SPEC_CTRL, val);
+}
+
 /*
  * Our boot-time value of the SPEC_CTRL MSR. We read it once so that any
  * writes to SPEC_CTRL contain whatever reserved bits have been set.
@@ -520,18 +553,20 @@ static enum ssb_mitigation_cmd __init __ssb_select_mitigation(void)
 	if (mode == SPEC_STORE_BYPASS_DISABLE) {
 		setup_force_cpu_cap(X86_FEATURE_SPEC_STORE_BYPASS_DISABLE);
 		/*
-		 * Intel uses the SPEC CTRL MSR Bit(2) for this, while AMD uses
-		 * a completely different MSR and bit dependent on family.
+		 * Intel uses the SPEC CTRL MSR Bit(2) for this, while AMD may
+		 * use a completely different MSR and bit dependent on family.
 		 */
 		switch (boot_cpu_data.x86_vendor) {
-		case X86_VENDOR_INTEL:
-			x86_spec_ctrl_base |= SPEC_CTRL_RDS;
-			x86_spec_ctrl_mask &= ~SPEC_CTRL_RDS;
-			x86_spec_ctrl_set(SPEC_CTRL_RDS);
-			break;
-		case X86_VENDOR_AMD:
-			x86_amd_rds_enable();
-			break;
+        case X86_VENDOR_INTEL:
+        case X86_VENDOR_AMD:
+                if (!static_cpu_has(X86_FEATURE_MSR_SPEC_CTRL)) {
+                        x86_amd_ssb_disable();
+                        break;
+                }
+                x86_spec_ctrl_base |= SPEC_CTRL_SSBD;
+                x86_spec_ctrl_mask |= SPEC_CTRL_SSBD;
+                wrmsrl(MSR_IA32_SPEC_CTRL, x86_spec_ctrl_base);
+                break;
 		}
 	}
 
@@ -627,11 +662,11 @@ int arch_prctl_spec_ctrl_get(struct task_struct *task, unsigned long which)
 
 void x86_spec_ctrl_setup_ap(void)
 {
-	if (boot_cpu_has(X86_FEATURE_IBRS))
-		x86_spec_ctrl_set(x86_spec_ctrl_base & ~x86_spec_ctrl_mask);
+    if (boot_cpu_has(X86_FEATURE_IBRS))
+            x86_spec_ctrl_set(x86_spec_ctrl_base & ~x86_spec_ctrl_mask);
 
-	if (ssb_mode == SPEC_STORE_BYPASS_DISABLE)
-		x86_amd_rds_enable();
+    if (ssb_mode == SPEC_STORE_BYPASS_DISABLE)
+            x86_amd_ssb_disable();
 }
 
 #undef pr_fmt
