@@ -2699,14 +2699,14 @@ static void batadv_iv_gw_print(struct batadv_priv *bat_priv,
  * Return: Error code, or 0 on success
  */
 static int batadv_iv_gw_dump_entry(struct sk_buff *msg, u32 portid, u32 seq,
-				   struct batadv_priv *bat_priv,
-				   struct batadv_gw_node *gw_node)
+                   struct batadv_priv *bat_priv,
+                   struct batadv_gw_node *gw_node)
 {
-	struct batadv_neigh_ifinfo *router_ifinfo = NULL;
-	struct batadv_neigh_node *router;
-	struct batadv_gw_node *curr_gw;
-	int ret = -EINVAL;
-	void *hdr;
+    struct batadv_neigh_ifinfo *router_ifinfo = NULL;
+    struct batadv_neigh_node *router;
+    struct batadv_gw_node *curr_gw = NULL;
+    int ret = 0;
+    void *hdr;
 
 	router = batadv_orig_router_get(gw_node->orig_node, BATADV_IF_DEFAULT);
 	if (!router)
@@ -2752,6 +2752,8 @@ static int batadv_iv_gw_dump_entry(struct sk_buff *msg, u32 portid, u32 seq,
 	ret = 0;
 
 out:
+	if (curr_gw)
+		batadv_gw_node_put(curr_gw);
 	if (router_ifinfo)
 		batadv_neigh_ifinfo_put(router_ifinfo);
 	if (router)
