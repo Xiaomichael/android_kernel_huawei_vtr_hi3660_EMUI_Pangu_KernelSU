@@ -16,6 +16,34 @@
 #include <asm/msr.h>
 #include <asm/paravirt.h>
 #include <asm/alternative.h>
+#include <asm/pgtable.h>
+#include <asm/cacheflush.h>
+#include <asm/intel-family.h>
+#include <asm/e820.h>
+
+static void __init spectre_v2_select_mitigation(void);
+static void __init ssb_select_mitigation(void);
+static void __init l1tf_select_mitigation(void);
+
+/*
+ * Our boot-time value of the SPEC_CTRL MSR. We read it once so that any
+ * writes to SPEC_CTRL contain whatever reserved bits have been set.
+ */
+u64 __ro_after_init x86_spec_ctrl_base;
+EXPORT_SYMBOL_GPL(x86_spec_ctrl_base);
+
+/*
+ * The vendor and possibly platform specific bits which can be modified in
+ * x86_spec_ctrl_base.
+ */
+static u64 __ro_after_init x86_spec_ctrl_mask = SPEC_CTRL_IBRS;
+
+/*
+ * AMD specific MSR info for Speculative Store Bypass control.
+ * x86_amd_ls_cfg_ssbd_mask is initialized in identify_boot_cpu().
+ */
+u64 __ro_after_init x86_amd_ls_cfg_base;
+u64 __ro_after_init x86_amd_ls_cfg_ssbd_mask;
 
 void __init check_bugs(void)
 {
@@ -28,10 +56,23 @@ void __init check_bugs(void)
 #endif
 
 	identify_boot_cpu();
-#ifndef CONFIG_SMP
-	pr_info("CPU: ");
-	print_cpu_info(&boot_cpu_data);
-#endif
+
+	if (!IS_ENABLED(CONFIG_SMP)) {
+		pr_info("CPU: ");
+		print_cpu_info(&boot_cpu_data);
+	}
+
+	/*
+	 * Read the SPEC_CTRL MSR to account for reserved bits which may
+	 * have unknown values. AMD64_LS_CFG MSR is cached in the early AMD
+	 * init code as it is not enumerated and depends on the family.
+	 */
+	if (boot_cpu_has(X86_FEATURE_MSR_SPEC_CTRL))
+		rdmsrl(MSR_IA32_SPEC_CTRL, x86_spec_ctrl_base);
+
+	/* Allow STIBP in MSR_SPEC_CTRL if supported */
+	if (boot_cpu_has(X86_FEATURE_STIBP))
+		x86_spec_ctrl_mask |= SPEC_CTRL_STIBP;
 
 	/*
 	 * Check whether we are able to run this kernel safely on SMP.
@@ -47,11 +88,20 @@ void __init check_bugs(void)
 		'0' + (boot_cpu_data.x86 > 6 ? 6 : boot_cpu_data.x86);
 	alternative_instructions();
 
+	/* Select the proper spectre mitigation before patching alternatives */
+	spectre_v2_select_mitigation();
+
+	/*
+	 * Select proper mitigation for any exposure to the Speculative Store
+	 * Bypass vulnerability.
+	 */
+	ssb_select_mitigation();
+
+	l1tf_select_mitigation();
+
 	fpu__init_check_bugs();
 
 #ifdef CONFIG_X86_64
-	alternative_instructions();
-
 	/*
 	 * Make sure the first 2MB area is not mapped by huge pages
 	 * There are typically fixed size MTRRs in there and overlapping
@@ -155,6 +205,32 @@ static void x86_amd_ssb_disable(void)
 		wrmsrl(MSR_AMD64_VIRT_SPEC_CTRL, SPEC_CTRL_SSBD);
 	else if (boot_cpu_has(X86_FEATURE_LS_CFG_SSBD))
 		wrmsrl(MSR_AMD64_LS_CFG, msrval);
+}
+
+static void __init l1tf_select_mitigation(void)
+{
+	u64 half_pa;
+
+	if (!boot_cpu_has_bug(X86_BUG_L1TF))
+		return;
+
+#if CONFIG_PGTABLE_LEVELS == 2
+	pr_warn("Kernel not compiled for PAE. No mitigation for L1TF\n");
+	return;
+#endif
+
+	/*
+	 * This is extremely unlikely to happen because almost all
+	 * systems have far more MAX_PA/2 than RAM can be fit into
+	 * DIMM slots.
+	 */
+	half_pa = (u64)l1tf_pfn_limit() << PAGE_SHIFT;
+	if (e820_any_mapped(half_pa, ULLONG_MAX - half_pa, E820_RAM)) {
+		pr_warn("System has more than MAX_PA/2 memory. L1TF mitigation not effective.\n");
+		return;
+	}
+
+	setup_force_cpu_cap(X86_FEATURE_L1TF_PTEINV);
 }
 
 #ifdef RETPOLINE
@@ -573,7 +649,6 @@ ssize_t cpu_show_common(struct device *dev, struct device_attribute *attr,
 	case X86_BUG_CPU_MELTDOWN:
 		if (boot_cpu_has(X86_FEATURE_KAISER))
 			return sprintf(buf, "Mitigation: PTI\n");
-
 		break;
 
 	case X86_BUG_SPECTRE_V1:
@@ -587,6 +662,11 @@ ssize_t cpu_show_common(struct device *dev, struct device_attribute *attr,
 
 	case X86_BUG_SPEC_STORE_BYPASS:
 		return sprintf(buf, "%s\n", ssb_strings[ssb_mode]);
+
+	case X86_BUG_L1TF:
+		if (boot_cpu_has(X86_FEATURE_L1TF_PTEINV))
+			return sprintf(buf, "Mitigation: Page Table Inversion\n");
+		break;
 
 	default:
 		break;
@@ -613,5 +693,10 @@ ssize_t cpu_show_spectre_v2(struct device *dev, struct device_attribute *attr, c
 ssize_t cpu_show_spec_store_bypass(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	return cpu_show_common(dev, attr, buf, X86_BUG_SPEC_STORE_BYPASS);
+}
+
+ssize_t cpu_show_l1tf(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	return cpu_show_common(dev, attr, buf, X86_BUG_L1TF);
 }
 #endif
