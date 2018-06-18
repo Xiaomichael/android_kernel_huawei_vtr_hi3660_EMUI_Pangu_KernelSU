@@ -1708,7 +1708,7 @@ static int enic_open(struct net_device *netdev)
 {
 	struct enic *enic = netdev_priv(netdev);
 	unsigned int i;
-	int err;
+	int err, ret;
 
 	err = enic_request_intr(enic);
 	if (err) {
@@ -1765,8 +1765,11 @@ static int enic_open(struct net_device *netdev)
 	return 0;
 
 err_out_free_rq:
-	for (i = 0; i < enic->rq_count; i++)
-		vnic_rq_clean(&enic->rq[i], enic_free_rq_buf);
+	for (i = 0; i < enic->rq_count; i++) {
+		ret = vnic_rq_disable(&enic->rq[i]);
+		if (!ret)
+			vnic_rq_clean(&enic->rq[i], enic_free_rq_buf);
+	}
 	enic_dev_notify_unset(enic);
 err_out_free_intr:
 	enic_unset_affinity_hint(enic);
@@ -1782,10 +1785,11 @@ static int enic_stop(struct net_device *netdev)
 	unsigned int i;
 	int err;
 
-	for (i = 0; i < enic->intr_count; i++) {
-		vnic_intr_mask(&enic->intr[i]);
-		(void)vnic_intr_masked(&enic->intr[i]); /* flush write */
-	}
+ 	for (i = 0; i < enic->rq_count; i++) {
+  		err = vnic_rq_disable(&enic->rq[i]);
+  		if (err)
+   		return err;
+ 	}
 
 	enic_synchronize_irqs(enic);
 
