@@ -103,7 +103,6 @@
 
 #define __always_inline inline __attribute__((always_inline))
 #define noinline        __attribute__((noinline))
-#endif
 
 #define __inline__ inline
 #define __inline inline
