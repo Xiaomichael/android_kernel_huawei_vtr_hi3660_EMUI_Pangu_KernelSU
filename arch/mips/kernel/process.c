@@ -665,6 +665,10 @@ static void raise_backtrace(cpumask_t *mask)
 		csd->func = handle_backtrace;
 		smp_call_function_single_async(cpu, csd);
 	}
+	if (regs)
+		show_regs(regs);
+	else
+		dump_stack();
 }
 
 void arch_trigger_cpumask_backtrace(const cpumask_t *mask, bool exclude_self)
