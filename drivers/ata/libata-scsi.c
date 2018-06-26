@@ -3772,6 +3772,14 @@ static unsigned int ata_scsi_zbc_out_xlat(struct ata_queued_cmd *qc)
 		 */
 		goto invalid_param_len;
 	}
+	
+	if (block >= dev->n_sectors) {
+		/*
+		 * Block must be a valid zone ID (a zone start LBA).
+		 */
+		fp = 2;
+		goto invalid_fld;
+	}
 
 	all = cdb[14] & 0x1;
 	if (all) {
