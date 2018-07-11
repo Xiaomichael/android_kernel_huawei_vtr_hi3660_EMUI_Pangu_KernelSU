@@ -22,6 +22,7 @@
 #include <linux/coresight.h>
 #include <linux/amba/bus.h>
 #include <linux/clk.h>
+#include <linux/delay.h>
 
 #include "coresight-priv.h"
 
@@ -47,7 +48,11 @@
 
 /** register definition **/
 /* FFCR - 0x304 */
+#define FFCR_STOP_FI		BIT(1)
+#define FFCR_FON_MAN_BIT	6
 #define FFCR_FON_MAN		BIT(6)
+/* FFSR - 0x300 */
+#define FFSR_FT_STOPPED_BIT	1
 
 /**
  * @base:	memory mapped base address for this component.
@@ -85,10 +90,14 @@ static void tpiu_disable_hw(struct tpiu_drvdata *drvdata)
 {
 	CS_UNLOCK(drvdata->base);
 
-	/* Clear formatter controle reg. */
+	/* Clear formatter control reg. */
 	writel_relaxed(0x0, drvdata->base + TPIU_FFCR);
-	/* Generate manual flush */
-	writel_relaxed(FFCR_FON_MAN, drvdata->base + TPIU_FFCR);
+	/* Generate manual flush and stop flush */
+	writel_relaxed(FFCR_STOP_FI | FFCR_FON_MAN, drvdata->base + TPIU_FFCR);
+	/* Wait for flush to complete */
+	coresight_timeout(drvdata->base, TPIU_FFCR, FFCR_FON_MAN_BIT, 0);
+	/* Wait for formatter to stop */
+	coresight_timeout(drvdata->base, TPIU_FFSR, FFSR_FT_STOPPED_BIT, 1);
 
 	CS_LOCK(drvdata->base);
 }
