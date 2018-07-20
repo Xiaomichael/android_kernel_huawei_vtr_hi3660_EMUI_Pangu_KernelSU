@@ -353,38 +353,6 @@ static int enable_smccc_arch_workaround_1(void *data)
 #ifdef CONFIG_ARM64_SSBD
 DEFINE_PER_CPU_READ_MOSTLY(u64, arm64_ssbd_callback_required);
 
-int ssbd_state __read_mostly = ARM64_SSBD_KERNEL;
-
-static const struct ssbd_options {
-	const char	*str;
-	int		state;
-} ssbd_options[] = {
-	{ "force-on",	ARM64_SSBD_FORCE_ENABLE, },
-	{ "force-off",	ARM64_SSBD_FORCE_DISABLE, },
-	{ "kernel",	ARM64_SSBD_KERNEL, },
-};
-
-static int __init ssbd_cfg(char *buf)
-{
-	int i;
-
-	if (!buf || !buf[0])
-		return -EINVAL;
-
-	for (i = 0; i < ARRAY_SIZE(ssbd_options); i++) {
-		int len = strlen(ssbd_options[i].str);
-
-		if (strncmp(buf, ssbd_options[i].str, len))
-			continue;
-
-		ssbd_state = ssbd_options[i].state;
-		return 0;
-	}
-
-	return -EINVAL;
-}
-early_param("ssbd", ssbd_cfg);
-
 void __init arm64_update_smccc_conduit(struct alt_instr *alt,
 				       __le32 *origptr, __le32 *updptr,
 				       int nr_inst)
