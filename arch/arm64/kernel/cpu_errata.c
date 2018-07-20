@@ -393,21 +393,9 @@ void __init arm64_update_smccc_conduit(struct alt_instr *alt,
 
 	BUG_ON(nr_inst != 1);
 
-#if 0
-	switch (psci_ops.conduit) {
-	case PSCI_CONDUIT_HVC:
-		insn = aarch64_insn_get_hvc_value();
-		break;
-	case PSCI_CONDUIT_SMC:
-		insn = aarch64_insn_get_smc_value();
-		break;
-	default:
-		return;
-	}
-#endif
 	insn = aarch64_insn_get_smc_value();
 
-	*updptr = cpu_to_le32(insn);
+	*updptr = cpu_to_le32(insn);		
 }
 
 void __init arm64_enable_wa2_handling(struct alt_instr *alt,
@@ -426,21 +414,6 @@ void __init arm64_enable_wa2_handling(struct alt_instr *alt,
 
 void arm64_set_ssbd_mitigation(bool state)
 {
-#if 0
-	switch (psci_ops.conduit) {
-	case PSCI_CONDUIT_HVC:
-		arm_smccc_1_1_hvc(ARM_SMCCC_ARCH_WORKAROUND_2, state, NULL);
-		break;
-
-	case PSCI_CONDUIT_SMC:
-		arm_smccc_1_1_smc(ARM_SMCCC_ARCH_WORKAROUND_2, state, NULL);
-		break;
-
-	default:
-		WARN_ON_ONCE(1);
-		break;
-	}
-#endif
 	arm_smccc_1_1_smc(ARM_SMCCC_ARCH_WORKAROUND_2, state, NULL);
 }
 
@@ -453,33 +426,6 @@ static bool has_ssbd_mitigation(const struct arm64_cpu_capabilities *entry,
 
 	WARN_ON(scope != SCOPE_LOCAL_CPU || preemptible());
 
-#if 0
-	if (psci_ops.smccc_version == SMCCC_VERSION_1_0)
-		ssbd_state = ARM64_SSBD_UNKNOWN;
-		return false;
-	/*
-	 * The probe function return value is either negative
-	 * (unsupported or mitigated), positive (unaffected), or zero
-	 * (requires mitigation). We only need to do anything in the
-	 * last case.
-	 */
-
-	switch (psci_ops.conduit) {
-	case PSCI_CONDUIT_HVC:
-		arm_smccc_1_1_hvc(ARM_SMCCC_ARCH_FEATURES_FUNC_ID,
-				  ARM_SMCCC_ARCH_WORKAROUND_2, &res);
-		break;
-
-	case PSCI_CONDUIT_SMC:
-		arm_smccc_1_1_smc(ARM_SMCCC_ARCH_FEATURES_FUNC_ID,
-				  ARM_SMCCC_ARCH_WORKAROUND_2, &res);
-		break;
-
-	default:
-		ssbd_state = ARM64_SSBD_UNKNOWN;
-		return false;
-	}
-#endif
 	arm_smccc_1_1_smc(ARM_SMCCC_ARCH_FEATURES_FUNC_ID,
 			  ARM_SMCCC_ARCH_WORKAROUND_2, &res);
 

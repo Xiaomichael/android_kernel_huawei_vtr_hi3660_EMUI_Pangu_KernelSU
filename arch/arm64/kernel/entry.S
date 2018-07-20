@@ -64,18 +64,6 @@
 #endif
 	.endm
 
-	// This macro corrupts x0-x3. It is the caller's duty
-	// to save/restore them if required.
-	.macro	apply_ssbd, state, targ, tmp1, tmp2
-#ifdef CONFIG_ARM64_SSBD
-	nop
-	ldr_this_cpu	\tmp2, arm64_ssbd_callback_required, \tmp1
-	cbz	\tmp2, \targ
-	mov	w0, #ARM_SMCCC_ARCH_WORKAROUND_2
-	mov	w1, #\state
-	smc #0
-#endif
-	.endm
 /*
  * Bad Abort numbers
  *-----------------
@@ -201,7 +189,7 @@ alternative_else_nop_endif
 	ldr	x19, [tsk, #TSK_TI_FLAGS]	// since we can unmask debug
 	disable_step_tsk x19, x20		// exceptions when scheduling.
 
-	apply_ssbd 1, 1f, x22, x23
+	apply_ssbd 1
 
 #ifdef CONFIG_ARM64_SSBD
 	ldp	x0, x1, [sp, #16 * 0]
@@ -284,7 +272,17 @@ alternative_else_nop_endif
 	*/
 	.endm
 #endif
-
+	// This macro corrupts x0-x3. It is the caller's duty
+	// to save/restore them if required.
+	.macro	apply_ssbd, state
+#ifdef CONFIG_ARM64_SSBD
+	mov	w0, #ARM_SMCCC_ARCH_WORKAROUND_2
+	mov	w1, #\state
+alternative_cb	arm64_update_smccc_conduit
+	nop					// Patched to SMC/HVC #0
+alternative_cb_end
+#endif
+	.endm
 	.macro	kernel_entry, el, regsize = 64
 	.if	\regsize == 32
 	mov	w0, w0				// zero upper 32 bits of x0
@@ -311,7 +309,7 @@ alternative_else_nop_endif
 	ldr	x19, [tsk, #TSK_TI_FLAGS]	// since we can unmask debug
 	disable_step_tsk x19, x20		// exceptions when scheduling.
 
-	apply_ssbd 1, 1f, x22, x23
+	apply_ssbd 1
 
 #ifdef CONFIG_ARM64_SSBD
 	ldp	x0, x1, [sp, #16 * 0]
@@ -482,7 +480,7 @@ alternative_if ARM64_WORKAROUND_845719
 alternative_else_nop_endif
 #endif
 3:
-	apply_ssbd 0, 5f, x0, x1
+	apply_ssbd 0
 5:
 	.endif
 
