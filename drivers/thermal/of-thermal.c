@@ -30,7 +30,6 @@
 #include <linux/err.h>
 #include <linux/export.h>
 #include <linux/string.h>
-#include <linux/thermal.h>
 
 #include "thermal_core.h"
 
@@ -44,7 +43,6 @@
  * @min: minimum cooling state used at this trip point
  * @max: maximum cooling state used at this trip point
  */
-
 struct __thermal_bind_params {
 	struct device_node *cooling_device;
 	unsigned int trip_id;
@@ -70,7 +68,6 @@ struct __thermal_bind_params {
  * @sensor_data: sensor private data used while reading temperature and trend
  * @ops: set of callbacks to handle the thermal zone based on DT
  */
-
 struct __thermal_zone {
 	enum thermal_device_mode mode;
 	int passive_delay;
@@ -93,8 +90,7 @@ struct __thermal_zone {
 
 /***   DT thermal zone device callbacks   ***/
 
-static int of_thermal_get_temp(struct thermal_zone_device *tz,
-			       int *temp)
+static int of_thermal_get_temp(struct thermal_zone_device *tz, int *temp)
 {
 	struct __thermal_zone *data = tz->devdata;
 
@@ -104,8 +100,7 @@ static int of_thermal_get_temp(struct thermal_zone_device *tz,
 	return data->ops->get_temp(data->sensor_data, temp);
 }
 
-static int of_thermal_set_trips(struct thermal_zone_device *tz,
-				int low, int high)
+static int of_thermal_set_trips(struct thermal_zone_device *tz, int low, int high)
 {
 	struct __thermal_zone *data = tz->devdata;
 
@@ -167,8 +162,7 @@ EXPORT_SYMBOL_GPL(of_thermal_is_trip_valid);
  *
  * Return: pointer to trip points table, NULL otherwise
  */
-const struct thermal_trip *
-of_thermal_get_trip_points(struct thermal_zone_device *tz)
+const struct thermal_trip *of_thermal_get_trip_points(struct thermal_zone_device *tz)
 {
 	struct __thermal_zone *data = tz->devdata;
 
@@ -190,8 +184,7 @@ EXPORT_SYMBOL_GPL(of_thermal_get_trip_points);
  *
  * Return: zero on success, error code otherwise
  */
-static int of_thermal_set_emul_temp(struct thermal_zone_device *tz,
-				    int temp)
+static int of_thermal_set_emul_temp(struct thermal_zone_device *tz, int temp)
 {
 	struct __thermal_zone *data = tz->devdata;
 
@@ -227,8 +220,7 @@ static int of_thermal_bind(struct thermal_zone_device *thermal,
 
 			ret = thermal_zone_bind_cooling_device(thermal,
 						tbp->trip_id, cdev,
-						tbp->max,
-						tbp->min,
+						tbp->max, tbp->min,
 						tbp->usage);
 			if (ret)
 				return ret;
@@ -281,7 +273,7 @@ static int of_thermal_set_mode(struct thermal_zone_device *tz,
 
 	mutex_lock(&tz->lock);
 
-	if (mode == THERMAL_DEVICE_ENABLED ) {
+	if (mode == THERMAL_DEVICE_ENABLED) {
 		tz->polling_delay = data->polling_delay;
 #ifdef CONFIG_HISI_IPA_THERMAL
 		tz->passive_delay = data->passive_delay;
@@ -335,7 +327,7 @@ static int of_thermal_set_trip_temp(struct thermal_zone_device *tz, int trip,
 	if (trip >= data->ntrips || trip < 0)
 		return -EDOM;
 
-	if(!data->ops)
+	if (!data->ops)
 		return -EINVAL;
 
 	if (data->ops->set_trip_temp) {
@@ -379,8 +371,7 @@ static int of_thermal_set_trip_hyst(struct thermal_zone_device *tz, int trip,
 	return 0;
 }
 
-static int of_thermal_get_crit_temp(struct thermal_zone_device *tz,
-				    int *temp)
+static int of_thermal_get_crit_temp(struct thermal_zone_device *tz, int *temp)
 {
 	struct __thermal_zone *data = tz->devdata;
 	int i;
@@ -742,6 +733,7 @@ end:
 	of_node_put(trip);
 
 	return ret;
+	}
 }
 
 #ifdef CONFIG_HISI_IPA_THERMAL
@@ -802,7 +794,7 @@ static int thermal_of_get_trip_type(struct device_node *np,
 	if (err < 0)
 		return err;
 
-	for (i = 0; i < ARRAY_SIZE(trip_types); i++)/*lint !e574*/
+	for (i = 0; i < ARRAY_SIZE(trip_types); i++)
 		if (!strcasecmp(t, trip_types[i])) {
 			*type = i;
 			return 0;
@@ -1067,8 +1059,7 @@ int __init of_parse_thermal_zones(void)
 		tz = thermal_of_build_thermal_zone(child);
 		if (IS_ERR(tz)) {
 			pr_err("failed to build thermal zone %s: %ld\n",
-			       child->name,
-			       PTR_ERR(tz));
+			       child->name, PTR_ERR(tz));
 			continue;
 		}
 
@@ -1118,8 +1109,7 @@ int __init of_parse_thermal_zones(void)
 		tzp->offset = tz->offset;
 
 		zone = thermal_zone_device_register(child->name, tz->ntrips,
-						    mask, tz,
-						    ops, tzp,
+						    mask, tz, ops, tzp,
 						    tz->passive_delay,
 						    tz->polling_delay);
 		if (IS_ERR(zone)) {
@@ -1130,7 +1120,7 @@ int __init of_parse_thermal_zones(void)
 			of_thermal_free_zone(tz);
 			/* attempting to build remaining zones still */
 		}
-	}/*lint !e593*/
+	}
 	of_node_put(np);
 
 	return 0;
