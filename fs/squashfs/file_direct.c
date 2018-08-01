@@ -106,7 +106,6 @@ int squashfs_readpages_block(struct page *target_page,
 			     unsigned int *nr_pages,
 			     struct address_space *mapping,
 			     int page_index, u64 block, int bsize)
-
 {
 	struct squashfs_page_actor *actor;
 	struct inode *inode = mapping->host;
