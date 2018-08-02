@@ -77,7 +77,7 @@ void squashfs_copy_cache(struct page *, struct squashfs_cache_entry *, int,
 
 /* file_direct.c */
 extern int squashfs_readpages_block(struct page *, struct list_head *,
-	unsigned int *, struct address_space *, int, u64, int);
+    unsigned int *, struct address_space *, int, u64, int);
 
 /* id.c */
 extern int squashfs_get_id(struct super_block *, unsigned int, unsigned int *);
