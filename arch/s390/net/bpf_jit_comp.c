@@ -472,6 +472,26 @@ static void bpf_jit_epilogue(struct bpf_jit *jit)
 	save_restore_regs(jit, REGS_RESTORE);
 	/* br %r14 */
 	_EMIT2(0x07fe);
+
+	if (IS_ENABLED(CC_USING_EXPOLINE) && !nospec_disable &&
+	    (jit->seen & SEEN_FUNC)) {
+		jit->r1_thunk_ip = jit->prg;
+		/* Generate __s390_indirect_jump_r1 thunk */
+		if (test_facility(35)) {
+			/* exrl %r0,.+10 */
+			EMIT6_PCREL_RIL(0xc6000000, jit->prg + 10);
+			/* j . */
+			EMIT4_PCREL(0xa7f40000, 0);
+			/* br %r1 */
+			_EMIT2(0x07f1);
+		} else {
+			/* ex 0,S390_lowcore.br_r1_tampoline */
+			EMIT4_DISP(0x44000000, REG_0, REG_0,
+				   offsetof(struct lowcore, br_r1_trampoline));
+			/* j . */
+			EMIT4_PCREL(0xa7f40000, 0);
+		}
+	}
 }
 
 /*
