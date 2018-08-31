@@ -51,6 +51,7 @@
 #include "ion.h"
 #include "ion_priv.h"
 #include "compat_ion.h"
+#include <linux/version.h>
 
 #define HISI_ION_FLUSH_ALL_CPUS_CACHES	(0x800000) /*8MB*/
 
@@ -191,8 +192,6 @@ static struct ion_buffer *ion_buffer_create(struct ion_heap *heap,
 		}
 	}
 
-	buffer->dev = dev;
-	buffer->size = len;
 	INIT_LIST_HEAD(&buffer->vmas);
 	mutex_init(&buffer->lock);
 	/*
@@ -211,7 +210,7 @@ static struct ion_buffer *ion_buffer_create(struct ion_heap *heap,
 	}
 
 #ifdef CONFIG_HISI_LB
-	if (flags * ION_FLAG_HISI_LB_MASK) {
+	if (flags & ION_FLAG_HISI_LB_MASK) {
 		buffer->plc_id = ION_FLAG_2_PLC_ID(flags);
 
 		/*
@@ -465,18 +464,6 @@ struct ion_handle *ion_handle_get_by_id_nolock(struct ion_client *client,
 		ion_handle_get(handle);
 
 	return handle ? handle : ERR_PTR(-EINVAL);
-}
-
-struct ion_handle *ion_handle_get_by_id(struct ion_client *client,
-					       int id)
-{
-	struct ion_handle *handle;
-
-	mutex_lock(&client->lock);
-	handle = ion_handle_get_by_id_nolock(client, id);
-	mutex_unlock(&client->lock);
-
-	return handle;
 }
 
 static bool ion_handle_validate(struct ion_client *client,
@@ -1349,28 +1336,28 @@ static struct dma_buf_ops dma_buf_ops = {
 	.kunmap = ion_dma_buf_kunmap,
 };
 
-struct dma_buf *ion_share_dma_buf(struct ion_client *client,
-				  struct ion_handle *handle)
+static struct dma_buf *__ion_share_dma_buf(struct ion_client *client,
+					   struct ion_handle *handle,
+					   bool lock_client)
 {
 	DEFINE_DMA_BUF_EXPORT_INFO(exp_info);
 	struct ion_buffer *buffer;
 	struct dma_buf *dmabuf;
 	bool valid_handle;
 
-	mutex_lock(&client->lock);
+	if (lock_client)
+		mutex_lock(&client->lock);
 	valid_handle = ion_handle_validate(client, handle);
 	if (!valid_handle) {
 		WARN(1, "%s: invalid handle passed to share.\n", __func__);
-		mutex_unlock(&client->lock);
+		if (lock_client)
+			mutex_unlock(&client->lock);
 		return ERR_PTR(-EINVAL);
 	}
 	buffer = handle->buffer;
 	ion_buffer_get(buffer);
-	mutex_lock(&buffer->lock);
-	if (buffer->iommu_map)
-		kref_get(&buffer->iommu_map->ref);
-	mutex_unlock(&buffer->lock);
-	mutex_unlock(&client->lock);
+	if (lock_client)
+		mutex_unlock(&client->lock);
 
 	exp_info.ops = &dma_buf_ops;
 	exp_info.size = buffer->size;
@@ -1386,18 +1373,23 @@ struct dma_buf *ion_share_dma_buf(struct ion_client *client,
 
 	return dmabuf;
 }
+
+struct dma_buf *ion_share_dma_buf(struct ion_client *client,
+				  struct ion_handle *handle)
+{
+	return __ion_share_dma_buf(client, handle, true);
+}
 EXPORT_SYMBOL(ion_share_dma_buf);
 
-int ion_share_dma_buf_fd(struct ion_client *client, struct ion_handle *handle)
+static int __ion_share_dma_buf_fd(struct ion_client *client,
+				  struct ion_handle *handle, bool lock_client)
 {
 	struct dma_buf *dmabuf;
 	int fd;
 
-	dmabuf = ion_share_dma_buf(client, handle);
-	if (IS_ERR(dmabuf)) {
-		pr_err("%s: ion share dma buf failed!\n", __func__);
+	dmabuf = __ion_share_dma_buf(client, handle, lock_client);
+	if (IS_ERR(dmabuf))
 		return PTR_ERR(dmabuf);
-	}
 
 	fd = dma_buf_fd(dmabuf, O_CLOEXEC);
 	if (fd < 0) {
@@ -1407,7 +1399,18 @@ int ion_share_dma_buf_fd(struct ion_client *client, struct ion_handle *handle)
 
 	return fd;
 }
+
+int ion_share_dma_buf_fd(struct ion_client *client, struct ion_handle *handle)
+{
+	return __ion_share_dma_buf_fd(client, handle, true);
+}
 EXPORT_SYMBOL(ion_share_dma_buf_fd);
+
+int ion_share_dma_buf_fd_nolock(struct ion_client *client,
+				struct ion_handle *handle)
+{
+	return __ion_share_dma_buf_fd(client, handle, false);
+}
 
 struct ion_handle *ion_import_dma_buf(struct ion_client *client,
 				      struct dma_buf *dmabuf)
@@ -1954,4 +1957,167 @@ int ion_secmem_get_phys(struct ion_client *client, struct ion_handle *handle,
 
 	return ret;
 }
-#include "hisi/hisi_ion_dump.c"
+
+/* "hisi/hisi_ion_dump.c" */
+
+#include <linux/fdtable.h>
+#include <linux/sched.h>
+/**
+ * This C file is included by ion.c, so it is the extension of ion.c
+ * in fact. Function hisi_ion_total is  called at lowmemory case.
+ * Function hisi_ion_memory_info is called at mapping iommu failed.
+ */
+static size_t ion_client_total(struct ion_client *client)
+{
+	size_t size = 0;
+	struct rb_node *n;
+
+	mutex_lock(&client->lock);
+	for (n = rb_first(&client->handles); n; n = rb_next(n)) {
+		struct ion_handle *handle = rb_entry(n,
+				struct ion_handle, node);
+		if (!handle->import &&
+		    (handle->buffer->heap->type != ION_HEAP_TYPE_CARVEOUT))
+			size += handle->buffer->size;
+	}
+	mutex_unlock(&client->lock);
+	return size;
+}
+
+unsigned long hisi_ion_total(void)
+{
+#ifdef CONFIG_HISI_SPECIAL_SCENE_POOL
+	return (unsigned long)atomic_long_read(&ion_total_size) + /* [false alarm] */
+		ion_scene_pool_total_size();
+#else
+	return (unsigned long)atomic_long_read(&ion_total_size);
+#endif
+}
+
+/* this func must be in ion.c */
+static inline struct ion_buffer *get_ion_buf(struct dma_buf *dbuf)
+{
+	if (dbuf->owner != THIS_MODULE)
+		return NULL;
+	return dbuf->priv;
+}
+
+int hisi_ion_proecss_info(void)
+{
+	int fd;
+	struct task_struct *tsk;
+	struct files_struct *files;
+
+	rcu_read_lock();
+	for_each_process(tsk) {
+		if (tsk->flags & PF_KTHREAD)
+			continue;
+
+		get_task_struct(tsk);
+
+		files = get_files_struct(tsk);
+		if (!files) {
+			put_task_struct(tsk);
+			continue;
+		}
+
+		for (fd = 0; fd < files_fdtable(files)->max_fds; fd++) {/*lint !e1058*/
+			struct dma_buf *dbuf;
+			struct ion_buffer *ibuf;
+			struct file *f = fcheck_files(files, fd);
+			if (!f)
+				continue;
+
+			if (!get_file_rcu(f))
+				continue;
+
+			if (!is_dma_buf_file(f)) {
+				fput(f);
+				continue;
+			}
+
+			dbuf = file_to_dma_buf(f);
+			if (!dbuf) {
+				fput(f);
+				continue;
+			}
+
+			ibuf = get_ion_buf(dbuf);
+			if (!ibuf) {
+				fput(f);
+				continue;
+			}
+
+			pr_err("Task name:%s PID[%d] fd[%d] sz[%lu] magic[%llu]\n",
+				tsk->comm, tsk->pid, fd, dbuf->size, ibuf->magic);
+
+			fput(f);
+		}
+		put_files_struct(files);
+		put_task_struct(tsk);
+	}
+	rcu_read_unlock();
+
+	return 0;
+}
+
+
+int hisi_ion_memory_info(bool verbose)
+{
+	struct rb_node *n;
+	struct ion_device *dev = get_ion_device();
+#ifdef CONFIG_HISI_SPECIAL_SCENE_POOL
+	unsigned long scenepool_size;
+#endif
+
+	if (!dev)
+		return -1;
+#ifdef CONFIG_HISI_SPECIAL_SCENE_POOL
+	scenepool_size = ion_scene_pool_total_size();
+	pr_info("ion total size:%ld, scenepool size:%ld\n",
+		atomic_long_read(&ion_total_size) + scenepool_size,
+		scenepool_size);
+#else
+	pr_info("ion total size:%ld\n", atomic_long_read(&ion_total_size));
+#endif
+	if (!verbose)
+		return 0;
+
+	down_read(&dev->client_lock);
+	for (n = rb_first(&dev->clients); n; n = rb_next(n)) {
+		struct ion_client *client = rb_entry(n,
+				struct ion_client, node);
+		size_t size = ion_client_total(client);
+
+		if (!size)
+			continue;
+		if (client->task) {
+			char task_comm[TASK_COMM_LEN];
+
+			get_task_comm(task_comm, client->task);
+			pr_info("%16.s %16u %16zu\n",
+				task_comm, client->pid, size);
+		} else {
+			pr_info("%16.s %16u %16zu\n",
+				client->name, client->pid, size);
+		}
+	}
+	up_read(&dev->client_lock);
+	pr_info("orphaned allocations (info is from last known client):\n");
+	mutex_lock(&dev->buffer_lock);
+	for (n = rb_first(&dev->buffers); n; n = rb_next(n)) {
+		struct ion_buffer *buffer = rb_entry(n, struct ion_buffer,
+				node);
+
+		if (!buffer->handle_count &&
+			(buffer->heap->type != ION_HEAP_TYPE_CARVEOUT))
+			pr_info("%16.s %16u %16zu\n", buffer->task_comm,
+				buffer->pid, buffer->size);
+	}
+	mutex_unlock(&dev->buffer_lock);
+
+	hisi_ion_proecss_info();
+
+	return 0;
+}
+
