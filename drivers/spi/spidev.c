@@ -680,8 +680,11 @@ static int spidev_release(struct inode *inode, struct file *filp)
 		dofree = (spidev->spi == NULL);
 		spin_unlock_irq(&spidev->spi_lock);
 
-		if (dofree)
+		if (dofree) {
+			/* Safe to free: no users remain and spi device is gone */
 			kfree(spidev);
+			spidev = NULL; /* not strictly needed but silences checkers */
+		}
 	}
 	mutex_unlock(&device_list_lock);
 
@@ -778,11 +781,10 @@ static int spidev_probe(struct spi_device *spi)
 	 * rather than a description of the hardware.
 	 */
 #ifndef CONFIG_HISI_SPI
-	if (spi->dev.of_node && !of_match_device(spidev_dt_ids, &spi->dev)) {
-		dev_err(&spi->dev, "buggy DT: spidev listed directly in DT\n");
-		WARN_ON(spi->dev.of_node &&
-			!of_match_device(spidev_dt_ids, &spi->dev));
-	}
+	/* Warn for the common mistake of using "spidev" directly in DT */
+	WARN(spi->dev.of_node &&
+	     of_device_is_compatible(spi->dev.of_node, "spidev"),
+	     "%pOF: buggy DT: spidev listed directly in DT\n", spi->dev.of_node);
 #endif
 
 	spidev_probe_acpi(spi);
@@ -1247,107 +1249,113 @@ static int __init spidev_init(void)
 
 #ifdef CONFIG_HISI_SPI
 	status = spi_register_driver(&spidev_spi_driver1);
-	if (status < 0) {
-		class_destroy(spidev_class);
-		unregister_chrdev(SPIDEV_MAJOR, spidev_spi_driver1.driver.name);
-	}
+	if (status < 0)
+		goto err_driver1;
 
 	status = spi_register_driver(&spidev_spi_driver2);
-	if (status < 0) {
-		class_destroy(spidev_class);
-		unregister_chrdev(SPIDEV_MAJOR, spidev_spi_driver2.driver.name);
-	}
+	if (status < 0)
+		goto err_driver2;
 
 	status = spi_register_driver(&spidev_spi_driver3);
-	if (status < 0) {
-		class_destroy(spidev_class);
-		unregister_chrdev(SPIDEV_MAJOR, spidev_spi_driver3.driver.name);
-	}
+	if (status < 0)
+		goto err_driver3;
 
 	status = spi_register_driver(&spidev_spi_driver10);
-	if (status < 0) {
-		class_destroy(spidev_class);
-		unregister_chrdev(SPIDEV_MAJOR, spidev_spi_driver10.driver.name);
-	}
+	if (status < 0)
+		goto err_driver10;
 
 	status = spi_register_driver(&spidev_spi_driver11);
-	if (status < 0) {
-		class_destroy(spidev_class);
-		unregister_chrdev(SPIDEV_MAJOR, spidev_spi_driver11.driver.name);
-	}
+	if (status < 0)
+		goto err_driver11;
 
 	status = spi_register_driver(&spidev_spi_driver12);
-	if (status < 0) {
-		class_destroy(spidev_class);
-		unregister_chrdev(SPIDEV_MAJOR, spidev_spi_driver12.driver.name);
-	 }
+	if (status < 0)
+		goto err_driver12;
 
 	status = spi_register_driver(&spidev_spi_driver13);
-	if (status < 0) {
-		class_destroy(spidev_class);
-		unregister_chrdev(SPIDEV_MAJOR, spidev_spi_driver13.driver.name);
-	 }
+	if (status < 0)
+		goto err_driver13;
 
 	status = spi_register_driver(&spidev_spi_driver21);
-	if (status < 0) {
-		class_destroy(spidev_class);
-		unregister_chrdev(SPIDEV_MAJOR, spidev_spi_driver21.driver.name);
-	}
+	if (status < 0)
+		goto err_driver21;
 
 	status = spi_register_driver(&spidev_spi_driver30);
-	if (status < 0) {
-		class_destroy(spidev_class);
-		unregister_chrdev(SPIDEV_MAJOR, spidev_spi_driver30.driver.name);
-	}
-
+	if (status < 0)
+		goto err_driver30;
 
 	status = spi_register_driver(&spidev_spi_driver31);
-	if (status < 0) {
-		class_destroy(spidev_class);
-		unregister_chrdev(SPIDEV_MAJOR, spidev_spi_driver31.driver.name);
-	}
+	if (status < 0)
+		goto err_driver31;
 
 	status = spi_register_driver(&spidev_spi_driver32);
-	if (status < 0) {
-		class_destroy(spidev_class);
-		unregister_chrdev(SPIDEV_MAJOR, spidev_spi_driver32.driver.name);
-	}
+	if (status < 0)
+		goto err_driver32;
 
 	status = spi_register_driver(&spidev_spi_driver33);
-	if (status < 0) {
-		class_destroy(spidev_class);
-		unregister_chrdev(SPIDEV_MAJOR, spidev_spi_driver33.driver.name);
-	}
+	if (status < 0)
+		goto err_driver33;
 
 	status = spi_register_driver(&spidev_spi_driver40);
-	if (status < 0) {
-		class_destroy(spidev_class);
-		unregister_chrdev(SPIDEV_MAJOR, spidev_spi_driver40.driver.name);
-	}
+	if (status < 0)
+		goto err_driver40;
 
 	status = spi_register_driver(&spidev_spi_driver41);
-	if (status < 0) {
-		class_destroy(spidev_class);
-		unregister_chrdev(SPIDEV_MAJOR, spidev_spi_driver41.driver.name);
-	}
+	if (status < 0)
+		goto err_driver41;
 
 	status = spi_register_driver(&spidev_spi_driver42);
-	if (status < 0) {
-		class_destroy(spidev_class);
-		unregister_chrdev(SPIDEV_MAJOR, spidev_spi_driver42.driver.name);
-	}
+	if (status < 0)
+		goto err_driver42;
 
 	status = spi_register_driver(&spidev_spi_driver43);
-	if (status < 0) {
-		class_destroy(spidev_class);
-		unregister_chrdev(SPIDEV_MAJOR, spidev_spi_driver43.driver.name);
-	}
+	if (status < 0)
+		goto err_driver43;
+
+	return 0;
+
+/* Error rollback cascade: unregister drivers in reverse order */
+err_driver43:
+	spi_unregister_driver(&spidev_spi_driver42);
+err_driver42:
+	spi_unregister_driver(&spidev_spi_driver41);
+err_driver41:
+	spi_unregister_driver(&spidev_spi_driver40);
+err_driver40:
+	spi_unregister_driver(&spidev_spi_driver33);
+err_driver33:
+	spi_unregister_driver(&spidev_spi_driver32);
+err_driver32:
+	spi_unregister_driver(&spidev_spi_driver31);
+err_driver31:
+	spi_unregister_driver(&spidev_spi_driver30);
+err_driver30:
+	spi_unregister_driver(&spidev_spi_driver21);
+err_driver21:
+	spi_unregister_driver(&spidev_spi_driver13);
+err_driver13:
+	spi_unregister_driver(&spidev_spi_driver12);
+err_driver12:
+	spi_unregister_driver(&spidev_spi_driver11);
+err_driver11:
+	spi_unregister_driver(&spidev_spi_driver10);
+err_driver10:
+	spi_unregister_driver(&spidev_spi_driver3);
+err_driver3:
+	spi_unregister_driver(&spidev_spi_driver2);
+err_driver2:
+	spi_unregister_driver(&spidev_spi_driver1);
+err_driver1:
+	class_destroy(spidev_class);
+	unregister_chrdev(SPIDEV_MAJOR, "spi");
+	return status;
 #else
 	status = spi_register_driver(&spidev_spi_driver);
 	if (status < 0) {
 		class_destroy(spidev_class);
 		unregister_chrdev(SPIDEV_MAJOR, spidev_spi_driver.driver.name);
 	}
+	return status;
 #endif
 
 	return status;
