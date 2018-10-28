@@ -120,7 +120,7 @@
 };
 
 &mmc3 {
-	interrupts-extended = <&intc 94 &omap3_pmx_core2 0x46>;
+	interrupts-extended = <&intc 94 &omap3_pmx_core 0x136>;
 	pinctrl-0 = <&mmc3_pins>;
 	pinctrl-names = "default";
 	vmmc-supply = <&wl12xx_vmmc>;
