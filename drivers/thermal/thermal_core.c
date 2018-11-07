@@ -791,12 +791,10 @@ static void update_temperature(struct thermal_zone_device *tz)
 			tz->last_temperature, tz->temperature);
 }
 
-static void thermal_zone_device_reset(struct thermal_zone_device *tz)
+static void thermal_zone_device_init(struct thermal_zone_device *tz)
 {
 	struct thermal_instance *pos;
-
 	tz->temperature = THERMAL_TEMP_INVALID;
-	tz->passive = 0;
 	list_for_each_entry(pos, &tz->thermal_instances, tz_node)
 		pos->initialized = false;
 }
@@ -804,66 +802,30 @@ static void thermal_zone_device_reset(struct thermal_zone_device *tz)
 #ifdef CONFIG_HISI_IPA_THERMAL
 int nametoactor(const char* weight_attr_name)
 {
-	int actor_id = -1;
+    int actor_id = -1;
 
-	if (!strncmp(weight_attr_name, IPA_GPU_WEIGHT_NAME, sizeof(IPA_GPU_WEIGHT_NAME) - 1))
-			actor_id = IPA_GPU;
-	else if (!strncmp(weight_attr_name, IPA_CLUSTER0_WEIGHT_NAME, sizeof(IPA_CLUSTER0_WEIGHT_NAME) - 1))
-			actor_id = IPA_CLUSTER0;
-	else if (!strncmp(weight_attr_name, IPA_CLUSTER1_WEIGHT_NAME, sizeof(IPA_CLUSTER1_WEIGHT_NAME) - 1))
-			actor_id = IPA_CLUSTER1;
+    if (!strncmp(weight_attr_name, IPA_GPU_WEIGHT_NAME, sizeof(IPA_GPU_WEIGHT_NAME) - 1))
+        actor_id = IPA_GPU;
+    else if (!strncmp(weight_attr_name, IPA_CLUSTER0_WEIGHT_NAME, sizeof(IPA_CLUSTER0_WEIGHT_NAME) - 1))
+        actor_id = IPA_CLUSTER0;
+    else if (!strncmp(weight_attr_name, IPA_CLUSTER1_WEIGHT_NAME, sizeof(IPA_CLUSTER1_WEIGHT_NAME) - 1))
+        actor_id = IPA_CLUSTER1;
 #ifdef CONFIG_HISI_THERMAL_TRIPPLE_CLUSTERS
-	else if (!strncmp(weight_attr_name, IPA_CLUSTER2_WEIGHT_NAME, sizeof(IPA_CLUSTER2_WEIGHT_NAME) - 1))
-			actor_id = IPA_CLUSTER2;
+    else if (!strncmp(weight_attr_name, IPA_CLUSTER2_WEIGHT_NAME, sizeof(IPA_CLUSTER2_WEIGHT_NAME) - 1))
+        actor_id = IPA_CLUSTER2;
 #endif
-	else
-		actor_id = -1;
+    else
+        actor_id = -1;
 
-	return actor_id;
+    return actor_id;
 }
 #endif
 
-#ifdef CONFIG_HISI_IPA_THERMAL
-void restore_actor_weights(struct thermal_zone_device *tz)
+static void thermal_zone_device_reset(struct thermal_zone_device *tz)
 {
-	struct thermal_instance *pos;
-	int actor_id = -1;
-
-	list_for_each_entry(pos, &tz->thermal_instances, tz_node) {
-		actor_id = nametoactor(pos->weight_attr_name);
-		if(actor_id != -1)
-			pos->weight = g_ipa_normal_weights[actor_id];
-	}
+    tz->passive = 0;
+    thermal_zone_device_init(tz);
 }
-
-void update_actor_weights(struct thermal_zone_device *tz)
-{
-	struct thermal_instance *pos;
-	bool bGPUBounded = false;
-	struct thermal_cooling_device *cdev;
-	int actor_id = -1;
-
-	list_for_each_entry(pos, &tz->thermal_instances, tz_node) {
-		cdev = pos->cdev;
-		if (!strncmp(pos->weight_attr_name, IPA_GPU_WEIGHT_NAME,sizeof(IPA_GPU_WEIGHT_NAME) - 1) && cdev->bound_event) {
-			bGPUBounded = true;
-			break;
-		}
-	}
-
-	list_for_each_entry(pos, &tz->thermal_instances, tz_node) {
-		actor_id = nametoactor(pos->weight_attr_name);
-
-		if (bGPUBounded) {
-			if (actor_id != -1)
-				pos->weight = g_ipa_gpu_boost_weights[actor_id];
-		} else {
-			if (actor_id != -1)
-				pos->weight = g_ipa_normal_weights[actor_id];
-		}
-	}
-}
-#endif
 
 void thermal_zone_device_update(struct thermal_zone_device *tz,
 				enum thermal_notify_event event)
@@ -2884,15 +2846,15 @@ static int thermal_pm_notify(struct notifier_block *nb,
 		atomic_set(&in_suspend, 0);
 		list_for_each_entry(tz, &thermal_tz_list, node) {
 #ifdef CONFIG_HISI_IPA_THERMAL
-			if(strncmp(tz->governor->name, USER_SPACE_GOVERNOR, THERMAL_NAME_LENGTH)){ /*[false alarm]*/
+			if (strncmp(tz->governor->name, USER_SPACE_GOVERNOR, THERMAL_NAME_LENGTH)) {
 				thermal_zone_device_reset(tz);
-				thermal_zone_device_update(tz, THERMAL_EVENT_UNSPECIFIED);
+			} else {
+				thermal_zone_device_init(tz);
 			}
 #else
-			thermal_zone_device_reset(tz);
-			thermal_zone_device_update(tz,
-						   THERMAL_EVENT_UNSPECIFIED);
+			thermal_zone_device_init(tz);
 #endif
+			thermal_zone_device_update(tz, THERMAL_EVENT_UNSPECIFIED);
 		}
 		break;
 	default:
