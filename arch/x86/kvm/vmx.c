@@ -1057,6 +1057,9 @@ static u32 vmx_segment_access_rights(struct kvm_segment *var);
 static void copy_vmcs12_to_shadow(struct vcpu_vmx *vmx);
 static void copy_shadow_to_vmcs12(struct vcpu_vmx *vmx);
 static int alloc_identity_pagetable(struct kvm *kvm);
+static void vmx_update_msr_bitmap(struct kvm_vcpu *vcpu);
+static __always_inline void vmx_disable_intercept_for_msr(unsigned long *msr_bitmap,
+							  u32 msr, int type);
 
 static DEFINE_PER_CPU(struct vmcs *, vmxarea);
 static DEFINE_PER_CPU(struct vmcs *, current_vmcs);
@@ -4732,10 +4735,8 @@ static void free_vpid(int vpid)
 	spin_unlock(&vmx_vpid_lock);
 }
 
-#define MSR_TYPE_R	1
-#define MSR_TYPE_W	2
-static void __vmx_disable_intercept_for_msr(unsigned long *msr_bitmap,
-						u32 msr, int type)
+static __always_inline void vmx_disable_intercept_for_msr(unsigned long *msr_bitmap,
+							  u32 msr, int type)
 {
 	int f = sizeof(unsigned long);
 
@@ -4769,8 +4770,8 @@ static void __vmx_disable_intercept_for_msr(unsigned long *msr_bitmap,
 	}
 }
 
-static void __vmx_enable_intercept_for_msr(unsigned long *msr_bitmap,
-						u32 msr, int type)
+static __always_inline void vmx_enable_intercept_for_msr(unsigned long *msr_bitmap,
+							 u32 msr, int type)
 {
 	int f = sizeof(unsigned long);
 
@@ -4802,6 +4803,15 @@ static void __vmx_enable_intercept_for_msr(unsigned long *msr_bitmap,
 			__set_bit(msr, msr_bitmap + 0xc00 / f);
 
 	}
+}
+
+static __always_inline void vmx_set_intercept_for_msr(unsigned long *msr_bitmap,
+			     			      u32 msr, int type, bool value)
+{
+	if (value)
+		vmx_enable_intercept_for_msr(msr_bitmap, msr, type);
+	else
+		vmx_disable_intercept_for_msr(msr_bitmap, msr, type);
 }
 
 /*
@@ -4853,23 +4863,23 @@ static void nested_vmx_disable_intercept_for_msr(unsigned long *msr_bitmap_l1,
 static void vmx_disable_intercept_for_msr(u32 msr, bool longmode_only)
 {
 	if (!longmode_only)
-		__vmx_disable_intercept_for_msr(vmx_msr_bitmap_legacy,
+		vmx_disable_intercept_for_msr(vmx_msr_bitmap_legacy,
 						msr, MSR_TYPE_R | MSR_TYPE_W);
-	__vmx_disable_intercept_for_msr(vmx_msr_bitmap_longmode,
+	vmx_disable_intercept_for_msr(vmx_msr_bitmap_longmode,
 						msr, MSR_TYPE_R | MSR_TYPE_W);
 }
 
 static void vmx_enable_intercept_msr_read_x2apic(u32 msr, bool apicv_active)
 {
 	if (apicv_active) {
-		__vmx_enable_intercept_for_msr(vmx_msr_bitmap_legacy_x2apic,
+		vmx_enable_intercept_for_msr(vmx_msr_bitmap_legacy_x2apic,
 				msr, MSR_TYPE_R);
-		__vmx_enable_intercept_for_msr(vmx_msr_bitmap_longmode_x2apic,
+		vmx_enable_intercept_for_msr(vmx_msr_bitmap_longmode_x2apic,
 				msr, MSR_TYPE_R);
 	} else {
-		__vmx_enable_intercept_for_msr(vmx_msr_bitmap_legacy_x2apic_apicv_inactive,
+		vmx_enable_intercept_for_msr(vmx_msr_bitmap_legacy_x2apic_apicv_inactive,
 				msr, MSR_TYPE_R);
-		__vmx_enable_intercept_for_msr(vmx_msr_bitmap_longmode_x2apic_apicv_inactive,
+		vmx_enable_intercept_for_msr(vmx_msr_bitmap_longmode_x2apic_apicv_inactive,
 				msr, MSR_TYPE_R);
 	}
 }
@@ -4877,14 +4887,14 @@ static void vmx_enable_intercept_msr_read_x2apic(u32 msr, bool apicv_active)
 static void vmx_disable_intercept_msr_read_x2apic(u32 msr, bool apicv_active)
 {
 	if (apicv_active) {
-		__vmx_disable_intercept_for_msr(vmx_msr_bitmap_legacy_x2apic,
+		vmx_disable_intercept_for_msr(vmx_msr_bitmap_legacy_x2apic,
 				msr, MSR_TYPE_R);
-		__vmx_disable_intercept_for_msr(vmx_msr_bitmap_longmode_x2apic,
+		vmx_disable_intercept_for_msr(vmx_msr_bitmap_longmode_x2apic,
 				msr, MSR_TYPE_R);
 	} else {
-		__vmx_disable_intercept_for_msr(vmx_msr_bitmap_legacy_x2apic_apicv_inactive,
+		vmx_disable_intercept_for_msr(vmx_msr_bitmap_legacy_x2apic_apicv_inactive,
 				msr, MSR_TYPE_R);
-		__vmx_disable_intercept_for_msr(vmx_msr_bitmap_longmode_x2apic_apicv_inactive,
+		vmx_disable_intercept_for_msr(vmx_msr_bitmap_longmode_x2apic_apicv_inactive,
 				msr, MSR_TYPE_R);
 	}
 }
@@ -4892,14 +4902,14 @@ static void vmx_disable_intercept_msr_read_x2apic(u32 msr, bool apicv_active)
 static void vmx_disable_intercept_msr_write_x2apic(u32 msr, bool apicv_active)
 {
 	if (apicv_active) {
-		__vmx_disable_intercept_for_msr(vmx_msr_bitmap_legacy_x2apic,
+		vmx_disable_intercept_for_msr(vmx_msr_bitmap_legacy_x2apic,
 				msr, MSR_TYPE_W);
-		__vmx_disable_intercept_for_msr(vmx_msr_bitmap_longmode_x2apic,
+		vmx_disable_intercept_for_msr(vmx_msr_bitmap_longmode_x2apic,
 				msr, MSR_TYPE_W);
 	} else {
-		__vmx_disable_intercept_for_msr(vmx_msr_bitmap_legacy_x2apic_apicv_inactive,
+		vmx_disable_intercept_for_msr(vmx_msr_bitmap_legacy_x2apic_apicv_inactive,
 				msr, MSR_TYPE_W);
-		__vmx_disable_intercept_for_msr(vmx_msr_bitmap_longmode_x2apic_apicv_inactive,
+		vmx_disable_intercept_for_msr(vmx_msr_bitmap_longmode_x2apic_apicv_inactive,
 				msr, MSR_TYPE_W);
 	}
 }
