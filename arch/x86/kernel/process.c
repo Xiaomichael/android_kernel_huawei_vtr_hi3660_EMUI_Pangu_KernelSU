@@ -34,6 +34,8 @@
 #include <asm/vm86.h>
 #include <asm/switch_to.h>
 
+#include "process.h"
+
 /*
  * per-CPU TSS segments. Threads are completely 'soft' on Linux,
  * no more per-task TSS's. The TSS size is kept cacheline-aligned
@@ -177,6 +179,27 @@ int set_tsc_mode(unsigned int val)
 		return -EINVAL;
 
 	return 0;
+}
+
+static inline void switch_to_bitmap(struct thread_struct *prev,
+				    struct thread_struct *next,
+				    unsigned long tifp, unsigned long tifn)
+{
+	struct tss_struct *tss = this_cpu_ptr(&cpu_tss);
+
+	if (tifn & _TIF_IO_BITMAP) {
+		/*
+		 * Copy the relevant range of the IO bitmap.
+		 * Normally this is 128 bytes or less:
+		 */
+		memcpy(tss->io_bitmap, next->io_bitmap_ptr,
+		       max(prev->io_bitmap_max, next->io_bitmap_max));
+	} else if (tifp & _TIF_IO_BITMAP) {
+		/*
+		 * Clear any possible leftover bits:
+		 */
+		memset(tss->io_bitmap, 0xff, prev->io_bitmap_max);
+	}
 }
 
 #ifdef CONFIG_SMP
@@ -350,8 +373,7 @@ void speculation_ctrl_update(unsigned long tif)
 	preempt_enable();
 }
 
-void __switch_to_xtra(struct task_struct *prev_p, struct task_struct *next_p,
-		      struct tss_struct *tss)
+void __switch_to_xtra(struct task_struct *prev_p, struct task_struct *next_p)
 {
 	struct thread_struct *prev, *next;
 	unsigned long tifp, tifn;
@@ -361,7 +383,7 @@ void __switch_to_xtra(struct task_struct *prev_p, struct task_struct *next_p,
 
 	tifn = READ_ONCE(task_thread_info(next_p)->flags);
 	tifp = READ_ONCE(task_thread_info(prev_p)->flags);
-	switch_to_bitmap(tss, prev, next, tifp, tifn);
+	switch_to_bitmap(prev, next, tifp, tifn);
 
 	propagate_user_return_notify(prev_p, next_p);
 
