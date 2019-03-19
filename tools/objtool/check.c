@@ -1281,47 +1281,48 @@ static void cleanup(struct objtool_file *file)
 	elf_close(file->elf);
 }
 
+static struct objtool_file file;
+
 int check(const char *_objname, bool _nofp)
 {
-	struct objtool_file file;
-	int ret, warnings = 0;
+    int ret, warnings = 0;
 
-	objname = _objname;
-	nofp = _nofp;
+    objname = _objname;
+    nofp = _nofp;
 
-	file.elf = elf_open(objname);
-	if (!file.elf) {
-		fprintf(stderr, "error reading elf file %s\n", objname);
-		return 1;
-	}
+    file.elf = elf_open(objname);
+    if (!file.elf) {
+        fprintf(stderr, "error reading elf file %s\n", objname);
+        return 1;
+    }
 
-	INIT_LIST_HEAD(&file.insn_list);
-	hash_init(file.insn_hash);
-	file.whitelist = find_section_by_name(file.elf, ".discard.func_stack_frame_non_standard");
-	file.rodata = find_section_by_name(file.elf, ".rodata");
-	file.ignore_unreachables = false;
-	file.c_file = find_section_by_name(file.elf, ".comment");
+    INIT_LIST_HEAD(&file.insn_list);
+    hash_init(file.insn_hash);
+    file.whitelist = find_section_by_name(file.elf, ".discard.func_stack_frame_non_standard");
+    file.rodata = find_section_by_name(file.elf, ".rodata");
+    file.ignore_unreachables = false;
+    file.c_file = find_section_by_name(file.elf, ".comment");
 
-	ret = decode_sections(&file);
-	if (ret < 0)
-		goto out;
-	warnings += ret;
+    ret = decode_sections(&file);
+    if (ret < 0)
+        goto out;
+    warnings += ret;
 
-	ret = validate_functions(&file);
-	if (ret < 0)
-		goto out;
-	warnings += ret;
+    ret = validate_functions(&file);
+    if (ret < 0)
+        goto out;
+    warnings += ret;
 
-	ret = validate_uncallable_instructions(&file);
-	if (ret < 0)
-		goto out;
-	warnings += ret;
+    ret = validate_uncallable_instructions(&file);
+    if (ret < 0)
+        goto out;
+    warnings += ret;
 
 out:
-	cleanup(&file);
+    cleanup(&file);
 
-	/* ignore warnings for now until we get all the code cleaned up */
-	if (ret || warnings)
-		return 0;
-	return 0;
+    /* ignore warnings for now until we get all the code cleaned up */
+    if (ret || warnings)
+        return 0;
+    return 0;
 }
