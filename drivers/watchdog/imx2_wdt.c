@@ -173,11 +173,18 @@ static int imx2_wdt_set_timeout(struct watchdog_device *wdog,
 				unsigned int new_timeout)
 {
 	struct imx2_wdt_device *wdev = watchdog_get_drvdata(wdog);
+	unsigned int actual;
 
-	wdog->timeout = new_timeout;
-
+	/* Limit timeout to hardware maximum */
+	actual = min(new_timeout, IMX2_WDT_MAX_TIME);
+	
+	/* Update hardware register */
 	regmap_update_bits(wdev->regmap, IMX2_WDT_WCR, IMX2_WDT_WCR_WT,
-			   WDOG_SEC_TO_COUNT(new_timeout));
+			   WDOG_SEC_TO_COUNT(actual));
+	
+	/* Update software timeout value */
+	wdog->timeout = actual;
+	
 	return 0;
 }
 
