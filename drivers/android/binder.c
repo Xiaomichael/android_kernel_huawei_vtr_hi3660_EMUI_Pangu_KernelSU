@@ -1170,11 +1170,11 @@ err:
 static inline u64 binder_clock(void)
 {
 #ifdef CONFIG_TRACE_CLOCK
-	return trace_clock_local();
+        return trace_clock_local();
+#else
+        return 0;
 #endif
-	return 0;
 }
-#endif
 
 static bool binder_has_work_ilocked(struct binder_thread *thread,
 				    bool do_proc_work)
