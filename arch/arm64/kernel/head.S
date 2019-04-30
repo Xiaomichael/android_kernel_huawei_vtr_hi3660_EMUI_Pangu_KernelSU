@@ -661,8 +661,8 @@ ENTRY_NOTAG(__boot_cpu_mode)
  * The booting CPU updates the failed status @__early_cpu_boot_status,
  * with MMU turned off.
  */
-ENTRY_NOTAG(__early_cpu_boot_status)
-	.long 	0
+ENTRY(__early_cpu_boot_status)
+	.quad 	0
 
 	.popsection
 
