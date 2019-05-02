@@ -251,9 +251,9 @@ int hisi_ambient_resume(struct platform_device *pdev)
 	int ambient_temp = 0;
 	int min_temp = 0;
 	int now_cc = 0;
-	long delta_time = 0;
-	int delta_cc = 0;
-	int avg_current = 0;
+    long delta_time;
+    long delta_cc;
+    long avg_current;
 	int ret = 0;
 	struct hisi_ambient_sensor_t *ambient_sensor;
 	struct hisi_ambient_t *hisi_ambient;
@@ -267,25 +267,27 @@ int hisi_ambient_resume(struct platform_device *pdev)
 	if (hisi_ambient) {
 		do_gettimeofday(&hisi_ambient->now);
 		now_cc = coul_get_battery_cc();
-		delta_time = hisi_ambient->now.tv_sec - hisi_ambient->last_time.tv_sec;
 
-		if(0 == delta_time) {
-			pr_info("%s-, delta_time is 0. \n", __func__);
+		delta_time = hisi_ambient->now.tv_sec - hisi_ambient->last_time.tv_sec;
+		if (delta_time <= 0) {
+			pr_info("%s: invalid delta_time %ld\n", __func__, delta_time);
 			return 0;
 		}
 
-		delta_cc = abs(now_cc - hisi_ambient->start_cc) / 1000;//unit modify from uah to mah
-		if (delta_cc > (INT_MAX / HOURTOSEC)) {
-			pr_err("%s-,delta battery CC is too big. now_cc is %d, start_cc is %d .\n", __func__, now_cc, hisi_ambient->start_cc);
+		long raw_cc_diff = (long)abs(now_cc - hisi_ambient->start_cc);
+		if (raw_cc_diff > (LONG_MAX / HOURTOSEC)) {
+			pr_err("%s: raw_cc_diff overflow, reset\n", __func__);
 			hisi_ambient->start_cc = -1;
 			return 0;
 		}
 
-		avg_current = (delta_cc * HOURTOSEC / (int)delta_time);//unit is ma
+		delta_cc = raw_cc_diff / 1000L;
+
+		avg_current = (delta_cc * HOURTOSEC) / delta_time;
 		if ( delta_time >= hisi_ambient->interval &&
 			(avg_current <= LOW_CURRENT)) {
 			/* time > interval (15 mins) and avg current is lower than LOW_CURRENT (50mA). */
-			pr_info("%s time pass %ld > interval(%d s) , now_cc = %d, start_cc = %d, avg_current = %d < LOW_CURRENT.\n ",
+			pr_info("%s time pass %ld > interval(%d s) , now_cc = %d, start_cc = %d, avg_current = %d < LOW_CURRENT.\n",
 					__func__, delta_time,  hisi_ambient->interval, now_cc, hisi_ambient->start_cc, avg_current);
 
 			for (i = 0; i < hisi_ambient->sensor_count ; i++) {

@@ -741,10 +741,11 @@ static int hisi_peripheral_tm_probe(struct platform_device *pdev)
 
 	return 0;
 fail:
-	for (i = DETECT_SYSTEM_H_CHANEL; i < flag; i++)
-		thermal_zone_device_unregister(gtm_dev->sensor[i].tz_dev);
-
-	return rc;
+    for (i = DETECT_SYSTEM_H_CHANEL; i < flag; i++) {
+        kfree(gtm_dev->sensor[i].ntc_name);
+        thermal_zone_device_unregister(gtm_dev->sensor[i].tz_dev);
+    }
+    return rc;
 }
 
 static int hisi_peripheral_tm_remove(struct platform_device *pdev)
@@ -758,7 +759,6 @@ static int hisi_peripheral_tm_remove(struct platform_device *pdev)
 			kfree(gtm_dev->sensor[i].ntc_name);
 			thermal_zone_device_unregister(gtm_dev->sensor[i].tz_dev);
 		}
-		kfree(chip);
 	}
 	return 0;
 }

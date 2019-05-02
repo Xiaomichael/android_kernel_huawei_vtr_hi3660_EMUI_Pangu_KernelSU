@@ -710,17 +710,11 @@ static int cpufreq_get_requested_power(struct thermal_cooling_device *cdev,
 			load = 0;
 
 		total_load += load;
-
 #ifdef CONFIG_HISI_IPA_THERMAL
 		if (load > max_load)
 			max_load = load;
 #endif
-
-#ifdef CONFIG_HISI_IPA_THERMAL
 		if (load_cpu)
-#else
-		if (trace_thermal_power_cpu_limit_enabled() && load_cpu)
-#endif
 			load_cpu[i] = load;
 
 		i++;
@@ -954,6 +948,12 @@ static int cpufreq_freq2volt(struct cpufreq_cooling_device *cpufreq_device, unsi
 
 	opp = dev_pm_opp_find_freq_exact(cpufreq_device->cpu_dev, freq_hz,
 					 (bool)true);
+
+	if (IS_ERR(opp)) {
+		rcu_read_unlock();
+		return PTR_ERR(opp);
+	}
+	
 	*voltage = dev_pm_opp_get_voltage(opp);
 
 	rcu_read_unlock();

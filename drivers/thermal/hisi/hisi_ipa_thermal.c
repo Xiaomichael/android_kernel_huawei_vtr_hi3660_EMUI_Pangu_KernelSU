@@ -83,7 +83,7 @@ struct capacitances {
 };
 
 struct ipa_sensor {
-	u32 sensor_id;
+	int sensor_id; 
 	s32 prev_temp;
 	int alpha;
 };
@@ -593,13 +593,15 @@ EXPORT_SYMBOL(get_minfreq_profile);
 
 int get_soc_temp(void)
 {
-	if ((IPA_INIT_OK == thermal_info.ipa_thermal[SOC].init_flag) && thermal_info.ipa_thermal[SOC].tzd) {
-		if (thermal_info.ipa_thermal[SOC].tzd->temperature < 0)
-			return 0;
-		return thermal_info.ipa_thermal[SOC].tzd->temperature; /*lint !e571*/
-	}
-
-	return  IPA_SOC_INIT_TEMP;
+    if ((IPA_INIT_OK == thermal_info.ipa_thermal[SOC].init_flag) && thermal_info.ipa_thermal[SOC].tzd) {
+        int temp = thermal_info.ipa_thermal[SOC].tzd->temperature;
+        if (temp < 0) {
+            pr_warn_once("IPA: invalid soc temp %d, using default\n", temp);
+            return IPA_SOC_INIT_TEMP;
+        }
+        return temp;
+    }
+    return IPA_SOC_INIT_TEMP;
 }
 EXPORT_SYMBOL(get_soc_temp);
 
@@ -629,22 +631,31 @@ static u32 get_cache_static_power_coeff(enum cluster_type cluster)
 
 static unsigned long get_temperature_scale(int temp)
 {
-	int i, t_exp = 1, t_scale = 0, ret = 0;
-	struct capacitances *caps = &g_caps;
-	int capacitance[5] = {0};
+    int i, ret;
+    long long t_scale = 0;
+    long long t_exp = 1;
+    int capacitance[5] = {0};
 
-	for (i = 0; i < 4; i++) {
-		ret = kstrtoint(caps->temperature_scale_capacitance[i], 10, &capacitance[i]);
-		if (ret)
-			pr_warning("%s kstortoint is failed \n", __func__);
-		t_scale += capacitance[i] * t_exp;
-		t_exp *= temp;
-	}
+    for (i = 0; i < 4; i++) {
+        ret = kstrtoint(caps->temperature_scale_capacitance[i], 10, &capacitance[i]);
+        if (ret) {
+            pr_warn("%s: kstrtoint failed for index %d\n", __func__, i);
+            capacitance[i] = 0;
+        }
+        t_scale += (long long)capacitance[i] * t_exp;
+        t_exp *= temp;
+    }
 
-	ret = kstrtoint(caps->temperature_scale_capacitance[4], 10, &capacitance[4]);
-	if (ret)
-		pr_warning("%s kstortoint is failed \n", __func__);
-	return (unsigned long)(t_scale / capacitance[4]); /*lint !e571*/
+    ret = kstrtoint(caps->temperature_scale_capacitance[4], 10, &capacitance[4]);
+    if (ret) {
+        pr_warn("%s: kstrtoint failed for denominator\n", __func__);
+        return 0;
+    }
+
+    if (capacitance[4] == 0)
+        return 0;
+
+    return (unsigned long)(t_scale / capacitance[4]);
 }
 
 static unsigned long get_voltage_scale(unsigned long u_volt)
@@ -1041,36 +1052,43 @@ static int ipa_register_soc_cdev(struct ipa_thermal *thermal_data, struct platfo
 	enum cluster_type cluster;
 	struct device_node *cdev_np;
 	int i;
-	struct cpumask cpu_masks[NUM_CLUSTERS];
+	struct cpumask *cpu_masks;
 	int cpu;
 	char node[16];
 
-
-	memset(cpu_masks, 0, sizeof(struct cpumask) * NUM_CLUSTERS);
-	for_each_online_cpu(cpu) { /*lint !e713*/
-		int cluster_id = topology_physical_package_id(cpu);
-		if (cluster_id > NUM_CLUSTERS) {
-			pr_warn("IPA:Cluster id: %d > %d\n", cluster_id, NUM_CLUSTERS);
-			return -ENODEV;
-		}
-		cpumask_set_cpu((u32)cpu, &cpu_masks[cluster_id]);
-	}
-
-	thermal_data->cdevs = kcalloc((size_t)NUM_CLUSTERS, sizeof(struct thermal_cooling_device *), GFP_KERNEL); /*lint !e433*/
-	if (!thermal_data->cdevs) {
+	cpu_masks = kcalloc(NUM_CLUSTERS, sizeof(struct cpumask), GFP_KERNEL);
+	if (!cpu_masks) {
 		ret = -ENOMEM;
 		goto end;
 	}
 
+	for (i = 0; i < NUM_CLUSTERS; i++)
+		cpumask_clear(&cpu_masks[i]);
+
+	for_each_online_cpu(cpu) {
+		int cluster_id = topology_physical_package_id(cpu);
+		if (cluster_id >= NUM_CLUSTERS) {
+			pr_warn("IPA:Cluster id %d >= %d\n", cluster_id, NUM_CLUSTERS);
+			ret = -ENODEV;
+			goto free_cpu_masks;
+		}
+		cpumask_set_cpu(cpu, &cpu_masks[cluster_id]);
+	}
+
+	thermal_data->cdevs = kcalloc(NUM_CLUSTERS, sizeof(struct thermal_cooling_device *), GFP_KERNEL);
+	if (!thermal_data->cdevs) {
+		ret = -ENOMEM;
+		goto free_cpu_masks;
+	}
+
 	for (i = 0; i < NUM_CLUSTERS; i++) {
-		cpuid = (int)cpumask_any(&cpu_masks[i]);
+		cpuid = cpumask_any(&cpu_masks[i]);
 		if (cpuid >= nr_cpu_ids)
 			continue;
 		cluster = (enum cluster_type)topology_physical_package_id(cpuid);
 
 		snprintf(node, sizeof(node), "cluster%d", i);
 		cdev_np = of_find_node_by_name(NULL, node);
-
 		if (!cdev_np) {
 			dev_err(&pdev->dev, "Node not found: %s\n", node);
 			continue;
@@ -1081,28 +1099,31 @@ static int ipa_register_soc_cdev(struct ipa_thermal *thermal_data, struct platfo
 						&cpu_masks[i],
 						get_dyn_power_coeff(cluster, thermal_data),
 						hisi_cluster_get_static_power);
+		of_node_put(cdev_np);
+
 		if (IS_ERR(thermal_data->cdevs[i])) {
-			ret = (int)PTR_ERR(thermal_data->cdevs[i]);
+			ret = PTR_ERR(thermal_data->cdevs[i]);
 			dev_err(&pdev->dev,
-				"IPA:Error registering cpu power actor:  cluster [%d] ERROR_ID [%d]\n",
+				"IPA:Error registering cpu power actor: cluster [%d] ERROR_ID [%d]\n",
 				i, ret);
 			goto cdevs_unregister;
 		}
 		thermal_data->cdevs_num++;
-		of_node_put(cdev_np);
 	}
 
-	return 0;
+    kfree(cpu_masks);
+    return 0;
 
 cdevs_unregister:
-	for (i = 0; i < thermal_data->cdevs_num; i++) {  /*lint !e574*/
-		cpufreq_cooling_unregister(thermal_data->cdevs[i]);
-	}
-	thermal_data->cdevs_num = 0;
-	kfree(thermal_data->cdevs);
-	thermal_data->cdevs = NULL;
+    for (i = 0; i < thermal_data->cdevs_num; i++)
+        cpufreq_cooling_unregister(thermal_data->cdevs[i]);
+    thermal_data->cdevs_num = 0;
+    kfree(thermal_data->cdevs);
+    thermal_data->cdevs = NULL;
+free_cpu_masks:
+    kfree(cpu_masks);
 end:
-	return ret;
+    return ret;
 }
 
 static int ipa_register_board_cdev(struct ipa_thermal *thermal_data, struct platform_device *pdev)
@@ -1234,7 +1255,7 @@ static int ipa_thermal_probe(struct platform_device *pdev)
 		goto cdevs_unregister;
 	}
 
-	thermal_data->ipa_sensor.sensor_id = (u32)sensor;
+	thermal_data->ipa_sensor.sensor_id = sensor;
 	dev_info(&pdev->dev, "IPA:Probed %s sensor. Id=%hu\n", ch, sensor);
 
 	/*

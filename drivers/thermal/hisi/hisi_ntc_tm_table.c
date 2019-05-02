@@ -250,6 +250,8 @@ static int temp_2_NTC_bisearch_table(int cur_temp, int table[][2], int table_siz
 	int iLow = 0;
 	int iMid = 0;
 
+    if (iUpper <= 0)
+        return table[0][0];
 	if (cur_temp > table[0][1])
 		return table[0][0];
 	else if (cur_temp < table[iUpper-1][1])
@@ -257,6 +259,8 @@ static int temp_2_NTC_bisearch_table(int cur_temp, int table[][2], int table_siz
 
 	while (iLow <= iUpper) {
 		iMid = (iLow + iUpper) / 2;
+        if (iMid < 0 || iMid >= iUpper)
+            break;
 		if (table[iMid][1] > cur_temp) {
 			if (table[iMid+1][1] < cur_temp)
 				return temp_2_NTC_linear_value(cur_temp, iMid, iMid+1, table);
