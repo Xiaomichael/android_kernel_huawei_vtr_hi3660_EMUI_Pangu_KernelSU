@@ -480,16 +480,20 @@ int fib_nl_newrule(struct sk_buff *skb, struct nlmsghdr *nlh)
 		rule->uid_range = nla_get_kuid_range(tb);
 
 		if (!uid_range_set(&rule->uid_range) ||
-		    !uid_lte(rule->uid_range.start, rule->uid_range.end))
+			!uid_lte(rule->uid_range.start, rule->uid_range.end))
 			goto errout_free;
 	} else {
 		rule->uid_range = fib_kuid_range_unset;
 	}
 
-	if ((nlh->nlmsg_flags & NLM_F_EXCL) &&
-	    rule_exists(ops, frh, tb, rule)) {
-		err = -EEXIST;
-		goto errout_free;
+	if (rule_exists(ops, frh, tb, rule)) {
+		if (nlh->nlmsg_flags & NLM_F_EXCL) {
+			err = -EEXIST;
+			goto errout_free;
+		}
+		kfree(rule);
+		rules_ops_put(ops);
+		return 0;
 	}
 
 	err = ops->configure(rule, skb, frh, tb);
