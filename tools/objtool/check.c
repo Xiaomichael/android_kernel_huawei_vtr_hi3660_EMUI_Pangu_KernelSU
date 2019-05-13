@@ -32,6 +32,8 @@
 #define STATE_FP_SETUP		0x2
 #define STATE_FENTRY		0x4
 
+#define FAKE_JUMP_OFFSET -1
+
 struct alternative {
 	struct list_head list;
 	struct instruction *insn;
@@ -416,8 +418,8 @@ static int add_jump_destinations(struct objtool_file *file)
 			continue;
 
 		/* skip ignores */
-		if (insn->visited)
-			continue;
+		if (insn->visited || insn->offset == FAKE_JUMP_OFFSET)
+    		continue;
 
 		rela = find_rela_by_dest_range(insn->sec, insn->offset,
 					       insn->len);
@@ -513,6 +515,11 @@ static int add_call_destinations(struct objtool_file *file)
 	return 0;
 }
 
+static inline void clear_insn_state(struct instruction *insn)
+{
+    insn->state = 0;
+}
+
 /*
  * The .alternatives section requires some extra special care, over and above
  * what other special sections require:
@@ -554,11 +561,22 @@ static int handle_group_alt(struct objtool_file *file,
 		last_orig_insn = insn;
 	}
 
-	if (!next_insn_same_sec(file, last_orig_insn)) {
-		WARN("%s: don't know how to handle alternatives at end of section",
-		     special_alt->orig_sec->name);
-		return -1;
-	}
+    if (next_insn_same_sec(file, last_orig_insn)) {
+        fake_jump = malloc(sizeof(*fake_jump));
+        if (!fake_jump) {
+            WARN("malloc failed");
+            return -1;
+        }
+        memset(fake_jump, 0, sizeof(*fake_jump));
+        INIT_LIST_HEAD(&fake_jump->alts);
+        clear_insn_state(&fake_jump->state);
+
+        fake_jump->sec = special_alt->new_sec;
+        fake_jump->offset = FAKE_JUMP_OFFSET;
+        fake_jump->type = INSN_JUMP_UNCONDITIONAL;
+        fake_jump->jump_dest = list_next_entry(last_orig_insn, list);
+        fake_jump->func = orig_insn->func;
+    }
 
 	fake_jump = malloc(sizeof(*fake_jump));
 	if (!fake_jump) {
