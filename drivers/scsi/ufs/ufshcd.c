@@ -1110,34 +1110,35 @@ static inline void ufshcd_copy_sense_data(struct ufshcd_lrb *lrbp)
 static
 int ufshcd_copy_query_response(struct ufs_hba *hba, struct ufshcd_lrb *lrbp)
 {
-	struct ufs_query_res *query_res = &hba->dev_cmd.query.response;
+    struct ufs_query_res *query_res = &hba->dev_cmd.query.response;
 
-	memcpy(&query_res->upiu_res, &lrbp->ucd_rsp_ptr->qr, QUERY_OSF_SIZE);
+    memcpy(&query_res->upiu_res, &lrbp->ucd_rsp_ptr->qr, QUERY_OSF_SIZE);
 
-	/* Get the descriptor */
-	if (lrbp->ucd_rsp_ptr->qr.opcode == UPIU_QUERY_OPCODE_READ_DESC
-		|| lrbp->ucd_rsp_ptr->qr.opcode == UPIU_QUERY_OPCODE_READ_HI1861_FSR) {
-		u8 *descp = (u8 *)lrbp->ucd_rsp_ptr +
-				GENERAL_UPIU_REQUEST_SIZE;
-		u16 resp_len;
-		u16 buf_len;
+    /* Get the descriptor */
+    if (hba->dev_cmd.query.descriptor &&
+        (lrbp->ucd_rsp_ptr->qr.opcode == UPIU_QUERY_OPCODE_READ_DESC ||
+         lrbp->ucd_rsp_ptr->qr.opcode == UPIU_QUERY_OPCODE_READ_HI1861_FSR)) {
+        u8 *descp = (u8 *)lrbp->ucd_rsp_ptr +
+                    GENERAL_UPIU_REQUEST_SIZE;
+        u16 resp_len;
+        u16 buf_len;
 
-		/* data segment length */
-		resp_len = be32_to_cpu(lrbp->ucd_rsp_ptr->header.dword_2) &
-						MASK_QUERY_DATA_SEG_LEN;
-		buf_len = be16_to_cpu(
-				hba->dev_cmd.query.request.upiu_req.length);
-		if (likely(buf_len >= resp_len)) {
-			memcpy(hba->dev_cmd.query.descriptor, descp, resp_len);
-		} else {
-			dev_warn(hba->dev,
-				"%s: Response size is bigger than buffer",
-				__func__);
-			return -EINVAL;
-		}
-	}
+        /* data segment length */
+        resp_len = be32_to_cpu(lrbp->ucd_rsp_ptr->header.dword_2) &
+                   MASK_QUERY_DATA_SEG_LEN;
+        buf_len = be16_to_cpu(
+                  hba->dev_cmd.query.request.upiu_req.length);
+        if (likely(buf_len >= resp_len)) {
+            memcpy(hba->dev_cmd.query.descriptor, descp, resp_len);
+        } else {
+            dev_warn(hba->dev,
+                "%s: Response size is bigger than buffer",
+                __func__);
+            return -EINVAL;
+        }
+    }
 
-	return 0;
+    return 0;
 }
 
 /**
