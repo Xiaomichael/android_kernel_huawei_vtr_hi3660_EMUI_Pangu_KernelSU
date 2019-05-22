@@ -100,11 +100,14 @@ got_key:
 
 	master_key = (struct fscrypt_key *)ukp->data;
 	//force the size equal to FS_AES_256_GCM_KEY_SIZE since user space might pass FS_AES_256_XTS_KEY_SIZE
-	master_key->size = FS_AES_256_GCM_KEY_SIZE;
-	if (master_key->size != FS_AES_256_GCM_KEY_SIZE) {
+	if (master_key->size == FS_AES_256_XTS_KEY_SIZE) {
+		/* The XTS key contains two parts, each 32 bytes, for a total of 64 bytes. For GCM we only need 32 bytes */
+		master_key->size = FS_AES_256_GCM_KEY_SIZE;
+	} else if (master_key->size != FS_AES_256_GCM_KEY_SIZE) {
 		printk_once(KERN_WARNING
-				"%s: key size incorrect: %d\n",
-				__func__, master_key->size);
+				"%s: key size incorrect: %d (expected %d or %d)\n",
+				__func__, master_key->size, 
+				FS_AES_256_GCM_KEY_SIZE, FS_AES_256_XTS_KEY_SIZE);
 		res = -ENOKEY;
 		up_read(&keyring_key->sem);
 		goto out;
@@ -166,11 +169,15 @@ int fscrypt_ioctl_set_policy(struct file *filp, const void __user *arg)
 	if (ret == -ENODATA) {
 		if (!S_ISDIR(inode->i_mode))
 			ret = -ENOTDIR;
+		else if (IS_DEADDIR(inode))
+			ret = -ENOENT;
+		else if (!inode->i_sb->s_cop->empty_dir)
+			ret = -EOPNOTSUPP;
 		else if (!inode->i_sb->s_cop->empty_dir(inode))
 			ret = -ENOTEMPTY;
 		else
 			ret = create_encryption_context_from_policy(inode,
-								    &policy);
+							    &policy);
 	} else if (ret == sizeof(ctx) &&
 		   is_encryption_context_consistent_with_policy(&ctx,
 								&policy)) {
