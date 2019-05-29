@@ -337,14 +337,17 @@ static int stub_probe(struct usb_device *udev)
 		 * See driver_probe_device() in driver/base/dd.c
 		 */
 		rc = -ENODEV;
-		goto sdev_free;
+		if (!busid_priv)
+			goto sdev_free;
+
+		goto call_put_busid_priv;
 	}
 
 	if (udev->descriptor.bDeviceClass == USB_CLASS_HUB) {
 		dev_dbg(&udev->dev, "%s is a usb hub device... skip!\n",
 			  udev_busid);
 		rc = -ENODEV;
-		goto sdev_free;
+		goto call_put_busid_priv;
 	}
 
 	if (!strcmp(udev->bus->bus_name, "vhci_hcd")) {
@@ -353,7 +356,7 @@ static int stub_probe(struct usb_device *udev)
 			udev_busid);
 
 		rc = -ENODEV;
-		goto sdev_free;
+		goto call_put_busid_priv;
 	}
 
 	dev_info(&udev->dev,
@@ -371,6 +374,9 @@ static int stub_probe(struct usb_device *udev)
 	save_status = busid_priv->status;
 	busid_priv->status = STUB_BUSID_ALLOC;
 
+	/* release the busid_lock */
+	put_busid_priv(busid_priv);
+
 	/*
 	 * Claim this hub port.
 	 * It doesn't matter what value we pass as owner
@@ -382,9 +388,6 @@ static int stub_probe(struct usb_device *udev)
 		dev_dbg(&udev->dev, "unable to claim port\n");
 		goto err_port;
 	}
-
-	/* release the busid_lock */
-	put_busid_priv(busid_priv);
 
 	rc = stub_add_files(&udev->dev);
 	if (rc) {
@@ -405,10 +408,16 @@ err_port:
 	spin_lock(&busid_priv->busid_lock);
 	busid_priv->sdev = NULL;
 	busid_priv->status = save_status;
-sdev_free:
-	stub_device_free(sdev);
+	spin_unlock(&busid_priv->busid_lock);
+	/* lock is released - go to free */
+	goto sdev_free;
+
+call_put_busid_priv:
 	/* release the busid_lock */
 	put_busid_priv(busid_priv);
+
+sdev_free:
+	stub_device_free(sdev);
 
 	return rc;
 }
@@ -445,6 +454,8 @@ static void stub_disconnect(struct usb_device *udev)
 	/* get stub_device */
 	if (!sdev) {
 		dev_err(&udev->dev, "could not get device");
+		/* release busid_lock */
+		put_busid_priv(busid_priv);
 		return;
 	}
 
@@ -475,7 +486,7 @@ static void stub_disconnect(struct usb_device *udev)
 	if (!busid_priv->shutdown_busid)
 		busid_priv->shutdown_busid = 1;
 	/* release busid_lock */
-	put_busid_priv(busid_priv);
+	spin_unlock(&busid_priv->busid_lock);
 
 	/* shutdown the current connection */
 	shutdown_busid(busid_priv);
@@ -495,9 +506,8 @@ static void stub_disconnect(struct usb_device *udev)
 		del_match_busid((char *)udev_busid);
 	}
 
-call_put_busid_priv:
 	/* release busid_lock */
-	put_busid_priv(busid_priv);
+	spin_unlock(&busid_priv->busid_lock);
 }
 
 #ifdef CONFIG_PM
