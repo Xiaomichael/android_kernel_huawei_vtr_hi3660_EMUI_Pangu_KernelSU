@@ -240,7 +240,6 @@ int ufshcd_pltfrm_probe(struct platform_device *pdev)
 			dev_err(dev, "UFS timer interrupt is not available!\n");
 	}
 
-
 	pm_runtime_set_active(&pdev->dev);
 	pm_runtime_irq_safe(&pdev->dev);
 	pm_suspend_ignore_children(&pdev->dev, true);
@@ -256,6 +255,13 @@ int ufshcd_pltfrm_probe(struct platform_device *pdev)
 	}
 	pm_runtime_enable(&pdev->dev);
 
+	/* TODO: 需要从合并分支获取 ufshcd_init_lanes_per_dir 函数的实现
+	 * 这个函数可能用于初始化UFS通道配置
+	 * 暂时注释掉以避免编译错误
+	 */
+	 
+	/* ufshcd_init_lanes_per_dir(hba); */
+
 	err = ufshcd_init(hba, mmio_base, irq, timer_irq);
 	if (err) {
 		dev_err(dev, "Initialization failed\n");
@@ -270,7 +276,6 @@ int ufshcd_pltfrm_probe(struct platform_device *pdev)
 		dev_err(dev, "ufshcd_keyregs_remap_wc err\n");
 		goto out_disable_rpm;
 	}
-
 #endif
 #endif
 	platform_set_drvdata(pdev, hba);
@@ -280,6 +285,8 @@ int ufshcd_pltfrm_probe(struct platform_device *pdev)
 out_disable_rpm:
 	pm_runtime_disable(&pdev->dev);
 	pm_runtime_set_suspended(&pdev->dev);
+dealloc_host:
+	ufshcd_dealloc_host(hba);
 out:
 	return err;
 }
