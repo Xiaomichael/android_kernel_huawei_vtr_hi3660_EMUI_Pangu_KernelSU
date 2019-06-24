@@ -1533,7 +1533,28 @@ static void sci_free_dma(struct uart_port *port)
 	if (s->chan_rx)
 		sci_rx_dma_release(s, false);
 }
+
+#ifdef CONFIG_SERIAL_SH_SCI_DMA
+static void sci_flush_buffer(struct uart_port *port)
+{
+        struct sci_port *s = to_sci_port(port);
+
+        /*
+         * In uart_flush_buffer(), the xmit circular buffer has just been
+         * cleared, so we have to reset tx_dma_len accordingly, and stop any
+         * pending transfers
+         */
+        s->tx_dma_len = 0;
+        if (s->chan_tx) {
+                dmaengine_terminate_all(s->chan_tx);
+                s->cookie_tx = -EINVAL;
+        }
+}
 #else
+static void sci_flush_buffer(struct uart_port *port)
+{
+}
+#endif
 static inline void sci_request_dma(struct uart_port *port)
 {
 }
@@ -2550,6 +2571,7 @@ static const struct uart_ops sci_uart_ops = {
 	.poll_get_char	= sci_poll_get_char,
 	.poll_put_char	= sci_poll_put_char,
 #endif
+    .flush_buffer   = sci_flush_buffer, 
 };
 
 static int sci_init_clocks(struct sci_port *sci_port, struct device *dev)
