@@ -620,11 +620,6 @@ static void dw_mci_translate_sglist(struct dw_mci *host, struct mmc_data *data,
 				desc->des1 = 0;
 			}
 
-			/*优化修改，防止内存不初始化*/
-			if(desc->des0 & IDMAC_DES0_CH) {
-				desc->des1 = 0;
-			}
-
 			/* Buffer length */
 			IDMAC_SET_BUFFER1_SIZE(desc, length);
 
@@ -667,11 +662,6 @@ static void dw_mci_translate_sglist(struct dw_mci *host, struct mmc_data *data,
 				/*优化修改，防止内存不初始化*/
 				if(desc->des0 & IDMAC_DES0_CH) {
 				        desc->des2 = 0;
-				}
-
-				/*优化修改，防止内存不初始化*/
-				if(desc->des0 & IDMAC_DES0_CH) {
-					desc->des2 = 0;
 				}
 
 				/* Buffer length */
@@ -1846,9 +1836,7 @@ static const struct mmc_host_ops dw_mci_ops = {
 	.execute_tuning		= dw_mci_execute_tuning,
 	.slowdown_clk		= dw_mci_slowdown_clk,
 	.card_busy		= dw_mci_card_busy,
-	.enable_sdio_irq	= dw_mci_enable_sdio_irq,
 	.start_signal_voltage_switch = dw_mci_start_signal_voltage_switch,
-	.execute_tuning		 = dw_mci_execute_tuning,
 #ifdef CONFIG_SD_SDIO_CRC_RETUNING
 	.need_retuning                       = dw_mci_need_retuning,
 #endif
@@ -2187,19 +2175,49 @@ static void dw_mci_tasklet_func(unsigned long priv)
 				goto unlock;
 			}
 
-			if (data && cmd->error &&
-					cmd != data->stop) {
-				if (host->mrq->data->stop)
-					send_stop_cmd(host, host->mrq->data);
-				else {
-					dw_mci_start_command(host, &host->stop,
-							host->stop_cmdr);
-					host->stop_snd = true;
+			if (cmd->error) {
+				int err = cmd->error;
+				struct mmc_data *cmd_data = cmd->data;
+				
+				/*
+				 * During UHS tuning sequence, sending the stop
+				 * command after the response CRC error would
+				 * throw the system into a confused state
+				 * causing all future tuning phases to report
+				 * failure.
+				 *
+				 * In such case controller will move into a data
+				 * transfer state after a response error or
+				 * response CRC error. Let's let that finish
+				 * before trying to send a stop, so we'll go to
+				 * STATE_SENDING_DATA.
+				 *
+				 * Although letting the data transfer take place
+				 * will waste a bit of time (we already know
+				 * the command was bad), it can't cause any
+				 * errors since it's possible it would have
+				 * taken place anyway if this tasklet got
+				 * delayed. Allowing the transfer to take place
+				 * avoids races and keeps things simple.
+				 */
+				if (cmd_data && err != -ETIMEDOUT) {
+					state = STATE_SENDING_DATA;
+					continue;
 				}
-				/* To avoid fifo full condition */
-				dw_mci_fifo_reset(host->dev, host);
-				state = STATE_SENDING_STOP;
-				break;
+				
+				if (cmd_data && cmd != cmd_data->stop) {
+					if (cmd_data->stop)
+						send_stop_cmd(host, cmd_data);
+					else {
+						dw_mci_start_command(host, &host->stop,
+								host->stop_cmdr);
+						host->stop_snd = true;
+					}
+					/* To avoid fifo full condition */
+					dw_mci_fifo_reset(host->dev, host);
+					state = STATE_SENDING_STOP;
+					break;
+				}
 			}
 
 			if (!host->mrq->data || cmd->error) {
@@ -2355,7 +2373,6 @@ static void dw_mci_tasklet_func(unsigned long priv)
 	host->state = state;
 unlock:
 	spin_unlock(&host->lock);
-
 }
 /*lint -restore*/
 /* push final bytes to part_buf, only use during push */
