@@ -3,6 +3,7 @@
 #include <linux/pm_runtime.h>
 #include <linux/module.h>
 #include <linux/pm_qos.h>
+#include <linux/byteorder/generic.h>
 #include <scsi/scsi_device.h>
 
 #include "libata.h"
@@ -51,17 +52,17 @@ static int eject_tray(struct ata_device *dev)
 /* Per the spec, only slot type and drawer type ODD can be supported */
 static enum odd_mech_type zpodd_get_mech_type(struct ata_device *dev)
 {
-	char *buf;
-	unsigned int ret;
-	struct rm_feature_desc *desc;
-	struct ata_taskfile tf;
-	char cdb[] = {  GPCMD_GET_CONFIGURATION,
-			2,      /* only 1 feature descriptor requested */
-			0, 3,   /* 3, removable medium feature */
-			0, 0, 0,/* reserved */
-			0, 16,
-			0, 0, 0,
-	};
+    char *buf;
+    unsigned int ret;
+    struct rm_feature_desc *desc;
+    struct ata_taskfile tf;
+    static const char cdb[ATAPI_CDB_LEN] = {  GPCMD_GET_CONFIGURATION,
+            2,      /* only 1 feature descriptor requested */
+            0, 3,   /* 3, removable medium feature */
+            0, 0, 0,/* reserved */
+            0, 16,
+            0, 0, 0,
+    };
 
 	buf = kzalloc(16, GFP_KERNEL);
 	if (!buf)
@@ -170,6 +171,8 @@ void zpodd_on_suspend(struct ata_device *dev)
 bool zpodd_zpready(struct ata_device *dev)
 {
 	struct zpodd *zpodd = dev->zpodd;
+	if (!zpodd)
+        return false;
 	return zpodd->zp_ready;
 }
 
