@@ -12,6 +12,7 @@
 #include <asm/page.h>
 #include <asm/smap.h>
 #include <asm/extable.h>
+#include <asm/barrier.h>
 
 #define VERIFY_READ 0
 #define VERIFY_WRITE 1
@@ -124,6 +125,20 @@ extern int __get_user_bad(void);
 #define __uaccess_begin() stac()
 #define __uaccess_end()   clac()
 
+#ifndef barrier_nospec
+#ifdef CONFIG_X86
+#define barrier_nospec() rmb()
+#else
+#define barrier_nospec() barrier()
+#endif
+#endif
+
+#define __uaccess_begin_nospec()		\
+({						\
+	stac();					\
+	barrier_nospec();			\
+})
+
 /*
  * This is a type: either unsigned long, if the argument fits into
  * that type, or otherwise unsigned long long.
@@ -166,11 +181,11 @@ __typeof__(__builtin_choose_expr(sizeof(x) > sizeof(0UL), 0ULL, 0UL))
 ({									\
 	int __ret_gu;							\
 	register __inttype(*(ptr)) __val_gu asm("%"_ASM_DX);		\
+	register void *__sp asm(_ASM_SP);				\
 	__chk_user_ptr(ptr);						\
 	might_fault();							\
 	asm volatile("call __get_user_%P4"				\
-		     : "=a" (__ret_gu), "=r" (__val_gu),		\
-			ASM_CALL_CONSTRAINT				\
+		     : "=a" (__ret_gu), "=r" (__val_gu), "+r" (__sp)	\
 		     : "0" (ptr), "i" (sizeof(*(ptr))));		\
 	(x) = (__force __typeof__(*(ptr))) __val_gu;			\
 	__builtin_expect(__ret_gu, 0);					\
@@ -179,8 +194,6 @@ __typeof__(__builtin_choose_expr(sizeof(x) > sizeof(0UL), 0ULL, 0UL))
 #define __put_user_x(size, x, ptr, __ret_pu)			\
 	asm volatile("call __put_user_" #size : "=a" (__ret_pu)	\
 		     : "0" ((typeof(*(ptr)))(x)), "c" (ptr) : "ebx")
-
-
 
 #ifdef CONFIG_X86_32
 #define __put_user_asm_u64(x, addr, err, errret)			\
@@ -266,7 +279,7 @@ extern void __put_user_8(void);
 		__put_user_x8(__pu_val, ptr, __ret_pu);		\
 		break;						\
 	default:						\
-		__put_user_x(X, __pu_val, ptr, __ret_pu);	\
+		__put_user_x(sizeof(*(ptr)), __pu_val, ptr, __ret_pu);	\
 		break;						\
 	}							\
 	__builtin_expect(__ret_pu, 0);				\
@@ -433,8 +446,10 @@ do {									\
 ({									\
 	int __gu_err;							\
 	__inttype(*(ptr)) __gu_val;					\
-	__uaccess_begin();						\
-	__get_user_size(__gu_val, (ptr), (size), __gu_err, -EFAULT);	\
+	__typeof__(ptr) __gu_ptr = (ptr);				\
+	__typeof__(size) __gu_size = (size);				\
+	__uaccess_begin_nospec();					\
+	__get_user_size(__gu_val, __gu_ptr, __gu_size, __gu_err, -EFAULT);	\
 	__uaccess_end();						\
 	(x) = (__force __typeof__(*(ptr)))__gu_val;			\
 	__builtin_expect(__gu_err, 0);					\
@@ -473,6 +488,11 @@ struct __large_struct { unsigned long buf[100]; };
 #define uaccess_try	do {						\
 	current->thread.uaccess_err = 0;				\
 	__uaccess_begin();						\
+	barrier();
+
+#define uaccess_try_nospec do {						\
+	current->thread.uaccess_err = 0;				\
+	__uaccess_begin_nospec();					\
 	barrier();
 
 #define uaccess_catch(err)						\
@@ -539,7 +559,7 @@ struct __large_struct { unsigned long buf[100]; };
  *	get_user_ex(...);
  * } get_user_catch(err)
  */
-#define get_user_try		uaccess_try
+#define get_user_try		uaccess_try_nospec
 #define get_user_catch(err)	uaccess_catch(err)
 
 #define get_user_ex(x, ptr)	do {					\
@@ -568,13 +588,13 @@ unsigned long __must_check __clear_user(void __user *mem, unsigned long len);
 extern void __cmpxchg_wrong_size(void)
 	__compiletime_error("Bad argument size for cmpxchg");
 
-#define __user_atomic_cmpxchg_inatomic(uval, ptr, old, new, size)	\
+#define __uaccess_begin_nospec(uval, ptr, old, new, size)	\
 ({									\
 	int __ret = 0;							\
 	__typeof__(ptr) __uval = (uval);				\
 	__typeof__(*(ptr)) __old = (old);				\
 	__typeof__(*(ptr)) __new = (new);				\
-	__uaccess_begin();						\
+	__uaccess_begin_nospec();						\
 	switch (size) {							\
 	case 1:								\
 	{								\
@@ -654,7 +674,7 @@ extern void __cmpxchg_wrong_size(void)
 #define user_atomic_cmpxchg_inatomic(uval, ptr, old, new)		\
 ({									\
 	access_ok(VERIFY_WRITE, (ptr), sizeof(*(ptr))) ?		\
-		__user_atomic_cmpxchg_inatomic((uval), (ptr),		\
+		__uaccess_begin_nospec((uval), (ptr),		\
 				(old), (new), sizeof(*(ptr))) :		\
 		-EFAULT;						\
 })
