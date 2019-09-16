@@ -1312,6 +1312,8 @@ static int __set_cpus_allowed_ptr(struct task_struct *p,
 		goto out;
 
 #ifdef CONFIG_HISI_CPU_ISOLATION
+	cpumask_t allowed_mask;
+	
 	cpumask_andnot(&allowed_mask, new_mask, cpu_isolated_mask);
 	cpumask_and(&allowed_mask, &allowed_mask, cpu_valid_mask);
 
@@ -1331,7 +1333,8 @@ static int __set_cpus_allowed_ptr(struct task_struct *p,
 
 	dest_cpu = cpumask_any(&allowed_mask);
 #else
-	if (!cpumask_intersects(new_mask, cpu_valid_mask)) {
+	dest_cpu = cpumask_any_and(cpu_valid_mask, new_mask);
+	if (dest_cpu >= nr_cpu_ids) {
 		ret = -EINVAL;
 		goto out;
 	}
@@ -1351,8 +1354,6 @@ static int __set_cpus_allowed_ptr(struct task_struct *p,
 	/* Can the task run on the task's current CPU? If so, we're done */
 	if (cpumask_test_cpu(task_cpu(p), new_mask))
 		goto out;
-
-	dest_cpu = cpumask_any_and(cpu_valid_mask, new_mask);
 #endif
 
 	if (task_running(rq, p) || p->state == TASK_WAKING) {
