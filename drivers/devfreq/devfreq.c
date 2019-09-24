@@ -994,10 +994,28 @@ static ssize_t available_governors_show(struct device *d,
 
 	mutex_lock(&devfreq_list_lock);
 
-	struct devfreq_governor *governor;
-	list_for_each_entry(governor, &devfreq_governor_list, node)
+	/*
+	 * The devfreq with immutable governor (e.g., passive) shows
+	 * only own governor.
+	 */
+	if (df->governor && df->governor->immutable) {
+		count = scnprintf(&buf[count], DEVFREQ_NAME_LEN,
+				  "%s ", df->governor_name);
+	/*
+	 * The devfreq device shows the registered governor except for
+	 * immutable governors such as passive governor .
+	 */
+	} else {
+		struct devfreq_governor *governor;
+
+		list_for_each_entry(governor, &devfreq_governor_list, node) {
+			if (governor->immutable)
+				continue;
 			count += scnprintf(&buf[count], (PAGE_SIZE - count - 2),
 					   "%s ", governor->name);
+		}
+	}
+
 	mutex_unlock(&devfreq_list_lock);
 
 	/* Truncate the trailing space */
