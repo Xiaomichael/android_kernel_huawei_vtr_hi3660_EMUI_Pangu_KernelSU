@@ -686,6 +686,9 @@ static int spidev_release(struct inode *inode, struct file *filp)
 			spidev = NULL; /* not strictly needed but silences checkers */
 		}
 	}
+#ifdef CONFIG_SPI_SLAVE
+	spi_slave_abort(spidev->spi);
+#endif
 	mutex_unlock(&device_list_lock);
 
 	return 0;
