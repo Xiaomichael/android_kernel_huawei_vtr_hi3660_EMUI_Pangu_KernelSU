@@ -4564,37 +4564,41 @@ static int kvm_read_guest_phys_system(struct x86_emulate_ctxt *ctxt,
 }
 
 int kvm_write_guest_virt_system(struct x86_emulate_ctxt *ctxt,
-				       gva_t addr, void *val,
-				       unsigned int bytes,
-				       struct x86_exception *exception)
+                                gva_t addr, void *val,
+                                unsigned int bytes,
+                                struct x86_exception *exception)
 {
-	struct kvm_vcpu *vcpu = emul_to_vcpu(ctxt);
-	void *data = val;
-	int r = X86EMUL_CONTINUE;
+    struct kvm_vcpu *vcpu = emul_to_vcpu(ctxt);
+    void *data = val;
+    int r = X86EMUL_CONTINUE;
 
-	while (bytes) {
-		gpa_t gpa =  vcpu->arch.walk_mmu->gva_to_gpa(vcpu, addr,
-							     PFERR_WRITE_MASK,
-							     exception);
-		unsigned offset = addr & (PAGE_SIZE-1);
-		unsigned towrite = min(bytes, (unsigned)PAGE_SIZE - offset);
-		int ret;
+    /* kvm_write_guest_virt_system can pull in tons of pages. */
+    vcpu->arch.l1tf_flush_l1d = true;
 
-		if (gpa == UNMAPPED_GVA)
-			return X86EMUL_PROPAGATE_FAULT;
-		ret = kvm_vcpu_write_guest(vcpu, gpa, data, towrite);
-		if (ret < 0) {
-			r = X86EMUL_IO_NEEDED;
-			goto out;
-		}
+    while (bytes) {
+        gpa_t gpa =  vcpu->arch.walk_mmu->gva_to_gpa(vcpu, addr,
+                                                     PFERR_WRITE_MASK,
+                                                     exception);
+        unsigned offset = addr & (PAGE_SIZE-1);
+        unsigned towrite = min(bytes, (unsigned)PAGE_SIZE - offset);
+        int ret;
 
-		bytes -= towrite;
-		data += towrite;
-		addr += towrite;
-	}
+        if (gpa == UNMAPPED_GVA)
+            return X86EMUL_PROPAGATE_FAULT;
+        ret = kvm_vcpu_write_guest(vcpu, gpa, data, towrite);
+        if (ret < 0) {
+            r = X86EMUL_IO_NEEDED;
+            goto out;
+        }
+
+        bytes -= towrite;
+        data += towrite;
+        addr += towrite;
+    }
 out:
-	return r;
+    return r;
 }
+EXPORT_SYMBOL_GPL(kvm_write_guest_virt_system);
 
 static int emulator_write_std(struct x86_emulate_ctxt *ctxt, gva_t addr, void *val,
 			      unsigned int bytes, struct x86_exception *exception,
@@ -4609,24 +4613,6 @@ static int emulator_write_std(struct x86_emulate_ctxt *ctxt, gva_t addr, void *v
 	return kvm_write_guest_virt_helper(addr, val, bytes, vcpu,
 					   access, exception);
 }
-
-int kvm_write_guest_virt_system(struct kvm_vcpu *vcpu, gva_t addr, void *val,
-				unsigned int bytes, struct x86_exception *exception)
-{
-	/* kvm_write_guest_virt_system can pull in tons of pages. */
-	vcpu->arch.l1tf_flush_l1d = true;
-
-	/*
-	 * FIXME: this should call handle_emulation_failure if X86EMUL_IO_NEEDED
-	 * is returned, but our callers are not ready for that and they blindly
-	 * call kvm_inject_page_fault.  Ensure that they at least do not leak
-	 * uninitialized kernel stack memory into cr2 and error code.
-	 */
-	memset(exception, 0, sizeof(*exception));
-	return kvm_write_guest_virt_helper(addr, val, bytes, vcpu,
-					   PFERR_WRITE_MASK, exception);
-}
-EXPORT_SYMBOL_GPL(kvm_write_guest_virt_system);
 
 static int vcpu_mmio_gva_to_gpa(struct kvm_vcpu *vcpu, unsigned long gva,
 				gpa_t *gpa, struct x86_exception *exception,
