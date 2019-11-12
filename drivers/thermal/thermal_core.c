@@ -18,7 +18,7 @@
  *
  *  You should have received a copy of the GNU General Public License along
  *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
@@ -595,7 +595,7 @@ static void thermal_zone_device_set_polling(struct thermal_zone_device *tz,
 		mod_delayed_work(system_freezable_wq, &tz->poll_queue,
 				 msecs_to_jiffies(delay));
 	else
-		cancel_delayed_work_sync(&tz->poll_queue);
+		cancel_delayed_work(&tz->poll_queue);
 #endif
 }
 
@@ -2657,7 +2657,7 @@ void thermal_zone_device_unregister(struct thermal_zone_device *tz)
 
 	mutex_unlock(&thermal_list_lock);
 
-	thermal_zone_device_set_polling(tz, 0);
+	cancel_delayed_work_sync(&tz->poll_queue);
 
 	if (tz->type[0])
 		device_remove_file(&tz->device, &dev_attr_type);
