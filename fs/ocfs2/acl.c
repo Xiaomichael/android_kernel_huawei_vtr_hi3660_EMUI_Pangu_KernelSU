@@ -44,6 +44,7 @@ static struct posix_acl *ocfs2_acl_from_xattr(const void *value, size_t size)
 {
 	int n, count;
 	struct posix_acl *acl;
+	struct ocfs2_acl_entry *entry = (struct ocfs2_acl_entry *)value;
 
 	if (!value)
 		return NULL;
@@ -56,27 +57,22 @@ static struct posix_acl *ocfs2_acl_from_xattr(const void *value, size_t size)
 	if (!acl)
 		return ERR_PTR(-ENOMEM);
 	for (n = 0; n < count; n++) {
-		struct ocfs2_acl_entry *entry =
-			(struct ocfs2_acl_entry *)value;
-
-		acl->a_entries[n].e_tag  = le16_to_cpu(entry->e_tag);
-		acl->a_entries[n].e_perm = le16_to_cpu(entry->e_perm);
+		acl->a_entries[n].e_tag  = le16_to_cpu(entry[n].e_tag);
+		acl->a_entries[n].e_perm = le16_to_cpu(entry[n].e_perm);
 		switch(acl->a_entries[n].e_tag) {
 		case ACL_USER:
 			acl->a_entries[n].e_uid =
 				make_kuid(&init_user_ns,
-					  le32_to_cpu(entry->e_id));
+					  le32_to_cpu(entry[n].e_id));
 			break;
 		case ACL_GROUP:
 			acl->a_entries[n].e_gid =
 				make_kgid(&init_user_ns,
-					  le32_to_cpu(entry->e_id));
+					  le32_to_cpu(entry[n].e_id));
 			break;
 		default:
 			break;
 		}
-		value += sizeof(struct posix_acl_entry);
-
 	}
 	return acl;
 }
@@ -334,8 +330,9 @@ int ocfs2_acl_chmod(struct inode *inode, struct buffer_head *bh)
 		return 0;
 
 	acl = ocfs2_get_acl_nolock(inode, ACL_TYPE_ACCESS, bh);
-	if (IS_ERR(acl) || !acl)
-		return PTR_ERR(acl);
+	up_read(&OCFS2_I(inode)->ip_xattr_sem);
+	if (IS_ERR_OR_NULL(acl))
+		return PTR_ERR_OR_ZERO(acl);
 	ret = __posix_acl_chmod(&acl, GFP_KERNEL, inode->i_mode);
 	if (ret)
 		return ret;
