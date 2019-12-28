@@ -4616,12 +4616,11 @@ static int kvm_read_guest_phys_system(struct x86_emulate_ctxt *ctxt,
 	return r < 0 ? X86EMUL_IO_NEEDED : X86EMUL_CONTINUE;
 }
 
-int kvm_write_guest_virt_system(struct x86_emulate_ctxt *ctxt,
+int kvm_write_guest_virt_system(struct kvm_vcpu *vcpu,
                                 gva_t addr, void *val,
                                 unsigned int bytes,
                                 struct x86_exception *exception)
 {
-    struct kvm_vcpu *vcpu = emul_to_vcpu(ctxt);
     void *data = val;
     int r = X86EMUL_CONTINUE;
 
@@ -4629,8 +4628,8 @@ int kvm_write_guest_virt_system(struct x86_emulate_ctxt *ctxt,
     vcpu->arch.l1tf_flush_l1d = true;
 
     while (bytes) {
-        gpa_t gpa =  vcpu->arch.walk_mmu->gva_to_gpa(vcpu, addr,
-                                                     PFERR_WRITE_MASK,
+        gpa_t gpa = vcpu->arch.walk_mmu->gva_to_gpa(vcpu, addr,
+                                                    PFERR_WRITE_MASK,
                                                      exception);
         unsigned offset = addr & (PAGE_SIZE-1);
         unsigned towrite = min(bytes, (unsigned)PAGE_SIZE - offset);
