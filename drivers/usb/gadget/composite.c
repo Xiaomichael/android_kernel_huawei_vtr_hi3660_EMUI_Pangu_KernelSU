@@ -440,13 +440,17 @@ static u8 encode_bMaxPower(enum usb_device_speed speed,
 		val = CONFIG_USB_GADGET_VBUS_DRAW;
 	if (!val)
 		return 0;
-	switch (speed) {
-	case USB_SPEED_SUPER:
-	case USB_SPEED_SUPER_PLUS:
-		return DIV_ROUND_UP(val, 8);
-	default:
+
+	/*
+	 * USB 2.0 devices report power in 2 mA units; USB 3.0 and later
+	 * use 8 mA units. See USB 2.0 spec 9.6.3 and USB 3.1 spec 9.6.3.
+	 * Enumeration order ensures speed < USB_SPEED_SUPER covers all
+	 * pre-3.0 speeds.
+	 */
+	if (speed < USB_SPEED_SUPER)
 		return DIV_ROUND_UP(val, 2);
-	}
+	else
+		return DIV_ROUND_UP(val, 8);
 }
 
 static int config_buf(struct usb_configuration *config,
