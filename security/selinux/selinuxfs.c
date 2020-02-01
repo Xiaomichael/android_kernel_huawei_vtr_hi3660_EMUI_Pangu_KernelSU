@@ -1429,14 +1429,14 @@ static struct avc_cache_stats *sel_avc_get_stat_idx(loff_t *idx)
 {
   int cpu;
 
-  for (cpu = *idx; cpu < nr_cpu_ids; ++cpu)
-  {
-    if (!cpu_possible(cpu))
-      continue;
-    *idx = cpu + 1;
-    return &per_cpu(avc_cache_stats, cpu);
-  }
-  return NULL;
+	for (cpu = *idx; cpu < nr_cpu_ids; ++cpu) {
+		if (!cpu_possible(cpu))
+			continue;
+		*idx = cpu + 1;
+		return &per_cpu(avc_cache_stats, cpu);
+	}
+	(*idx)++;
+	return NULL;
 }
 
 static void *sel_avc_stats_seq_start(struct seq_file *seq, loff_t *pos)
