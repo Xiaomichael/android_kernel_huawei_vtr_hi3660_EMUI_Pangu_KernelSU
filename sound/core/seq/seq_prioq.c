@@ -85,16 +85,18 @@ void snd_seq_prioq_delete(struct snd_seq_prioq **fifo)
 	/*....................*/
 	
 	if (f->cells > 0) {
-		/* drain prioQ */
-		while (f->cells > 0)
-			snd_seq_cell_free(snd_seq_prioq_cell_out(f));
+		struct snd_seq_event_cell *cell = f->head;
+		while (cell) {
+			struct snd_seq_event_cell *next = cell->next;
+			snd_seq_cell_free(cell);
+			cell = next;
+		}
+		f->head = f->tail = NULL;
+		f->cells = 0;
 	}
 	
 	kfree(f);
 }
-
-
-
 
 /* compare timestamp between events */
 /* return 1 if a >= b; 0 */
@@ -140,6 +142,15 @@ static inline int compare_timestamp_rel(struct snd_seq_event *a,
 		} else
 			return -1;
 	}
+}
+
+/* return 1 if the current time >= event timestamp */
+static int event_is_ready(struct snd_seq_event *ev, void *current_time)
+{
+	if ((ev->flags & SNDRV_SEQ_TIME_STAMP_MASK) == SNDRV_SEQ_TIME_STAMP_TICK)
+		return snd_seq_compare_tick_time(current_time, &ev->time.tick);
+	else
+		return snd_seq_compare_real_time(current_time, &ev->time.time);
 }
 
 /* enqueue cell to prioq */
@@ -215,18 +226,21 @@ int snd_seq_prioq_cell_in(struct snd_seq_prioq * f,
 }
 
 /* dequeue cell from prioq */
-struct snd_seq_event_cell *snd_seq_prioq_cell_out(struct snd_seq_prioq *f)
+struct snd_seq_event_cell *snd_seq_prioq_cell_out(struct snd_seq_prioq *f,
+                                                  void *current_time)
 {
 	struct snd_seq_event_cell *cell;
 	unsigned long flags;
 
 	if (f == NULL) {
-		pr_debug("ALSA: seq: snd_seq_prioq_cell_in() called with NULL prioq\n");
+		pr_debug("ALSA: seq: snd_seq_prioq_cell_out() called with NULL prioq\n");
 		return NULL;
 	}
 	spin_lock_irqsave(&f->lock, flags);
 
 	cell = f->head;
+	if (cell && current_time && !event_is_ready(&cell->event, current_time))
+		cell = NULL;
 	if (cell) {
 		f->head = cell->next;
 
