@@ -878,6 +878,14 @@ static const struct option_info nctrl0_rsvd1_info = {
 	.blacklist = &nctrl0_rsvd1_blacklist,
 	.flags = 0,
 };
+static const struct option_blacklist_info nctrl0_only_blacklist = {
+	.sendsetup = BIT(0),
+	.reserved = 0,
+};
+static const struct option_info nctrl0_only_info = {
+	.blacklist = &nctrl0_only_blacklist,
+	.flags = 0,
+};
 /* For NCTRL(2)|RSVD(3) */
 static const struct option_blacklist_info nctrl2_rsvd3_blacklist = {
 	.sendsetup = BIT(2),
@@ -1551,6 +1559,8 @@ static const struct usb_device_id option_ids[] = {
 	  .driver_info = (kernel_ulong_t)&nctrl0_rsvd1_info },	/* NCTRL(0) */
 	{ USB_DEVICE_INTERFACE_CLASS(TELIT_VENDOR_ID, 0x110a, 0xff),	/* Telit ME910G1 */
 	  .driver_info = (kernel_ulong_t)&nctrl0_rsvd1_info },	/* NCTRL(0)|RSVD(3) */
+	{ USB_DEVICE_INTERFACE_CLASS(TELIT_VENDOR_ID, 0x110b, 0xff),	/* Telit ME910G1 (ECM) */
+	  .driver_info = (kernel_ulong_t)&nctrl0_only_info },
 	{ USB_DEVICE(TELIT_VENDOR_ID, TELIT_PRODUCT_LE910),
 		.driver_info = (kernel_ulong_t)&telit_le910_info },
 	{ USB_DEVICE(TELIT_VENDOR_ID, TELIT_PRODUCT_LE910_USBCFG4),
