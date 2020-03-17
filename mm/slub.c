@@ -2700,7 +2700,7 @@ redo:
 	}
 
 	/* must check again c->freelist in case of cpu migration or IRQ */
-	freelist = c->freelist;
+	freelist = READ_ONCE(c->freelist);
 	if (freelist)
 		goto load_freelist;
 
@@ -2837,7 +2837,7 @@ redo:
 	 * linked list in between.
 	 */
 
-	object = c->freelist;
+	object = READ_ONCE(c->freelist);
 	page = c->page;
 	if (unlikely(!object || !node_match(page, node))) {
 		object = __slab_alloc(s, gfpflags, node, addr, c);
@@ -3128,14 +3128,16 @@ redo:
 	barrier();
 
 	if (likely(page == c->page)) {
-		set_freepointer(s, tail_obj, c->freelist);
+		void **freelist = READ_ONCE(c->freelist);
+
+		set_freepointer(s, tail_obj, freelist);
 #ifdef CONFIG_HW_SLUB_SANITIZE
-	if (unlikely(*(void **)(tail_obj + s->offset) != c->freelist))
-		return;
+		if (unlikely(*(void **)(tail_obj + s->offset) != freelist))
+			return;
 #endif
 		if (unlikely(!this_cpu_cmpxchg_double(
 				s->cpu_slab->freelist, s->cpu_slab->tid,
-				c->freelist, tid,
+				freelist, tid,
 				head, next_tid(tid)))) {
 
 			note_cmpxchg_failure("slab_free", s, tid);
@@ -3307,7 +3309,7 @@ int kmem_cache_alloc_bulk(struct kmem_cache *s, gfp_t flags, size_t size,
 	c = this_cpu_ptr(s->cpu_slab);
 
 	for (i = 0; i < size; i++) {
-		void *object = c->freelist;
+		void *object = READ_ONCE(c->freelist);
 
 		if (unlikely(!object)) {
 			/*
