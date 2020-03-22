@@ -101,9 +101,15 @@ extern int remap_vmalloc_range_partial(struct vm_area_struct *vma,
 
 extern int remap_vmalloc_range(struct vm_area_struct *vma, void *addr,
 							unsigned long pgoff);
-void vmalloc_sync_all(void);
- 
+void vmalloc_sync_mappings(void);
+void vmalloc_sync_unmappings(void);
+
+/*
+ * WARNING: find_vmap_area() is an internal function exposed for legacy
+ * Hisilicon pmalloc driver. Do not use in new code.
+ */
 struct vmap_area *find_vmap_area(unsigned long addr);
+
 /*
  *	Lowlevel-APIs (not for driver use!)
  */
