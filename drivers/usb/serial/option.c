@@ -558,6 +558,10 @@ struct option_blacklist_info {
 	const unsigned long reserved;
 };
 
+static const struct option_blacklist_info askey_wwhc050_blacklist = {
+	.reserved = BIT(1) | BIT(4),
+};
+
 static const struct option_blacklist_info four_g_w14_blacklist = {
 	.sendsetup = BIT(0) | BIT(1),
 };
@@ -706,6 +710,11 @@ struct option_info {
 #define OPTION_FLAG_ZLP		BIT(0)   /* Device needs ZLP */
 
 /* Pre-define option_info objects for all blacklists used in option_ids */
+static const struct option_info askey_wwhc050_info = {
+	.blacklist = &askey_wwhc050_blacklist,
+	.flags = 0,
+};
+
 static const struct option_info four_g_w14_info = {
 	.blacklist = &four_g_w14_blacklist,
 	.flags = 0,
@@ -2372,9 +2381,11 @@ static const struct usb_device_id option_ids[] = {
 	{ USB_DEVICE_AND_INTERFACE_INFO(0x07d1, 0x3e02, 0xff, 0xff, 0xff) },	/* D-Link DWM-156/C1 */
 	{ USB_DEVICE_AND_INTERFACE_INFO(0x07d1, 0x7e11, 0xff, 0xff, 0xff) },	/* D-Link DWM-156/A3 */
 	{ USB_DEVICE_INTERFACE_CLASS(0x1690, 0x7588, 0xff),			/* ASKEY WWHC050 */
-	  .driver_info = RSVD(1) | RSVD(4) },
+	  .driver_info = (kernel_ulong_t)&askey_wwhc050_info },
 	{ USB_DEVICE_INTERFACE_CLASS(0x2020, 0x2031, 0xff),			/* Olicard 600 */
-	  .driver_info = (kernel_ulong_t)&rsvd4_info },	/* RSVD(4) */
+	  .driver_info = (kernel_ulong_t)&rsvd4_info },
+	{ USB_DEVICE_INTERFACE_CLASS(0x2020, 0x2033, 0xff),			/* BroadMobi BM806U */
+	  .driver_info = (kernel_ulong_t)&rsvd4_info },
 	{ USB_DEVICE_INTERFACE_CLASS(0x2020, 0x2060, 0xff),			/* BroadMobi BM818 */
 	  .driver_info = (kernel_ulong_t)&rsvd4_info },	/* RSVD(4) */
 	{ USB_DEVICE_INTERFACE_CLASS(0x2020, 0x4000, 0xff) },			/* OLICARD300 - MT6225 */
