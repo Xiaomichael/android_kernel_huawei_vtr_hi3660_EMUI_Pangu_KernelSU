@@ -564,23 +564,6 @@ static int handle_group_alt(struct objtool_file *file,
 		last_orig_insn = insn;
 	}
 
-    if (next_insn_same_sec(file, last_orig_insn)) {
-        fake_jump = malloc(sizeof(*fake_jump));
-        if (!fake_jump) {
-            WARN("malloc failed");
-            return -1;
-        }
-        memset(fake_jump, 0, sizeof(*fake_jump));
-        INIT_LIST_HEAD(&fake_jump->alts);
-        clear_insn_state(&fake_jump->state);
-
-        fake_jump->sec = special_alt->new_sec;
-        fake_jump->offset = FAKE_JUMP_OFFSET;
-        fake_jump->type = INSN_JUMP_UNCONDITIONAL;
-        fake_jump->jump_dest = list_next_entry(last_orig_insn, list);
-        fake_jump->func = orig_insn->func;
-    }
-
 	fake_jump = malloc(sizeof(*fake_jump));
 	if (!fake_jump) {
 		WARN("malloc failed");
@@ -589,9 +572,10 @@ static int handle_group_alt(struct objtool_file *file,
 	memset(fake_jump, 0, sizeof(*fake_jump));
 	INIT_LIST_HEAD(&fake_jump->alts);
 	fake_jump->sec = special_alt->new_sec;
-	fake_jump->offset = -1;
+	fake_jump->offset = FAKE_JUMP_OFFSET;
 	fake_jump->type = INSN_JUMP_UNCONDITIONAL;
 	fake_jump->jump_dest = list_next_entry(last_orig_insn, list);
+	fake_jump->func = orig_insn->func;
 
 	if (!special_alt->new_len) {
 		*new_insn = fake_jump;
@@ -815,49 +799,43 @@ static struct rela *find_switch_table(struct objtool_file *file,
 	struct rela *text_rela, *rodata_rela;
 	struct instruction *orig_insn = insn;
 
-	text_rela = find_rela_by_dest_range(insn->sec, insn->offset, insn->len);
-	if (text_rela && text_rela->sym == file->rodata->sym) {
-		/* case 1 */
-		rodata_rela = find_rela_by_dest(file->rodata,
-						text_rela->addend);
-		if (rodata_rela)
-			return rodata_rela;
+	/* FIXED: Resolved merge conflict - using new version with first_jump_src */
+	/*
+	 * Backward search using the @first_jump_src links, these help avoid
+	 * much of the 'in between' code. Which avoids us getting confused by
+	 * it.
+	 */
+	for (;
+	     &insn->list != &file->insn_list && insn->func && insn->func->pfunc == func;
+	     insn = insn->first_jump_src ?: list_prev_entry(insn, list)) {
 
-		/* case 2 */
-		rodata_rela = find_rela_by_dest(file->rodata,
-						text_rela->addend + 4);
-		if (!rodata_rela)
-			return NULL;
-		file->ignore_unreachables = true;
-		return rodata_rela;
-	}
+		/* case 3 */
+		func_for_each_insn_continue_reverse(file, func, insn) {
+			if (insn->type == INSN_JUMP_DYNAMIC)
+				break;
 
-	/* case 3 */
-	func_for_each_insn_continue_reverse(file, func, insn) {
-		if (insn->type == INSN_JUMP_DYNAMIC)
-			break;
+			/* allow small jumps within the range */
+			if (insn->type == INSN_JUMP_UNCONDITIONAL &&
+			    insn->jump_dest &&
+			    (insn->jump_dest->offset <= insn->offset ||
+			     insn->jump_dest->offset > orig_insn->offset))
+			    break;
 
-		/* allow small jumps within the range */
-		if (insn->type == INSN_JUMP_UNCONDITIONAL &&
-		    insn->jump_dest &&
-		    (insn->jump_dest->offset <= insn->offset ||
-		     insn->jump_dest->offset > orig_insn->offset))
-		    break;
+			/* look for a relocation which references .rodata */
+			text_rela = find_rela_by_dest_range(insn->sec, insn->offset,
+							    insn->len);
+			if (!text_rela || text_rela->sym != file->rodata->sym)
+				continue;
 
-		/* look for a relocation which references .rodata */
-		text_rela = find_rela_by_dest_range(insn->sec, insn->offset,
-						    insn->len);
-		if (!text_rela || text_rela->sym != file->rodata->sym)
-			continue;
+			/*
+			 * Make sure the .rodata address isn't associated with a
+			 * symbol.  gcc jump tables are anonymous data.
+			 */
+			if (find_symbol_containing(file->rodata, text_rela->addend))
+				continue;
 
-		/*
-		 * Make sure the .rodata address isn't associated with a
-		 * symbol.  gcc jump tables are anonymous data.
-		 */
-		if (find_symbol_containing(file->rodata, text_rela->addend))
-			continue;
-
-		return find_rela_by_dest(file->rodata, text_rela->addend);
+			return find_rela_by_dest(file->rodata, text_rela->addend);
+		}
 	}
 
 	return NULL;
