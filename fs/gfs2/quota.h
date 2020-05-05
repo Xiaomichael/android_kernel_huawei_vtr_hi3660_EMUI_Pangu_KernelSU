@@ -10,6 +10,7 @@
 #ifndef __QUOTA_DOT_H__
 #define __QUOTA_DOT_H__
 
+#include <linux/capability.h>
 #include <linux/list_lru.h>
 
 struct gfs2_inode;
@@ -45,7 +46,10 @@ static inline int gfs2_quota_lock_check(struct gfs2_inode *ip,
 {
 	struct gfs2_sbd *sdp = GFS2_SB(&ip->i_inode);
 	int ret;
-	if (sdp->sd_args.ar_quota == GFS2_QUOTA_OFF)
+
+	ap->allowed = UINT_MAX; /* Assume we are permitted a whole lot */
+	if (capable(CAP_SYS_RESOURCE) ||
+	    sdp->sd_args.ar_quota == GFS2_QUOTA_OFF)
 		return 0;
 	ret = gfs2_quota_lock(ip, NO_UID_QUOTA_CHANGE, NO_GID_QUOTA_CHANGE);
 	if (ret)
