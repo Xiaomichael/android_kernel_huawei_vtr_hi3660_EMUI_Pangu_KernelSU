@@ -26,9 +26,9 @@
 #define UFS_VENDOR_TOSHIBA     0x198
 #define UFS_VENDOR_SAMSUNG     0x1CE
 #define UFS_VENDOR_SKHYNIX     0x1AD
-#define UFS_VENDOR_HI1861	   0x8B6
-#define UFS_VENDOR_MICRON	   0x12C
-#define UFS_VENDOR_SANDISK	   0x145
+#define UFS_VENDOR_HI1861      0x8B6
+#define UFS_VENDOR_MICRON      0x12C
+#define UFS_VENDOR_SANDISK     0x145
 
 /**
  * ufs_device_info - ufs device details

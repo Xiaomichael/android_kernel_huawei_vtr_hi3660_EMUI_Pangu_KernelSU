@@ -26,7 +26,7 @@
 #define BOARDID_SIZE 4
 #define MAX_OLD_PRDCT_NAME_NR 13
 
-static char old_product_name[MAX_OLD_PRDCT_NAME_NR][MAX_MODEL_LEN] = {
+static char old_product_name[][MAX_MODEL_LEN + 1] = {
 	"KLUBG4G1CE-B0B1", /* Samsung  UFS2.0 32GB */
 	"KLUCG4J1CB-B0B1", /* Samsung  UFS2.0 64GB */
 	"KLUDG8J1CB-B0B1", /* Samsung  UFS2.0 128GB */
@@ -74,8 +74,30 @@ static int is_old_product_name(char *product_name, unsigned int *boardid)
 }
 
 static struct ufs_dev_fix ufs_fixups[] = {
-	/* UFS cards deviations table */
-	END_FIX};
+    /* UFS cards deviations table */
+    UFS_FIX(UFS_VENDOR_MICRON, UFS_ANY_MODEL,
+            UFS_DEVICE_QUIRK_DELAY_BEFORE_LPM),
+    UFS_FIX(UFS_VENDOR_SAMSUNG, UFS_ANY_MODEL,
+            UFS_DEVICE_QUIRK_DELAY_BEFORE_LPM),
+    UFS_FIX(UFS_VENDOR_SAMSUNG, UFS_ANY_MODEL, UFS_DEVICE_NO_VCCQ),
+    UFS_FIX(UFS_VENDOR_SAMSUNG, UFS_ANY_MODEL,
+            UFS_DEVICE_QUIRK_RECOVERY_FROM_DL_NAC_ERRORS),
+    UFS_FIX(UFS_VENDOR_SAMSUNG, UFS_ANY_MODEL,
+            UFS_DEVICE_NO_FASTAUTO),
+    UFS_FIX(UFS_VENDOR_SAMSUNG, UFS_ANY_MODEL,
+            UFS_DEVICE_QUIRK_HOST_PA_TACTIVATE),
+    UFS_FIX(UFS_VENDOR_TOSHIBA, UFS_ANY_MODEL,
+            UFS_DEVICE_QUIRK_DELAY_BEFORE_LPM),
+    UFS_FIX(UFS_VENDOR_TOSHIBA, "THGLF2G9C8KBADG",
+            UFS_DEVICE_QUIRK_PA_TACTIVATE),
+    UFS_FIX(UFS_VENDOR_TOSHIBA, "THGLF2G9D8KBADG",
+            UFS_DEVICE_QUIRK_PA_TACTIVATE),
+    UFS_FIX(UFS_VENDOR_SKHYNIX, UFS_ANY_MODEL, UFS_DEVICE_NO_VCCQ),
+    UFS_FIX(UFS_VENDOR_SKHYNIX, UFS_ANY_MODEL,
+            UFS_DEVICE_QUIRK_HOST_PA_SAVECONFIGTIME),
+
+    END_FIX
+};
 
 static void get_boardid(unsigned int *boardid)
 {
