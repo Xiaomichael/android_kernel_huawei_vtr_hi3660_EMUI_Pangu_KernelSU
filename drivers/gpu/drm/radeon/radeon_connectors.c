@@ -898,8 +898,10 @@ radeon_lvds_detect(struct drm_connector *connector, bool force)
 	int r;
 
 	r = pm_runtime_get_sync(connector->dev->dev);
-	if (r < 0)
+	if (r < 0) {
+		pm_runtime_put_autosuspend(connector->dev->dev);
 		return connector_status_disconnected;
+	}
 
 	if (encoder) {
 		struct radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
@@ -1038,8 +1040,10 @@ radeon_vga_detect(struct drm_connector *connector, bool force)
 	int r;
 
 	r = pm_runtime_get_sync(connector->dev->dev);
-	if (r < 0)
+	if (r < 0) {
+		pm_runtime_put_autosuspend(connector->dev->dev);
 		return connector_status_disconnected;
+	}
 
 	encoder = radeon_best_single_encoder(connector);
 	if (!encoder)
@@ -1172,8 +1176,10 @@ radeon_tv_detect(struct drm_connector *connector, bool force)
 		return ret;
 
 	r = pm_runtime_get_sync(connector->dev->dev);
-	if (r < 0)
+	if (r < 0) {
+		pm_runtime_put_autosuspend(connector->dev->dev);
 		return connector_status_disconnected;
+	}
 
 	encoder = radeon_best_single_encoder(connector);
 	if (!encoder)
@@ -1250,8 +1256,10 @@ radeon_dvi_detect(struct drm_connector *connector, bool force)
 	bool dret = false, broken_edid = false;
 
 	r = pm_runtime_get_sync(connector->dev->dev);
-	if (r < 0)
+	if (r < 0) {
+		pm_runtime_put_autosuspend(connector->dev->dev);
 		return connector_status_disconnected;
+	}
 
 	if (radeon_connector->detected_hpd_without_ddc) {
 		force = true;
@@ -1687,8 +1695,10 @@ radeon_dp_detect(struct drm_connector *connector, bool force)
 		return connector_status_disconnected;
 
 	r = pm_runtime_get_sync(connector->dev->dev);
-	if (r < 0)
+	if (r < 0) {
+		pm_runtime_put_autosuspend(connector->dev->dev);
 		return connector_status_disconnected;
+	}
 
 	if (!force && radeon_check_hpd_status_unchanged(connector)) {
 		ret = connector->status;
