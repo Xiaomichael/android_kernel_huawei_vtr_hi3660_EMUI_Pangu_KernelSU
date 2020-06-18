@@ -655,7 +655,8 @@ err_find_dev:
 
 static int spidev_release(struct inode *inode, struct file *filp)
 {
-	struct spidev_data	*spidev;
+	struct spidev_data *spidev;
+	int dofree = 0;
 
 	mutex_lock(&device_list_lock);
 	spidev = filp->private_data;
@@ -664,11 +665,8 @@ static int spidev_release(struct inode *inode, struct file *filp)
 	/* last close? */
 	spidev->users--;
 	if (!spidev->users) {
-		int		dofree;
-
 		kfree(spidev->tx_buffer);
 		spidev->tx_buffer = NULL;
-
 		kfree(spidev->rx_buffer);
 		spidev->rx_buffer = NULL;
 
@@ -687,12 +685,13 @@ static int spidev_release(struct inode *inode, struct file *filp)
 		}
 	}
 #ifdef CONFIG_SPI_SLAVE
-	spi_slave_abort(spidev->spi);
+	if (!dofree && spidev->spi)
+		spi_slave_abort(spidev->spi);
 #endif
 	mutex_unlock(&device_list_lock);
 
 	return 0;
-}/*lint !e715 */
+}
 
 static const struct file_operations spidev_fops = {
 	.owner =	THIS_MODULE,/*lint !e64 */
