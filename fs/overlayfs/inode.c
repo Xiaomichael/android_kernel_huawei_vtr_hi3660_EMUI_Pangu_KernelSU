@@ -202,10 +202,10 @@ int ovl_xattr_set(struct dentry *dentry, const char *name, const void *value,
 
 	old_cred = ovl_override_creds(dentry->d_sb);
 	if (value)
-		err = vfs_setxattr(NULL, realpath.dentry, name, value, size, flags);
+		err = vfs_setxattr(realpath.dentry, name, value, size, flags);
 	else {
 		WARN_ON(flags != XATTR_REPLACE);
-		err = vfs_removexattr(NULL, realpath.dentry, name);
+		err = vfs_removexattr(realpath.dentry, name);
 	}
 	ovl_revert_creds(old_cred);
 

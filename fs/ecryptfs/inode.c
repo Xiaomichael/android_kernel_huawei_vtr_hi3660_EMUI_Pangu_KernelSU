@@ -1047,7 +1047,7 @@ ecryptfs_setxattr(struct dentry *dentry, struct inode *inode,
 		rc = -EOPNOTSUPP;
 		goto out;
 	}
-	rc = vfs_setxattr(NULL, lower_dentry, name, value, size, flags);
+	rc = vfs_setxattr(lower_dentry, name, value, size, flags);
 	if (!rc && inode)
 		fsstack_copy_attr_all(inode, d_inode(lower_dentry));
 out:

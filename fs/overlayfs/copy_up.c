@@ -122,7 +122,7 @@ retry:
 			error = 0;
 			continue; /* Discard */
 		}
-		error = vfs_setxattr(NULL, new, name, value, size, 0);
+		error = vfs_setxattr(new, name, value, size, 0);
 		if (error)
 			break;
 	}

@@ -31,7 +31,7 @@ int sdcardfs_setxattr(struct dentry *dentry, const char *name,
 	lower_dentry = lower_path.dentry;
 	dget(lower_dentry);
 
-	rc = vfs_setxattr(NULL, lower_dentry, name, value, size, flags);
+	rc = vfs_setxattr(lower_dentry, name, value, size, flags);
 
 	dput(lower_dentry);
 	sdcardfs_put_lower_path(dentry, &lower_path);
@@ -107,7 +107,7 @@ int sdcardfs_removexattr(struct dentry *dentry, const char *name)
 	lower_dentry = lower_path.dentry;
 	dget(lower_dentry);
 
-	rc = vfs_removexattr(NULL, lower_dentry, name);
+	rc = vfs_removexattr(lower_dentry, name);
 
 	dput(lower_dentry);
 	sdcardfs_put_lower_path(dentry, &lower_path);
