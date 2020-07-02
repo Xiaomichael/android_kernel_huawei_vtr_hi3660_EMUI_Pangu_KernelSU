@@ -1630,10 +1630,12 @@ struct sock *sk_clone_lock(const struct sock *sk, const gfp_t priority)
 #endif
 
 		sock_reset_flag(newsk, SOCK_DONE);
+		/* Clear MPTCP flag if set on the original socket */
 #ifdef CONFIG_MPTCP
 		sock_reset_flag(newsk, SOCK_MPTCP);
 #endif
-		cgroup_sk_alloc(&newsk->sk_cgrp_data);
+		/* Use the proper clone helper for cgroup v2 accounting */
+		cgroup_sk_clone(&newsk->sk_cgrp_data);
 		skb_queue_head_init(&newsk->sk_error_queue);
 
 		filter = rcu_dereference_protected(newsk->sk_filter, 1);
