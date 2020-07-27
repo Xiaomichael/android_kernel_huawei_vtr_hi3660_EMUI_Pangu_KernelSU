@@ -3230,6 +3230,10 @@ static void binder_transaction(struct binder_proc *proc,
 #endif
 
 		e->to_node = target_node->debug_id;
+		if (WARN_ON(proc == target_proc)) {
+			return_error = BR_FAILED_REPLY;
+			goto err_invalid_target_handle;
+		}
 		if (security_binder_transaction(proc->tsk,
 						target_proc->tsk) < 0) {
 			return_error = BR_FAILED_REPLY;
@@ -3777,34 +3781,68 @@ static int binder_thread_write(struct binder_proc *proc,
 		case BC_DECREFS: {
 			uint32_t target;
 			const char *debug_string;
-			bool strong = cmd == BC_ACQUIRE || cmd == BC_RELEASE;
-			bool increment = cmd == BC_INCREFS || cmd == BC_ACQUIRE;
+			bool strong = (cmd == BC_ACQUIRE || cmd == BC_RELEASE);
+			bool increment = (cmd == BC_INCREFS || cmd == BC_ACQUIRE);
 			struct binder_ref_data rdata;
+			struct binder_ref *ref = NULL;
+			int ret = 0;
 
 			if (get_user(target, (uint32_t __user *)ptr))
 				return -EFAULT;
-
 			ptr += sizeof(uint32_t);
-			ret = -1;
-			if (increment && !target) {
-				struct binder_node *ctx_mgr_node;
-				mutex_lock(&context->context_mgr_node_lock);
-				ctx_mgr_node = context->binder_context_mgr_node;
-				if (ctx_mgr_node)
-					ret = binder_inc_ref_for_node(
-							proc, ctx_mgr_node,
-							strong, NULL, &rdata);
-				mutex_unlock(&context->context_mgr_node_lock);
+
+			/*
+			 * Handle special case for handle 0 (context manager).
+			 * Upstream fix: prevent context manager from
+			 * incrementing its own ref and avoid UAF.
+			 */
+			if (target == 0 && context->binder_context_mgr_node &&
+			    (cmd == BC_INCREFS || cmd == BC_ACQUIRE)) {
+				if (context->binder_context_mgr_node->proc == proc) {
+					binder_user_error("%d:%d context manager tried to acquire desc 0\n",
+							  proc->pid, thread->pid);
+					return -EINVAL;
+				}
+				binder_proc_lock(proc);
+				ref = binder_get_ref_for_node_olocked(proc,
+						context->binder_context_mgr_node, NULL);
+				if (ref) {
+					rdata = ref->data;
+					if (rdata.desc != target) {
+						binder_user_error("%d:%d tried to acquire reference to desc 0, got %d instead\n",
+							proc->pid, thread->pid, rdata.desc);
+					}
+					/* Perform the increment operation */
+					if (increment) {
+						ret = binder_inc_ref_olocked(ref, strong, NULL);
+						if (!ret)
+							rdata = ref->data; /* update rdata after inc */
+					} else {
+						/* decrement on handle 0 not expected here */
+						ret = -EINVAL;
+					}
+				} else {
+					ret = -EINVAL;
+				}
+				binder_proc_unlock(proc);
+			} else {
+				/* Normal handle: look up ref and apply inc/dec */
+				binder_proc_lock(proc);
+				ref = binder_get_ref_olocked(proc, target, strong);
+				if (ref) {
+					rdata = ref->data;
+					if (increment)
+						ret = binder_inc_ref_olocked(ref, strong, NULL);
+					else
+						ret = binder_dec_ref_olocked(ref, strong);
+					if (!ret)
+						rdata = ref->data; /* update after operation */
+				} else {
+					ret = -EINVAL;
+				}
+				binder_proc_unlock(proc);
 			}
-			if (ret)
-				ret = binder_update_ref_for_handle(
-						proc, target, increment, strong,
-						&rdata);
-			if (!ret && rdata.desc != target) {
-				binder_user_error("%d:%d tried to acquire reference to desc %d, got %d instead\n",
-					proc->pid, thread->pid,
-					target, rdata.desc);
-			}
+
 			switch (cmd) {
 			case BC_INCREFS:
 				debug_string = "IncRefs";
@@ -3820,17 +3858,34 @@ static int binder_thread_write(struct binder_proc *proc,
 				debug_string = "DecRefs";
 				break;
 			}
+
 			if (ret) {
 				binder_user_error("%d:%d %s %d refcount change on invalid ref %d ret %d\n",
 					proc->pid, thread->pid, debug_string,
 					strong, target, ret);
+				if (ref && !increment) {
+					/*
+					 * Decrement failed but ref might have been cleaned up.
+					 * Let the error path handle it without double free.
+					 */
+				}
 				break;
 			}
+
 			binder_debug(BINDER_DEBUG_USER_REFS,
 				     "%d:%d %s ref %d desc %d s %d w %d\n",
 				     proc->pid, thread->pid, debug_string,
 				     rdata.debug_id, rdata.desc, rdata.strong,
 				     rdata.weak);
+
+			/* If decrement caused ref to be deleted, free it */
+			if (!increment && ref && ref->data.strong == 0 && ref->data.weak == 0) {
+				/*
+				 * binder_dec_ref_olocked already calls binder_cleanup_ref_olocked
+				 * when counts reach zero, but we must free the ref memory.
+				 */
+				binder_free_ref(ref);
+			}
 			break;
 		}
 		case BC_INCREFS_DONE:
