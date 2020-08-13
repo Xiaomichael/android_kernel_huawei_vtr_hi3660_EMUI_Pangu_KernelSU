@@ -27,6 +27,9 @@
 #include <linux/delay.h>
 #include <linux/version.h>
 #include <linux/kthread.h>
+#include <linux/spinlock.h>
+#include <linux/wait.h>
+#include <linux/atomic.h>
 
 #define UART_NR			14
 
@@ -60,21 +63,7 @@ enum {
 	REG_ARRAY_SIZE,
 };
 
-static u16 pl011_std_offsets[REG_ARRAY_SIZE] = {
-	[REG_DR] = UART01x_DR,
-	[REG_FR] = UART01x_FR,
-	[REG_LCRH_RX] = UART011_LCRH,
-	[REG_LCRH_TX] = UART011_LCRH,
-	[REG_IBRD] = UART011_IBRD,
-	[REG_FBRD] = UART011_FBRD,
-	[REG_CR] = UART011_CR,
-	[REG_IFLS] = UART011_IFLS,
-	[REG_IMSC] = UART011_IMSC,
-	[REG_RIS] = UART011_RIS,
-	[REG_MIS] = UART011_MIS,
-	[REG_ICR] = UART011_ICR,
-	[REG_DMACR] = UART011_DMACR,
-};
+extern u16 pl011_std_offsets[REG_ARRAY_SIZE];
 
 struct vendor_data {
 	const u16		*reg_offset;
@@ -94,20 +83,7 @@ struct vendor_data {
 
 unsigned int get_fifosize_arm(struct amba_device *dev);
 
-static struct vendor_data vendor_arm = {
-	.reg_offset		= pl011_std_offsets,
-	.ifls			= UART011_IFLS_RX2_8|UART011_IFLS_TX4_8 | (4<<6),
-	.fr_busy		= UART01x_FR_BUSY,
-	.fr_dsr			= UART01x_FR_DSR,
-	.fr_cts			= UART01x_FR_CTS,
-	.fr_ri			= UART011_FR_RI,
-	.oversampling		= false,
-	.dma_threshold		= false,
-	.cts_event_workaround	= false,
-	.always_enabled		= false,
-	.fixed_options		= false,
-	.get_fifosize		= get_fifosize_arm,
-};
+extern struct vendor_data vendor_arm;
 
 struct pl011_sgbuf {
 	struct scatterlist sg;
@@ -139,7 +115,7 @@ struct pl011_dmatx_data {
 
 #ifdef CONFIG_SERIAL_AMBA_PL011_CONSOLE
 #define PL011_UART_TX_WORK
-static int console_uart_name_is_ttyAMA;
+extern int console_uart_name_is_ttyAMA;
 extern int get_console_index(void);
 extern int get_console_name(char *name, int name_buf_len);
 #define PL011_TX_LOCAL_BUF_SIZE	96
@@ -213,7 +189,7 @@ struct uart_tx_unit {
 	bool			rx_dma_disabled;
 #endif
 };
-static struct uart_amba_port *amba_ports[UART_NR];
+extern struct uart_amba_port *amba_ports[UART_NR];
 
 unsigned int pl011_reg_to_offset(const struct uart_amba_port *uap, unsigned int reg);
 unsigned int pl011_read(const struct uart_amba_port *uap, unsigned int reg);

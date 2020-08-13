@@ -8,14 +8,56 @@
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  */
+#include <linux/spinlock.h>
+#include <linux/wait.h>
+#include <linux/atomic.h>
 #include "../../hisi/tzdriver/libhwsecurec/securec.h"
 #define TX_WORK_TIMEOUT  1600000
 #include <linux/hisi/hisi_log.h>
 #define HISI_LOG_TAG HISI_AMBA_PL011_TAG
 #define SET_CONSOLE_FIFO_SIZE_DEFAULT  262144
 #define SET_CONSOLE_FIFO_CPUON_DEFAULT  3
+#define UART_NR 14
 
+extern void pl011_console_write(struct console *co, const char *s, unsigned int count);
+
+struct uart_amba_port *amba_ports[UART_NR];
 static int console_fifo_enable_status = -1;
+int console_uart_name_is_ttyAMA = 0;
+
+static u16 pl011_std_offsets[REG_ARRAY_SIZE] = {
+	[REG_DR] = UART01x_DR,
+	[REG_FR] = UART01x_FR,
+	[REG_LCRH_RX] = UART011_LCRH,
+	[REG_LCRH_TX] = UART011_LCRH,
+	[REG_IBRD] = UART011_IBRD,
+	[REG_FBRD] = UART011_FBRD,
+	[REG_CR] = UART011_CR,
+	[REG_IFLS] = UART011_IFLS,
+	[REG_IMSC] = UART011_IMSC,
+	[REG_RIS] = UART011_RIS,
+	[REG_MIS] = UART011_MIS,
+	[REG_ICR] = UART011_ICR,
+	[REG_DMACR] = UART011_DMACR,
+};
+
+static struct vendor_data vendor_arm = {
+	.reg_offset		= pl011_std_offsets,
+	.ifls			= UART011_IFLS_RX2_8|UART011_IFLS_TX4_8 | (4<<6),
+	.fr_busy		= UART01x_FR_BUSY,
+	.fr_dsr			= UART01x_FR_DSR,
+	.fr_cts			= UART01x_FR_CTS,
+	.fr_ri			= UART011_FR_RI,
+	.oversampling		= false,
+	.dma_threshold		= false,
+	.cts_event_workaround	= false,
+	.always_enabled		= false,
+	.fixed_options		= false,
+	.get_fifosize		= get_fifosize_arm,
+};
+
+/* int __weak get_console_index(void) { return 0; } */
+/* int __weak get_console_name(char *name, int len) { return -ENODEV; } */
 static int __init console_fifo_enable_setup(char *str)
 {
 	char buf[2]; /* 2 for "1 or 0 " */
@@ -514,5 +556,5 @@ void hisi_pl011_disable_ms(struct uart_port *port)
 	    container_of(port, struct uart_amba_port, port);
 
 	uap->im &= ~(UART011_RIMIM|UART011_CTSMIM|UART011_DCDMIM|UART011_DSRMIM);
-	writew(uap->im, uap->port.membase + UART011_IMSC);
+	pl011_write(uap->im, uap, REG_IMSC);
 }

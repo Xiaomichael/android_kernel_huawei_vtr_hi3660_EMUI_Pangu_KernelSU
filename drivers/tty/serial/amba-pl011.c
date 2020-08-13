@@ -78,9 +78,6 @@
 #define UART_DR_ERROR		(UART011_DR_OE|UART011_DR_BE|UART011_DR_PE|UART011_DR_FE)
 #define UART_DUMMY_DR_RX	(1 << 16)
 
-
-#ifdef CONFIG_HISI_AMBA_PL011
-#else
 static u16 pl011_std_offsets[REG_ARRAY_SIZE] = {
 	[REG_DR] = UART01x_DR,
 	[REG_FR] = UART01x_FR,
@@ -96,7 +93,7 @@ static u16 pl011_std_offsets[REG_ARRAY_SIZE] = {
 	[REG_ICR] = UART011_ICR,
 	[REG_DMACR] = UART011_DMACR,
 };
-
+#ifdef CONFIG_HISI_AMBA_PL011
 /* There is by now at least one vendor with differing details, so handle it */
 struct vendor_data {
 	const u16		*reg_offset;
@@ -117,16 +114,11 @@ struct vendor_data {
 #endif
 
 #ifdef CONFIG_HISI_AMBA_PL011
-#else
 static unsigned int get_fifosize_arm(struct amba_device *dev)
 {
 	return amba_rev(dev) < 3 ? 16 : 32;
 }
 #endif
-
-
-
-
 
 #ifdef CONFIG_HISI_AMBA_PL011
 #else
@@ -2381,7 +2373,7 @@ static void pl011_console_putchar(struct uart_port *port, int ch)
 	pl011_write(ch, uap, REG_DR);
 }
 
-static void
+void
 pl011_console_write(struct console *co, const char *s, unsigned int count)
 {
 	struct uart_amba_port *uap = amba_ports[co->index];
@@ -2427,9 +2419,8 @@ pl011_console_write(struct console *co, const char *s, unsigned int count)
 	clk_disable(uap->clk);
 }
 
-static void __init
-pl011_console_get_options(struct uart_amba_port *uap, int *baud,
-			     int *parity, int *bits)
+static void pl011_console_get_options(struct uart_amba_port *uap, int *baud,
+				      int *parity, int *bits)
 {
 	if (pl011_read(uap, REG_CR) & UART01x_CR_UARTEN) {
 		unsigned int lcr_h, ibrd, fbrd;
@@ -2465,7 +2456,7 @@ pl011_console_get_options(struct uart_amba_port *uap, int *baud,
 	}
 }
 
-static int __init pl011_console_setup(struct console *co, char *options)
+static int pl011_console_setup(struct console *co, char *options)
 {
 	struct uart_amba_port *uap;
 	int baud = 38400;
@@ -2543,6 +2534,62 @@ static int __init pl011_console_setup(struct console *co, char *options)
 	return uart_set_options(&uap->port, co, baud, parity, bits, flow);
 #endif
 }
+
+#ifndef CONFIG_HISI_AMBA_PL011
+/**
+ *	pl011_console_match - non-standard console matching
+ *	@co:	  registering console
+ *	@name:	  name from console command line
+ *	@idx:	  index from console command line
+ *	@options: ptr to option string from console command line
+ *
+ *	Only attempts to match console command lines of the form:
+ *	    console=pl011,mmio|mmio32,<addr>[,<options>]
+ *	    console=pl011,0x<addr>[,<options>]
+ *	This form is used to register an initial earlycon boot console and
+ *	replace it with the amba_console at pl011 driver init.
+ *
+ *	Performs console setup for a match (as required by interface)
+ *	If no <options> are specified, then assume the h/w is already setup.
+ *
+ *	Returns 0 if console matches; otherwise non-zero to use default matching
+ */
+static int pl011_console_match(struct console *co, char *name, int idx,
+			       char *options)
+{
+	unsigned char iotype;
+	resource_size_t addr;
+	int i;
+
+	if (strcmp(name, "pl011") != 0)
+		return -ENODEV;
+
+	if (uart_parse_earlycon(options, &iotype, &addr, &options))
+		return -ENODEV;
+
+	if (iotype != UPIO_MEM && iotype != UPIO_MEM32)
+		return -ENODEV;
+
+	/* try to match the port specified on the command line */
+	for (i = 0; i < ARRAY_SIZE(amba_ports); i++) {
+		struct uart_port *port;
+
+		if (!amba_ports[i])
+			continue;
+
+		port = &amba_ports[i]->port;
+
+		if (port->mapbase != addr)
+			continue;
+
+		co->index = i;
+		port->cons = co;
+		return pl011_console_setup(co, options);
+	}
+
+	return -ENODEV;
+}
+#endif
 
 static struct uart_driver amba_reg;
 static struct console amba_console = {
