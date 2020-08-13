@@ -3492,12 +3492,21 @@ failed_register:
 failed_mii_init:
 failed_irq:
 failed_init:
-    fec_ptp_stop(pdev);
-    if (fep->reg_phy)
-        regulator_disable(fep->reg_phy);
+	fec_ptp_stop(pdev);
 failed_reset:
-    pm_runtime_put_noidle(&pdev->dev);
-    pm_runtime_disable(&pdev->dev);
+	pm_runtime_put_noidle(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
+	if (fep->reg_phy)
+		regulator_disable(fep->reg_phy);
+failed_regulator:
+failed_clk_ipg:
+	clk_disable_unprepare(fep->clk_ipg);
+failed_clk:
+	fec_enet_clk_enable(ndev, false);
+failed_phy:
+	of_node_put(phy_node);
+failed_ioremap:
+	free_netdev(ndev);
 failed_clk_ipg:
     clk_disable_unprepare(fep->clk_ipg);
 failed_clk:
