@@ -42,6 +42,8 @@
 #include <linux/configfs.h>
 #include <linux/usb/composite.h>
 
+#include "function-hisi/f_accessory_hisi.c"
+
 #define MAX_INST_NAME_LEN        40
 #define BULK_BUFFER_SIZE    16384
 #define ACC_STRING_SIZE     256
@@ -994,6 +996,11 @@ __acc_function_bind(struct usb_configuration *c,
 			acc_fullspeed_in_desc.bEndpointAddress;
 		acc_superspeed_out_desc.bEndpointAddress =
 			acc_fullspeed_out_desc.bEndpointAddress;
+		/* SSP endpoints */
+		acc_superspeedplus_in_desc.bEndpointAddress =
+			acc_fullspeed_in_desc.bEndpointAddress;
+		acc_superspeedplus_out_desc.bEndpointAddress =
+			acc_fullspeed_out_desc.bEndpointAddress;
 	}
 #endif
 
@@ -1363,7 +1370,7 @@ static struct usb_function *acc_alloc(struct usb_function_instance *fi)
 	dev->function.hs_descriptors = hs_acc_descs;
 #ifdef CONFIG_HISI_USB_FUNC_ADD_SS_DESC
 	dev->function.ss_descriptors = ss_acc_descs;
-	dev->function.ssp_descriptors = ss_acc_descs;
+	dev->function.ssp_descriptors = ssp_acc_descs;
 #endif
 	dev->function.bind = acc_function_bind_configfs;
 	dev->function.unbind = acc_function_unbind;

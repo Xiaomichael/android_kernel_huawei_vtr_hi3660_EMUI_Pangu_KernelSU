@@ -101,12 +101,14 @@ static inline struct f_rndis *func_to_rndis(struct usb_function *f)
 /* peak (theoretical) bulk transfer rate in bits-per-second */
 static unsigned int bitrate(struct usb_gadget *g)
 {
-	if (gadget_is_superspeed(g) && ((g->speed == USB_SPEED_SUPER) || (g->speed == USB_SPEED_SUPER_PLUS)))
-		return 13 * 1024 * 8 * 1000 * 8;
-	else if (gadget_is_dualspeed(g) && g->speed == USB_SPEED_HIGH)
-		return 13 * 512 * 8 * 1000 * 8;
-	else
-		return 19 * 64 * 1 * 1000 * 8;
+    if (gadget_is_superspeed(g) && g->speed >= USB_SPEED_SUPER_PLUS)
+        return 4250000000U;
+    else if (gadget_is_superspeed(g) && g->speed == USB_SPEED_SUPER)
+        return 3750000000U;
+    else if (gadget_is_dualspeed(g) && g->speed == USB_SPEED_HIGH)
+        return 13 * 512 * 8 * 1000 * 8;
+    else
+        return 19 * 64 * 1 * 1000 * 8;
 }
 
 /*-------------------------------------------------------------------------*/
@@ -355,6 +357,61 @@ static struct usb_descriptor_header *eth_ss_function[] = {
 	(struct usb_descriptor_header *) &ss_bulk_comp_desc,
 	(struct usb_descriptor_header *) &ss_out_desc,
 	(struct usb_descriptor_header *) &ss_bulk_comp_desc,
+	NULL,
+};
+
+/* SuperSpeedPlus support */
+static struct usb_endpoint_descriptor ssp_notify_desc = {
+	.bLength =		USB_DT_ENDPOINT_SIZE,
+	.bDescriptorType =	USB_DT_ENDPOINT,
+	.bEndpointAddress =	USB_DIR_IN,
+	.bmAttributes =		USB_ENDPOINT_XFER_INT,
+	.wMaxPacketSize =	cpu_to_le16(STATUS_BYTECOUNT),
+	.bInterval =		USB_MS_TO_HS_INTERVAL(RNDIS_STATUS_INTERVAL_MS)
+};
+
+static struct usb_ss_ep_comp_descriptor ssp_intr_comp_desc = {
+	.bLength =		sizeof(ssp_intr_comp_desc),
+	.bDescriptorType =	USB_DT_SS_ENDPOINT_COMP,
+	.wBytesPerInterval =	cpu_to_le16(STATUS_BYTECOUNT),
+};
+
+static struct usb_endpoint_descriptor ssp_in_desc = {
+	.bLength =		USB_DT_ENDPOINT_SIZE,
+	.bDescriptorType =	USB_DT_ENDPOINT,
+	.bEndpointAddress =	USB_DIR_IN,
+	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
+	.wMaxPacketSize =	cpu_to_le16(1024),
+};
+
+static struct usb_endpoint_descriptor ssp_out_desc = {
+	.bLength =		USB_DT_ENDPOINT_SIZE,
+	.bDescriptorType =	USB_DT_ENDPOINT,
+	.bEndpointAddress =	USB_DIR_OUT,
+	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
+	.wMaxPacketSize =	cpu_to_le16(1024),
+};
+
+static struct usb_ss_ep_comp_descriptor ssp_bulk_comp_desc = {
+	.bLength =		sizeof(ssp_bulk_comp_desc),
+	.bDescriptorType =	USB_DT_SS_ENDPOINT_COMP,
+	.bMaxBurst =		15,	/* SSP optimization */
+};
+
+static struct usb_descriptor_header *eth_ssp_function[] = {
+	(struct usb_descriptor_header *) &rndis_iad_descriptor,
+	(struct usb_descriptor_header *) &rndis_control_intf,
+	(struct usb_descriptor_header *) &header_desc,
+	(struct usb_descriptor_header *) &call_mgmt_descriptor,
+	(struct usb_descriptor_header *) &rndis_acm_descriptor,
+	(struct usb_descriptor_header *) &rndis_union_desc,
+	(struct usb_descriptor_header *) &ssp_notify_desc,
+	(struct usb_descriptor_header *) &ssp_intr_comp_desc,
+	(struct usb_descriptor_header *) &rndis_data_intf,
+	(struct usb_descriptor_header *) &ssp_in_desc,
+	(struct usb_descriptor_header *) &ssp_bulk_comp_desc,
+	(struct usb_descriptor_header *) &ssp_out_desc,
+	(struct usb_descriptor_header *) &ssp_bulk_comp_desc,
 	NULL,
 };
 
@@ -837,8 +894,13 @@ rndis_bind(struct usb_configuration *c, struct usb_function *f)
 	ss_out_desc.bEndpointAddress = fs_out_desc.bEndpointAddress;
 	ss_notify_desc.bEndpointAddress = fs_notify_desc.bEndpointAddress;
 
+	/* Copy endpoint addresses to SSP descriptors */
+	ssp_in_desc.bEndpointAddress = fs_in_desc.bEndpointAddress;
+	ssp_out_desc.bEndpointAddress = fs_out_desc.bEndpointAddress;
+	ssp_notify_desc.bEndpointAddress = fs_notify_desc.bEndpointAddress;
+	
 	status = usb_assign_descriptors(f, eth_fs_function, eth_hs_function,
-			eth_ss_function, eth_ss_function);
+			eth_ss_function, eth_ssp_function);
 	if (status)
 		goto fail;
 

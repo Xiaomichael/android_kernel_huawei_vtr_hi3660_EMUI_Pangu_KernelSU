@@ -8,7 +8,7 @@ static struct usb_endpoint_descriptor ss_as_in_ep_desc  = {
 	.bEndpointAddress =	USB_DIR_IN,
 	.bmAttributes =		USB_ENDPOINT_SYNC_SYNC
 				| USB_ENDPOINT_XFER_ISOC,
-	.wMaxPacketSize =	__constant_cpu_to_le16(IN_EP_MAX_PACKET_SIZE),
+	.wMaxPacketSize =	cpu_to_le16(IN_EP_MAX_PACKET_SIZE),
 	.bInterval =		4, /* poll 1 per millisecond */
 };
 

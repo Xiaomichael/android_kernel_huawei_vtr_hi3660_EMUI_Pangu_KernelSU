@@ -2,6 +2,7 @@
  * huawei mass storage autorun and lun config
  *
  */
+#include <linux/string.h>
 
 #define MS_STG_SET_LEN         (32)
 #define FSG_MAX_LUNS_HUAWEI    (2)
