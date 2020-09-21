@@ -1018,13 +1018,18 @@ int sync_dirty_inodes(struct f2fs_sb_info *sbi, enum inode_type type)
 				get_pages(sbi, is_dir ?
 				F2FS_DIRTY_DENTS : F2FS_DIRTY_DATA));
 retry:
+	/* Prevent infinite loop in case of repeated dirty inodes */
 	cycles++;
 	if (cycles % 10000 == 0)
 		f2fs_msg(sbi->sb, KERN_ALERT,
 			"%s:%d: too many cycles(%lu), maybe an infinite loop!\n",
 				__func__, __LINE__, cycles);
-	if (unlikely(f2fs_cp_error(sbi)))
+	if (unlikely(f2fs_cp_error(sbi))) {
+		trace_f2fs_sync_dirty_inodes_exit(sbi->sb, is_dir,
+				get_pages(sbi, is_dir ?
+				F2FS_DIRTY_DENTS : F2FS_DIRTY_DATA));
 		return -EIO;
+	}
 
 	spin_lock(&sbi->inode_lock[type]);
 
