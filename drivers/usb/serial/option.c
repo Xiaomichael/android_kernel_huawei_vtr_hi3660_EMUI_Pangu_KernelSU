@@ -568,6 +568,11 @@ static const struct option_blacklist_info four_g_w14_blacklist = {
 	.sendsetup = BIT(0) | BIT(1),
 };
 
+static const struct option_blacklist_info nctrl0_rsvd123_blacklist = {
+	.sendsetup = BIT(0),
+	.reserved = BIT(1) | BIT(2) | BIT(3),
+};
+
 static const struct option_blacklist_info four_g_w100_blacklist = {
 	.sendsetup = BIT(1) | BIT(2),
 	.reserved = BIT(3),
@@ -714,6 +719,11 @@ struct option_info {
 /* Pre-define option_info objects for all blacklists used in option_ids */
 static const struct option_info askey_wwhc050_info = {
 	.blacklist = &askey_wwhc050_blacklist,
+	.flags = 0,
+};
+
+static const struct option_info nctrl0_rsvd123_info = {
+	.blacklist = &nctrl0_rsvd123_blacklist,
 	.flags = 0,
 };
 
@@ -1582,6 +1592,8 @@ static const struct usb_device_id option_ids[] = {
 	  .driver_info = (kernel_ulong_t)&nctrl0_only_info },
 	{ USB_DEVICE(TELIT_VENDOR_ID, TELIT_PRODUCT_LE910),
 		.driver_info = (kernel_ulong_t)&telit_le910_info },
+	{ USB_DEVICE_INTERFACE_CLASS(TELIT_VENDOR_ID, 0x1203, 0xff),	/* Telit LE910Cx (RNDIS) */
+		.driver_info = (kernel_ulong_t)&nctrl2_rsvd3_info },
 	{ USB_DEVICE(TELIT_VENDOR_ID, TELIT_PRODUCT_LE910_USBCFG4),
 		.driver_info = (kernel_ulong_t)&telit_le922_usbcfg3_info },
 	{ USB_DEVICE(TELIT_VENDOR_ID, TELIT_PRODUCT_LE920),
@@ -1595,7 +1607,11 @@ static const struct usb_device_id option_ids[] = {
 		.driver_info = (kernel_ulong_t)&telit_le920a4_1208_info },
 	{ USB_DEVICE_INTERFACE_CLASS(TELIT_VENDOR_ID, TELIT_PRODUCT_LE920A4_1213, 0xff) },
 	{ USB_DEVICE(TELIT_VENDOR_ID, TELIT_PRODUCT_LE920A4_1214),
-	  .driver_info = (kernel_ulong_t)&nctrl0_rsvd12_info },	/* NCTRL(0)|RSVD(1)|RSVD(2)|RSVD(3) */
+	  .driver_info = (kernel_ulong_t)&nctrl0_rsvd123_info },	/* NCTRL(0)|RSVD(1)|RSVD(2)|RSVD(3) */
+	{ USB_DEVICE_INTERFACE_CLASS(TELIT_VENDOR_ID, 0x1230, 0xff),	/* Telit LE910Cx (rmnet) */
+	  .driver_info = (kernel_ulong_t)&nctrl0_rsvd12_info },
+	{ USB_DEVICE_INTERFACE_CLASS(TELIT_VENDOR_ID, 0x1231, 0xff),	/* Telit LE910Cx (RNDIS) */
+	  .driver_info = (kernel_ulong_t)&nctrl2_rsvd3_info },
 	{ USB_DEVICE(TELIT_VENDOR_ID, 0x1260),
 	  .driver_info = (kernel_ulong_t)&nctrl0_rsvd12_info },	/* NCTRL(0)|RSVD(1)|RSVD(2) */
 	{ USB_DEVICE(TELIT_VENDOR_ID, 0x1261),
