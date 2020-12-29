@@ -35,8 +35,6 @@
 #include <linux/device.h>
 #include <uapi/linux/usb/ch9.h>
 
-#define USB_SPEED_SUPER_PLUS  5
-
 /**
  * usb_speed_string() - Returns human readable-name of the speed.
  * @speed: The speed to return human-readable name for.  If it's not
