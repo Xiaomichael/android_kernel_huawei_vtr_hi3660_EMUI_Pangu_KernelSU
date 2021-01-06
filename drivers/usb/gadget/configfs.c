@@ -1820,19 +1820,19 @@ static void android_disconnect(struct usb_gadget *gadget)
 #endif /* CONFIG_USB_CONFIGFS_UEVENT */
 
 static const struct usb_gadget_driver configfs_driver_template = {
-    .bind           = configfs_composite_bind,
-    .unbind         = configfs_composite_unbind,
-    .setup          = configfs_composite_setup,
-    .reset          = configfs_composite_disconnect,
-    .disconnect     = configfs_composite_disconnect,
-    .suspend        = configfs_composite_suspend,
-    .resume         = configfs_composite_resume,
-    .max_speed      = USB_SPEED_SUPER,
-    .driver = {
-        .owner          = THIS_MODULE,
-        .name           = "configfs-gadget",
-    },
-    .match_existing_only = 0,
+	.bind           = configfs_composite_bind,
+	.unbind         = configfs_composite_unbind,
+	.setup          = configfs_composite_setup,
+	.reset          = configfs_composite_disconnect,
+	.disconnect     = configfs_composite_disconnect,
+	.suspend        = configfs_composite_suspend,
+	.resume         = configfs_composite_resume,
+	.max_speed      = USB_SPEED_SUPER_PLUS,
+	.driver = {
+		.owner          = THIS_MODULE,
+		.name           = "configfs-gadget",
+	},
+	.match_existing_only = 1,
 };
 
 #ifdef CONFIG_USB_CONFIGFS_UEVENT
@@ -2010,7 +2010,7 @@ static struct config_group *gadgets_make(
 	gi->composite.unbind = configfs_do_nothing;
 	gi->composite.suspend = NULL;
 	gi->composite.resume = NULL;
-	gi->composite.max_speed = USB_SPEED_SUPER;
+	gi->composite.max_speed = USB_SPEED_SUPER_PLUS;
 
 	spin_lock_init(&gi->spinlock);
 	mutex_init(&gi->lock);
