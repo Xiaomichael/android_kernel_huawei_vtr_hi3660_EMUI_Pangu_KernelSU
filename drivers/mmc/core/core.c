@@ -1943,14 +1943,11 @@ int mmc_set_signal_voltage(struct mmc_host *host, int signal_voltage, u32 ocr)
 	cmd.flags = MMC_RSP_PRESENT | MMC_RSP_OPCODE | MMC_CMD_AC | MMC_RSP_136;
 
 	err = mmc_wait_for_cmd(host, &cmd, 0);
-	if (err)
-	
-	{
-		if(!strcmp(mmc_hostname(host),"mmc1"))
-		{
-			printk(KERN_ERR "%s:send cmd11 fail,err=%d\n",mmc_hostname(host),err);
-		}
-			return -EAGAIN;
+	if (err) {
+		if (!strcmp(mmc_hostname(host), "mmc1"))
+			printk(KERN_ERR "%s: send cmd11 fail, err=%d\n",
+			       mmc_hostname(host), err);
+		goto power_cycle;
 	}
 	if (!mmc_host_is_spi(host) && (cmd.resp[0] & R1_ERROR))
 		return -EIO;
