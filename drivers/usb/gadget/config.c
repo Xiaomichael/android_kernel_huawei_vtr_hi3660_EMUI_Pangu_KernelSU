@@ -40,7 +40,8 @@ usb_descriptor_fillbuf(void *buf, unsigned buflen,
 {
 	u8	*dest = buf;
 
-	if (!src)
+	/* Additional sanity check: buf must be valid */
+	if (!src || !buf)
 		return -EINVAL;
 
 	/* fill buffer from src[] until null descriptor ptr */
@@ -88,7 +89,7 @@ int usb_gadget_config_buf(
 	int					len;
 
 	/* config descriptor first */
-	if (length < USB_DT_CONFIG_SIZE || !desc)
+	if (length < USB_DT_CONFIG_SIZE || !desc || !buf)
 		return -EINVAL;
 	*cp = *config;
 
@@ -130,6 +131,10 @@ usb_copy_descriptors(struct usb_descriptor_header **src)
 	unsigned n_desc;
 	void *mem;
 	struct usb_descriptor_header **ret;
+
+	/* Guard against NULL src to avoid immediate crash */
+	if (!src)
+		return NULL;
 
 	/* count descriptors and their sizes; then add vector size */
 	for (bytes = 0, n_desc = 0, tmp = src; *tmp; tmp++, n_desc++)
@@ -198,12 +203,12 @@ EXPORT_SYMBOL_GPL(usb_assign_descriptors);
 void usb_free_all_descriptors(struct usb_function *f)
 {
 	usb_free_descriptors(f->fs_descriptors);
-	usb_free_descriptors(f->hs_descriptors);
-	usb_free_descriptors(f->ss_descriptors);
-	usb_free_descriptors(f->ssp_descriptors);
 	f->fs_descriptors = NULL;
+	usb_free_descriptors(f->hs_descriptors);
 	f->hs_descriptors = NULL;
+	usb_free_descriptors(f->ss_descriptors);
 	f->ss_descriptors = NULL;
+	usb_free_descriptors(f->ssp_descriptors);
 	f->ssp_descriptors = NULL;
 }
 EXPORT_SYMBOL_GPL(usb_free_all_descriptors);
@@ -213,6 +218,10 @@ struct usb_descriptor_header *usb_otg_descriptor_alloc(
 {
 	struct usb_descriptor_header *otg_desc;
 	unsigned length = 0;
+
+	/* Protect against invalid gadget pointer */
+	if (!gadget)
+		return NULL;
 
 	if (gadget->otg_caps && (gadget->otg_caps->otg_rev >= 0x0200))
 		length = sizeof(struct usb_otg20_descriptor);
@@ -229,11 +238,13 @@ int usb_otg_descriptor_init(struct usb_gadget *gadget,
 {
 	struct usb_otg_descriptor *otg1x_desc;
 	struct usb_otg20_descriptor *otg20_desc;
-	struct usb_otg_caps *otg_caps = gadget->otg_caps;
+	struct usb_otg_caps *otg_caps;
 	u8 otg_attributes = 0;
 
-	if (!otg_desc)
+	if (!gadget || !otg_desc)
 		return -EINVAL;
+
+	otg_caps = gadget->otg_caps;
 
 	if (otg_caps && otg_caps->otg_rev) {
 		if (otg_caps->hnp_support)
