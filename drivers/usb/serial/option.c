@@ -910,6 +910,16 @@ static const struct option_info nctrl0_only_info = {
 	.blacklist = &nctrl0_only_blacklist,
 	.flags = 0,
 };
+
+static const struct option_blacklist_info nctrl2_only_blacklist = {
+	.sendsetup = BIT(2),
+	.reserved = 0,
+};
+static const struct option_info nctrl2_only_info = {
+	.blacklist = &nctrl2_only_blacklist,
+	.flags = 0,
+};
+
 /* For NCTRL(2)|RSVD(3) */
 static const struct option_blacklist_info nctrl2_rsvd3_blacklist = {
 	.sendsetup = BIT(2),
@@ -1625,6 +1635,10 @@ static const struct usb_device_id option_ids[] = {
 	  .driver_info = (kernel_ulong_t)&nctrl0_rsvd1_info },	/* NCTRL(0)|RSVD(1) */
 	{ USB_DEVICE_INTERFACE_CLASS(TELIT_VENDOR_ID, 0x1901, 0xff),	/* Telit LN940 (MBIM) */
 	  .driver_info = (kernel_ulong_t)&nctrl0_rsvd1_info },	/* NCTRL(0) */
+	{ USB_DEVICE_INTERFACE_CLASS(TELIT_VENDOR_ID, 0x7010, 0xff),	/* Telit LE910-S1 (RNDIS) */
+	  .driver_info = (kernel_ulong_t)&nctrl2_only_info },
+	{ USB_DEVICE_INTERFACE_CLASS(TELIT_VENDOR_ID, 0x7011, 0xff),	/* Telit LE910-S1 (ECM) */
+	  .driver_info = (kernel_ulong_t)&nctrl2_only_info },
 	{ USB_DEVICE(TELIT_VENDOR_ID, 0x9010),				/* Telit SBL FN980 flashing device */
 	  .driver_info = (kernel_ulong_t)&telit_9010_info },
 	{ USB_DEVICE_AND_INTERFACE_INFO(ZTE_VENDOR_ID, ZTE_PRODUCT_MF622, 0xff, 0xff, 0xff) }, /* ZTE WCDMA products */
