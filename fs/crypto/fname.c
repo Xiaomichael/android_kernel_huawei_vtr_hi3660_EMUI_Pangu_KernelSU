@@ -295,9 +295,6 @@ int fscrypt_fname_disk_to_usr(struct inode *inode,
 	if (hash) {
 		digested_name.hash = hash;
 		digested_name.minor_hash = minor_hash;
-	} else {
-		digested_name.hash = 0;
-		digested_name.minor_hash = 0;
 	}
 	memcpy(digested_name.digest,
 	       FSCRYPT_FNAME_DIGEST(iname->name, iname->len),
