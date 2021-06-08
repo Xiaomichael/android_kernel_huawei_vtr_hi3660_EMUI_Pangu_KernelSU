@@ -540,8 +540,7 @@ static int pn_bind(struct usb_configuration *c, struct usb_function *f)
 	pn_hs_source_desc.bEndpointAddress = pn_fs_source_desc.bEndpointAddress;
 
 	/* Do not try to bind Phonet twice... */
-	status = usb_assign_descriptors(f, fs_pn_function, hs_pn_function,
-			NULL, NULL);
+	status = usb_assign_descriptors(f, fs_pn_function, hs_pn_function, hs_pn_function, hs_pn_function);
 	if (status)
 		goto err;
 

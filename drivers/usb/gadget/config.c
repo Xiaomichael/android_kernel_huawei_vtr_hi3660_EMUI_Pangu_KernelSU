@@ -168,6 +168,12 @@ int usb_assign_descriptors(struct usb_function *f,
 {
 	struct usb_gadget *g = f->config->cdev->gadget;
 
+	/* If no SSP descriptors are provided, fall back to SS descriptors
+	 * to avoid NULL pointer dereference on 10Gbps cables.
+	 */
+	if (!ssp)
+		ssp = ss;
+
 	if (fs) {
 		f->fs_descriptors = usb_copy_descriptors(fs);
 		if (!f->fs_descriptors)

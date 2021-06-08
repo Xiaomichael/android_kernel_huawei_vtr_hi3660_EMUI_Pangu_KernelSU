@@ -899,8 +899,11 @@ rndis_bind(struct usb_configuration *c, struct usb_function *f)
 	ssp_out_desc.bEndpointAddress = fs_out_desc.bEndpointAddress;
 	ssp_notify_desc.bEndpointAddress = fs_notify_desc.bEndpointAddress;
 
+	/* Use SS descriptors for both SS and SSP to avoid NULL deref
+	 * on 10Gbps cables (see commit beb1e67a5ca8).
+	 */
 	status = usb_assign_descriptors(f, eth_fs_function, eth_hs_function,
-			eth_ss_function, eth_ssp_function);
+			eth_ss_function, eth_ss_function);
 	if (status)
 		goto fail;
 
