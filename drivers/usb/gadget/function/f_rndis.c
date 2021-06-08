@@ -899,6 +899,10 @@ rndis_bind(struct usb_configuration *c, struct usb_function *f)
 	ssp_out_desc.bEndpointAddress = fs_out_desc.bEndpointAddress;
 	ssp_notify_desc.bEndpointAddress = fs_notify_desc.bEndpointAddress;
 
+	/*
+	* Use dedicated SSP descriptors (bMaxBurst=15) for optimal performance
+	* on 10Gbps SuperSpeedPlus connections.
+	*/
 	status = usb_assign_descriptors(f, eth_fs_function, eth_hs_function,
 			eth_ss_function, eth_ssp_function);
 	if (status)
