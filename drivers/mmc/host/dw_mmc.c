@@ -2232,20 +2232,11 @@ static void dw_mci_tasklet_func(unsigned long priv)
 					state = STATE_SENDING_DATA;
 					continue;
 				}
-				
-				if (cmd_data && cmd != cmd_data->stop) {
-					if (cmd_data->stop)
-						send_stop_cmd(host, cmd_data);
-					else {
-						dw_mci_start_command(host, &host->stop,
-								host->stop_cmdr);
-						host->stop_snd = true;
-					}
-					/* To avoid fifo full condition */
-					dw_mci_fifo_reset(host->dev, host);
-					state = STATE_SENDING_STOP;
-					break;
-				}
+
+				send_stop_abort(host, data);
+				dw_mci_stop_dma(host);
+				state = STATE_SENDING_STOP;
+				break;
 			}
 
 			if (!host->mrq->data || cmd->error) {
@@ -2267,10 +2258,10 @@ static void dw_mci_tasklet_func(unsigned long priv)
 			 */
 			if (test_and_clear_bit(EVENT_DATA_ERROR,
 					       &host->pending_events)) {
-				dw_mci_stop_dma(host);
 				if (!(host->data_status & (SDMMC_INT_DRTO |
 							   SDMMC_INT_EBE)))
 					send_stop_abort(host, data);
+				dw_mci_stop_dma(host);
 				state = STATE_DATA_ERROR;
 				break;
 			}
@@ -2292,10 +2283,10 @@ static void dw_mci_tasklet_func(unsigned long priv)
 			 */
 			if (test_and_clear_bit(EVENT_DATA_ERROR,
 					       &host->pending_events)) {
-				dw_mci_stop_dma(host);
 				if (!(host->data_status & (SDMMC_INT_DRTO |
 							   SDMMC_INT_EBE)))
 					send_stop_abort(host, data);
+				dw_mci_stop_dma(host);
 				state = STATE_DATA_ERROR;
 				break;
 			}
