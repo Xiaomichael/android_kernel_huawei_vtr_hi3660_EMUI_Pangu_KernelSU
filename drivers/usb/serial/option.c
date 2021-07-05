@@ -239,6 +239,9 @@ static void option_instat_callback(struct urb *urb);
 /* These Quectel products use Qualcomm's vendor ID */
 #define QUECTEL_PRODUCT_UC20			0x9003
 #define QUECTEL_PRODUCT_UC15			0x9090
+/* These u-blox products use Qualcomm's vendor ID */
+#define UBLOX_PRODUCT_R410M			0x90b2
+#define UBLOX_PRODUCT_R6XX			0x90fa
 /* These Yuga products use Qualcomm's vendor ID */
 #define YUGA_PRODUCT_CLM920_NC5			0x9625
 
@@ -920,6 +923,61 @@ static const struct option_info nctrl2_only_info = {
 	.flags = 0,
 };
 
+/* For u-blox R410M: reserved interfaces 1 and 3 */
+static const struct option_blacklist_info ublox_r410m_blacklist = {
+	.reserved = BIT(1) | BIT(3),
+};
+static const struct option_info ublox_r410m_info = {
+	.blacklist = &ublox_r410m_blacklist,
+	.flags = 0,
+};
+
+/* For u-blox R6XX: reserved interface 3 */
+static const struct option_blacklist_info ublox_r6xx_blacklist = {
+	.reserved = BIT(3),
+};
+static const struct option_info ublox_r6xx_info = {
+	.blacklist = &ublox_r6xx_blacklist,
+	.flags = 0,
+};
+
+/* For ZTE P685M: reserved interfaces 3 and 4 */
+static const struct option_blacklist_info zte_p685m_blacklist = {
+	.reserved = BIT(3) | BIT(4),
+};
+static const struct option_info zte_p685m_info = {
+	.blacklist = &zte_p685m_blacklist,
+	.flags = 0,
+};
+
+/* For Cinterion MV31 MBIM: reserved interface 3 */
+static const struct option_blacklist_info cinterion_mv31_mbim_blacklist = {
+	.reserved = BIT(3),
+};
+static const struct option_info cinterion_mv31_mbim_info = {
+	.blacklist = &cinterion_mv31_mbim_blacklist,
+	.flags = 0,
+};
+
+/* For Cinterion MV31 RMNET: reserved interface 0 */
+static const struct option_blacklist_info cinterion_mv31_rmnet_blacklist = {
+	.reserved = BIT(0),
+};
+static const struct option_info cinterion_mv31_rmnet_info = {
+	.blacklist = &cinterion_mv31_rmnet_blacklist,
+	.flags = 0,
+};
+
+/* For Telit LE910C1‑EUX: sendsetup BIT(0), reserved BIT(3) */
+static const struct option_blacklist_info nctrl0_rsvd3_blacklist = {
+	.sendsetup = BIT(0),
+	.reserved = BIT(3),
+};
+static const struct option_info nctrl0_rsvd3_info = {
+	.blacklist = &nctrl0_rsvd3_blacklist,
+	.flags = 0,
+};
+
 /* For NCTRL(2)|RSVD(3) */
 static const struct option_blacklist_info nctrl2_rsvd3_blacklist = {
 	.sendsetup = BIT(2),
@@ -1513,6 +1571,11 @@ static const struct usb_device_id option_ids[] = {
 	/* Yuga products use Qualcomm vendor ID */
 	{ USB_DEVICE(QUALCOMM_VENDOR_ID, YUGA_PRODUCT_CLM920_NC5),
 	  .driver_info = (kernel_ulong_t)&yuga_clm920_nc5_info },
+	/* u-blox products using Qualcomm vendor ID */
+	{ USB_DEVICE(QUALCOMM_VENDOR_ID, UBLOX_PRODUCT_R410M),
+	  .driver_info = (kernel_ulong_t)&ublox_r410m_info },
+	{ USB_DEVICE(QUALCOMM_VENDOR_ID, UBLOX_PRODUCT_R6XX),
+	  .driver_info = (kernel_ulong_t)&ublox_r6xx_info },
 	/* Quectel products using Quectel vendor ID */
 	{ USB_DEVICE(QUECTEL_VENDOR_ID, QUECTEL_PRODUCT_EC21),
 	  .driver_info = (kernel_ulong_t)&net_intf4_info },
@@ -1570,9 +1633,9 @@ static const struct usb_device_id option_ids[] = {
 	{ USB_DEVICE(TELIT_VENDOR_ID, TELIT_PRODUCT_DE910_DUAL) },
 	{ USB_DEVICE(TELIT_VENDOR_ID, TELIT_PRODUCT_UE910_V2) },
 	{ USB_DEVICE_INTERFACE_CLASS(TELIT_VENDOR_ID, 0x1031, 0xff),	/* Telit LE910C1-EUX */
-	 .driver_info = NCTRL(0) | RSVD(3) },
+		.driver_info = (kernel_ulong_t)&nctrl0_rsvd3_info },
 	{ USB_DEVICE_INTERFACE_CLASS(TELIT_VENDOR_ID, 0x1033, 0xff),	/* Telit LE910C1-EUX (ECM) */
-	 .driver_info = NCTRL(0) },
+		.driver_info = (kernel_ulong_t)&nctrl0_only_info },
 	{ USB_DEVICE(TELIT_VENDOR_ID, TELIT_PRODUCT_LE922_USBCFG0),
 		.driver_info = (kernel_ulong_t)&telit_le922_usbcfg0_info },
 	{ USB_DEVICE(TELIT_VENDOR_ID, TELIT_PRODUCT_LE922_USBCFG1),
@@ -1969,7 +2032,7 @@ static const struct usb_device_id option_ids[] = {
 	{ USB_DEVICE_AND_INTERFACE_INFO(ZTE_VENDOR_ID, 0x1273, 0xff, 0xff, 0xff) },
 	{ USB_DEVICE_AND_INTERFACE_INFO(ZTE_VENDOR_ID, 0x1274, 0xff, 0xff, 0xff) },
 	{ USB_DEVICE(ZTE_VENDOR_ID, 0x1275),	/* ZTE P685M */
-	  .driver_info = RSVD(3) | RSVD(4) },
+	  .driver_info = (kernel_ulong_t)&zte_p685m_info },
 	{ USB_DEVICE_AND_INTERFACE_INFO(ZTE_VENDOR_ID, 0x1276, 0xff, 0xff, 0xff) },
 	{ USB_DEVICE_AND_INTERFACE_INFO(ZTE_VENDOR_ID, 0x1277, 0xff, 0xff, 0xff) },
 	{ USB_DEVICE_AND_INTERFACE_INFO(ZTE_VENDOR_ID, 0x1278, 0xff, 0xff, 0xff) },
@@ -2318,9 +2381,9 @@ static const struct usb_device_id option_ids[] = {
 	{ USB_DEVICE(SIEMENS_VENDOR_ID, CINTERION_PRODUCT_HC28_MDM) }, /* HC28 enumerates with Siemens or Cinterion VID depending on FW revision */
 	{ USB_DEVICE(SIEMENS_VENDOR_ID, CINTERION_PRODUCT_HC28_MDMNET) },
 	{ USB_DEVICE_INTERFACE_CLASS(CINTERION_VENDOR_ID, CINTERION_PRODUCT_MV31_MBIM, 0xff),
-	  .driver_info = RSVD(3)},
+	.driver_info = (kernel_ulong_t)&cinterion_mv31_mbim_info },
 	{ USB_DEVICE_INTERFACE_CLASS(CINTERION_VENDOR_ID, CINTERION_PRODUCT_MV31_RMNET, 0xff),
-	  .driver_info = RSVD(0)},
+	.driver_info = (kernel_ulong_t)&cinterion_mv31_rmnet_info },
 	{ USB_DEVICE(OLIVETTI_VENDOR_ID, OLIVETTI_PRODUCT_OLICARD100),
 		.driver_info = (kernel_ulong_t)&net_intf4_info },
 	{ USB_DEVICE(OLIVETTI_VENDOR_ID, OLIVETTI_PRODUCT_OLICARD120),
