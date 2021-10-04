@@ -1572,12 +1572,6 @@ void sdhci_set_power_noreg(struct sdhci_host *host, unsigned char mode,
 		} else {
 			switch (1 << vdd) {
 			case MMC_VDD_165_195:
-			/*
-			 * Without a regulator, SDHCI does not support 2.0v
-			 * so we only get here if the driver deliberately
-			 * added the 2.0v range to ocr_avail. Map it to 1.8v
-			 * for the purpose of turning on the power.
-			 */
 			case MMC_VDD_20_21:
 				pwr = SDHCI_POWER_180;
 				break;
@@ -1587,11 +1581,17 @@ void sdhci_set_power_noreg(struct sdhci_host *host, unsigned char mode,
 				break;
 			case MMC_VDD_32_33:
 			case MMC_VDD_33_34:
+			/*
+			 * 3.4 ~ 3.6V are valid only for those platforms where it's
+			 * known that the voltage range is supported by hardware.
+			 */
+			case MMC_VDD_34_35:
+			case MMC_VDD_35_36:
 				pwr = SDHCI_POWER_330;
 				break;
 			default:
 				WARN(1, "%s: Invalid vdd %#x\n",
-			     mmc_hostname(host->mmc), vdd);
+				     mmc_hostname(host->mmc), vdd);
 				BUG();
 			}
 		}
