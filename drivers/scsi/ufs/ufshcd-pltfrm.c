@@ -68,6 +68,113 @@ static struct ufs_hba_variant_ops *get_variant_ops(struct device *dev)
 	return NULL;
 }
 
+/*
+ * ufshcd_populate_vreg - fill a ufs_vreg struct from device tree
+ * @dev: pointer to device
+ * @name: regulator supply name (e.g., "vcc")
+ * @out_vreg: pointer to store resulting ufs_vreg pointer
+ *
+ * Returns 0 on success, -ENOENT if regulator not present, other negative
+ * error on failure.
+ */
+static int ufshcd_populate_vreg(struct device *dev, const char *name,
+				struct ufs_vreg **out_vreg)
+{
+	struct ufs_vreg *vreg;
+	struct device_node *np = dev->of_node;
+
+	if (!np)
+		return -EINVAL;
+
+	if (!of_parse_phandle(np, name, 0)) {
+		dev_dbg(dev, "%s: %s regulator not referenced, assuming absent\n",
+			__func__, name);
+		return -ENOENT;
+	}
+
+	vreg = devm_kzalloc(dev, sizeof(*vreg), GFP_KERNEL);
+	if (!vreg)
+		return -ENOMEM;
+
+	vreg->name = name;
+	vreg->reg = devm_regulator_get_optional(dev, name);
+	if (IS_ERR(vreg->reg)) {
+		int err = PTR_ERR(vreg->reg);
+		devm_kfree(dev, vreg);
+		if (err == -ENODEV) {
+			dev_dbg(dev, "%s: %s regulator not found\n", __func__, name);
+			return -ENOENT;
+		}
+		dev_err(dev, "%s: %s regulator get failed, err=%d\n",
+			__func__, name, err);
+		return err;
+	}
+
+	if (regulator_count_voltages(vreg->reg) > 0) {
+		vreg->min_uV = regulator_get_voltage(vreg->reg);
+		vreg->max_uV = vreg->min_uV;
+	}
+	vreg->max_uA = regulator_get_current_limit(vreg->reg);
+
+	*out_vreg = vreg;
+	return 0;
+}
+
+/**
+ * ufshcd_parse_regulator_info - get regulator info from device tree
+ * @hba: per adapter instance
+ *
+ * Get regulator info for vcc, vccq, vccq2 from device tree.
+ * Returns 0 on success, non-zero on failure.
+ */
+static int ufshcd_parse_regulator_info(struct ufs_hba *hba)
+{
+	int err = 0;
+	struct device *dev = hba->dev;
+	struct ufs_vreg_info *info = &hba->vreg_info;
+
+	err = ufshcd_populate_vreg(dev, "vcc", &info->vcc);
+	if (err && err != -ENOENT) {
+		dev_err(dev, "%s: vcc population failed, err=%d\n", __func__, err);
+		goto out;
+	}
+	err = ufshcd_populate_vreg(dev, "vccq", &info->vccq);
+	if (err && err != -ENOENT) {
+		dev_err(dev, "%s: vccq population failed, err=%d\n", __func__, err);
+		goto out;
+	}
+	err = ufshcd_populate_vreg(dev, "vccq2", &info->vccq2);
+	if (err && err != -ENOENT) {
+		dev_err(dev, "%s: vccq2 population failed, err=%d\n", __func__, err);
+		goto out;
+	}
+	err = 0;
+out:
+	return err;
+}
+
+/**
+ * ufshcd_init_lanes_per_dir - initialize lanes per direction
+ * @hba: per adapter instance
+ *
+ * Read number of lanes per direction from device tree. If not specified,
+ * default to 2 lanes per direction.
+ */
+static void ufshcd_init_lanes_per_dir(struct ufs_hba *hba)
+{
+	struct device *dev = hba->dev;
+	u32 lanes = 2;
+	int ret;
+
+	ret = of_property_read_u32(dev->of_node, "lanes-per-direction", &lanes);
+	if (ret) {
+		dev_dbg(dev, "%s: lanes-per-direction not specified, defaulting to 2\n",
+			__func__);
+		lanes = 2;
+	}
+	hba->lanes_per_direction = lanes;
+}
+
 #ifdef CONFIG_PM
 /**
  * ufshcd_pltfrm_suspend - suspend power management function
@@ -239,7 +346,26 @@ int ufshcd_pltfrm_probe(struct platform_device *pdev)
 		if (timer_irq < 0)
 			dev_err(dev, "UFS timer interrupt is not available!\n");
 	}
+	err = ufshcd_parse_regulator_info(hba);
+	if (err) {
+		dev_err(&pdev->dev, "%s: regulator init failed %d\n",
+				__func__, err);
+		goto dealloc_host;
+	}
 
+	ufshcd_init_lanes_per_dir(hba);
+
+	/*
+	 * ufshcd_init() must be called after regulator and lanes initialization
+	 * and before runtime PM enable.
+	 */
+	err = ufshcd_init(hba, mmio_base, irq, timer_irq);
+	if (err) {
+		dev_err(dev, "Initialization failed\n");
+		goto dealloc_host;
+	}
+
+	/* runtime PM setup after ufshcd_init */
 	pm_runtime_set_active(&pdev->dev);
 	pm_runtime_irq_safe(&pdev->dev);
 	pm_suspend_ignore_children(&pdev->dev, true);
@@ -248,24 +374,12 @@ int ufshcd_pltfrm_probe(struct platform_device *pdev)
 
 	if (of_find_property(np, "ufs-kirin-disable-pm-runtime", NULL))
 		hba->caps |= DISABLE_UFS_PMRUNTIME;
-	/* auto hibern8 can not exist with pm runtime */
+	
 	if (hba->caps & DISABLE_UFS_PMRUNTIME ||
-		of_find_property(np, "ufs-kirin-use-auto-H8", NULL)) {
+	    of_find_property(np, "ufs-kirin-use-auto-H8", NULL)) {
 		pm_runtime_forbid(hba->dev);
 	}
 	pm_runtime_enable(&pdev->dev);
-
-	/* TODO: 需要从合并分支获取 ufshcd_init_lanes_per_dir 函数的实现
-	 * 这个函数可能用于初始化UFS通道配置
-	 * 暂时注释掉以避免编译错误
-	 */
-	/* ufshcd_init_lanes_per_dir(hba); */
-
-	err = ufshcd_init(hba, mmio_base, irq, timer_irq);
-	if (err) {
-		dev_err(dev, "Initialization failed\n");
-		goto out_disable_rpm;
-	}
 
 #ifndef CONFIG_SCSI_UFS_ENHANCED_INLINE_CRYPTO_V2
 #ifdef CONFIG_SCSI_UFS_INLINE_CRYPTO
@@ -284,7 +398,10 @@ int ufshcd_pltfrm_probe(struct platform_device *pdev)
 out_disable_rpm:
 	pm_runtime_disable(&pdev->dev);
 	pm_runtime_set_suspended(&pdev->dev);
+dealloc_host:
+	scsi_host_put(hba->host);
 out:
+	dev_err(dev, "%s: probe failed, err=%d\n", __func__, err);
 	return err;
 }
 
