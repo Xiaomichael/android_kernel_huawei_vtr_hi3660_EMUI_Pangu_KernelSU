@@ -109,9 +109,9 @@ long ion_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		struct ion_handle *handle;
 
 		handle = __ion_alloc(client, data.allocation.len,
-						data.allocation.align,
-						data.allocation.heap_id_mask,
-						data.allocation.flags, true);
+							data.allocation.align,
+							data.allocation.heap_id_mask,
+							data.allocation.flags, true);
 		if (IS_ERR(handle)) {
 			pr_err("%s: ion alloc failed!\n", __func__);
 			pr_err("len:%lx,align:%lx,heap_id_mask:%x,flags:%x\n",
@@ -123,7 +123,6 @@ long ion_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		}
 
 		data.allocation.handle = handle->id;
-
 		cleanup_handle = handle;
 		break;
 	}
@@ -259,7 +258,6 @@ long ion_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 					__func__, cmd);
 			if (cleanup_handle) {
 				ion_free(client, cleanup_handle);
-				ion_handle_put(cleanup_handle);
 			}
 			return -EFAULT;
 		}
