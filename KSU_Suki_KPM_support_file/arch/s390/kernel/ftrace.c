@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Dynamic function tracer architecture backend.
  *
  * Copyright IBM Corp. 2009,2014

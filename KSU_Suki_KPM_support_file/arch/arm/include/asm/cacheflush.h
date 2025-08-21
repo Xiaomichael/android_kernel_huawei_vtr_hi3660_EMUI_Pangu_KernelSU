@@ -1,4 +1,4 @@
-﻿/*
+/*
  *  arch/arm/include/asm/cacheflush.h
  *
  *  Copyright (C) 1999-2002 Russell King

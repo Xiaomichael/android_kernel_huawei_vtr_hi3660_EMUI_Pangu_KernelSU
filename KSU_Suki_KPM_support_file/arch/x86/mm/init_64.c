@@ -1,4 +1,4 @@
-﻿/*
+/*
  *  linux/arch/x86_64/mm/init.c
  *
  *  Copyright (C) 1995  Linus Torvalds

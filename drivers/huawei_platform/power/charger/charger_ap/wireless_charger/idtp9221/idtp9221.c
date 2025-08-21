@@ -34,7 +34,7 @@ static struct idtp9221_device_info *g_idtp9221_di;
 static struct wake_lock g_idtp9221_wakelock;
 static int stop_charging_flag;
 static int irq_abnormal_flag = false;
-static const u8 idtp9221_send_msg_len[IDT9221_RX_TO_TX_DATA_LEN+2] = {0,0x18,0x28,0x38,0x48,0x58};
+static const u8 idtp9221_send_msg_len[IDT9221_RX_TO_TX_DATA_LEN+2] = {0,0x18,0x28,0x38,0x48,0x58};
 static const u8 idtp9221_send_fsk_msg_len[IDT9221_RX_TO_TX_DATA_LEN+2] = {0,0x1f,0x2f,0x3f,0x4f,0x5f};
 static int g_otp_index = -1;  //refer to which otp to be (or has been) programmed
 static int g_otp_status = -1;  //OTP_PROGRAMED;OTP_NON_PROGRAMED;OTP_ERR_PROGRAMED

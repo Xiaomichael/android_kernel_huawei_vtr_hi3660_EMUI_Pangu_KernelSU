@@ -1,4 +1,4 @@
-﻿#ifndef _ASMS390_SET_MEMORY_H
+#ifndef _ASMS390_SET_MEMORY_H
 #define _ASMS390_SET_MEMORY_H
 
 #define SET_MEMORY_RO	1UL

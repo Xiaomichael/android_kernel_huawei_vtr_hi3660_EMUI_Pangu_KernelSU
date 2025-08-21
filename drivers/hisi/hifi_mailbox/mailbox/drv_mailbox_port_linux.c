@@ -1,7 +1,7 @@
 
 
 /*****************************************************************************
-1 Í·ÎÄ¼ş°üº¬
+1 å¤´æ–‡ä»¶åŒ…å«
 *****************************************************************************/
 
 #include <linux/string.h>
@@ -28,16 +28,16 @@
 #include "bsp_drv_ipc.h"
 
 /*****************************************************************************
-  1 ¿ÉÎ¬¿É²âĞÅÏ¢ÖĞ°üº¬µÄCÎÄ¼ş±àºÅºê¶¨Òå
+  1 å¯ç»´å¯æµ‹ä¿¡æ¯ä¸­åŒ…å«çš„Cæ–‡ä»¶ç¼–å·å®å®šä¹‰
 *****************************************************************************/
 #undef	_MAILBOX_FILE_
 #define _MAILBOX_FILE_	 "linux"
 /*lint -e750*/
 #define MAILBOX_MILLISEC_PER_SECOND 					  1000
 
-#define  MAILBOX_LINUX_SEND_FULL_DELAY_MS				  10		 /*·¢ËÍÂúÑÓ³ÙºÁÃë*/
+#define  MAILBOX_LINUX_SEND_FULL_DELAY_MS				  10		 /*å‘é€æ»¡å»¶è¿Ÿæ¯«ç§’*/
 
-#define  MAILBOX_LINUX_SEND_FULL_DELAY_TIMES			  0 		 /*·¢ËÍÂúÑÓ³ÙÔÙ³¢ÊÔ´ÎÊı*/
+#define  MAILBOX_LINUX_SEND_FULL_DELAY_TIMES			  0 		 /*å‘é€æ»¡å»¶è¿Ÿå†å°è¯•æ¬¡æ•°*/
 
 enum MAILBOX_LOCK_TYPE
 {
@@ -45,7 +45,7 @@ enum MAILBOX_LOCK_TYPE
 	MAILBOX_LOCK_SPINLOCK  = 0x00020000
 };
 /*****************************************************************************
-  ¶¨ÒåCºËvxworks²Ù×÷ÏµÍ³ÖĞÓÊÏäÊı¾İµÄ´¦Àí½Ó¿Úµ÷ÓÃ·½Ê½
+  å®šä¹‰Cæ ¸vxworksæ“ä½œç³»ç»Ÿä¸­é‚®ç®±æ•°æ®çš„å¤„ç†æ¥å£è°ƒç”¨æ–¹å¼
 *****************************************************************************/
 #define MAILBOX_PROC_MASK  0x0000ffff
 enum MAILBOX_LINUX_PROC_STYLE_E
@@ -54,59 +54,59 @@ enum MAILBOX_LINUX_PROC_STYLE_E
 
     MAILBOX_RECEV_START,
 
-    /*¹Ò½ÓÔÚÈÎÎñÉÏµÄÓÊ¼ş´¦Àí¶ÓÁĞ¿ªÊ¼*/
+    /*æŒ‚æ¥åœ¨ä»»åŠ¡ä¸Šçš„é‚®ä»¶å¤„ç†é˜Ÿåˆ—å¼€å§‹*/
     MAILBOX_RECV_TASK_START,
     MAILBOX_RECV_TASK_NORMAL,
     MAILBOX_RECV_TASK_HIGH,
 
-    /*¹Ò½ÓÔÚÈÎÎñÉÏµÄÓÊ¼ş´¦Àí¶ÓÁĞ½áÊø*/
+    /*æŒ‚æ¥åœ¨ä»»åŠ¡ä¸Šçš„é‚®ä»¶å¤„ç†é˜Ÿåˆ—ç»“æŸ*/
     MAILBOX_RECV_TASK_END,
 
-    /*taskletÀïÃæ´¦ÀíµÄÏûÏ¢*/
+    /*taskleté‡Œé¢å¤„ç†çš„æ¶ˆæ¯*/
     MAILBOX_RECV_TASKLET,
     MAILBOX_RECV_TASKLET_HI,
 
-    /*ÔÚÖĞ¶ÏÖĞ´¦ÀíµÄÓÊ¼ş´¦Àí¶ÓÁĞ*/
+    /*åœ¨ä¸­æ–­ä¸­å¤„ç†çš„é‚®ä»¶å¤„ç†é˜Ÿåˆ—*/
     MAILBOX_RECV_INT_IRQ,
     MAILBOX_RECV_END,
 };
 
 /*****************************************************************************
-    ¶¨ÒåCºËÓÊÏäµ¥¸öÈÎÎñ¹Ò½ÓµÄÓÊÏä¹¤×÷¶ÓÁĞ¼°ÆäÊı¾İ
+    å®šä¹‰Cæ ¸é‚®ç®±å•ä¸ªä»»åŠ¡æŒ‚æ¥çš„é‚®ç®±å·¥ä½œé˜Ÿåˆ—åŠå…¶æ•°æ®
 *****************************************************************************/
 struct mb_local_work
 {
-    unsigned int             channel_id;      /*ÓÊÏäIDºÅ£¬¿ÉÄÜÊÇºË¼äÁ¬½ÓID,Ò²¿ÉÄÜÊÇÎïÀíÍ¨µÀID*/
-    unsigned int             data_flag;       /*´ËÓÊÏäÊÇ·ñÓĞÊı¾İµÄ±êÖ¾Î»*/
+    unsigned int             channel_id;      /*é‚®ç®±IDå·ï¼Œå¯èƒ½æ˜¯æ ¸é—´è¿æ¥ID,ä¹Ÿå¯èƒ½æ˜¯ç‰©ç†é€šé“ID*/
+    unsigned int             data_flag;       /*æ­¤é‚®ç®±æ˜¯å¦æœ‰æ•°æ®çš„æ ‡å¿—ä½*/
     int		      (*cb)(unsigned int channel_id);
-    struct mb_local_work            *next;          /*Ö¸ÏòÏÂÒ»Ìõ*/
+    struct mb_local_work            *next;          /*æŒ‡å‘ä¸‹ä¸€æ¡*/
     void                     *mb_priv;
 };
 
 /*****************************************************************************
-  ¶¨ÒåCºËÓÊÏäÈÎÎñÏà¹ØµÄÊı¾İ
+  å®šä¹‰Cæ ¸é‚®ç®±ä»»åŠ¡ç›¸å…³çš„æ•°æ®
 *****************************************************************************/
 struct mb_local_proc
 {
-    signed char                 proc_name[16];   /*´¦Àí·½Ê½Ãû×Ö*/
-    unsigned int               proc_id;         /*´¦Àí·½Ê½IDºÅ*/
-    signed int                 priority;       /*ÈÎÎñÓÅÏÈ¼¶*/
-    struct mb_local_work       *work_list;      /*´ËÈÎÎñ¹Ò½ÓµÄÓÊÏä´¦Àí¶ÓÁĞ*/
-    wait_queue_head_t           wait;           /*ÈÎÎñ·½Ê½µÈ´ıµÄÏûÏ¢*/
-    struct tasklet_struct       tasklet;        /*tasklet·½Ê½µÄ¾ä±ú*/
+    signed char                 proc_name[16];   /*å¤„ç†æ–¹å¼åå­—*/
+    unsigned int               proc_id;         /*å¤„ç†æ–¹å¼IDå·*/
+    signed int                 priority;       /*ä»»åŠ¡ä¼˜å…ˆçº§*/
+    struct mb_local_work       *work_list;      /*æ­¤ä»»åŠ¡æŒ‚æ¥çš„é‚®ç®±å¤„ç†é˜Ÿåˆ—*/
+    wait_queue_head_t           wait;           /*ä»»åŠ¡æ–¹å¼ç­‰å¾…çš„æ¶ˆæ¯*/
+    struct tasklet_struct       tasklet;        /*taskletæ–¹å¼çš„å¥æŸ„*/
     int                         incoming;
 
 };
 
 /*****************************************************************************
-  ¶¨ÒåÓÊÏäÎïÀíÍ¨µÀºÍÈÎÎñ£¬ºË¼äÖĞ¶Ï¼°½ÓÊÕ»Øµ÷º¯ÊıÖ®¼äµÄ¶ÔÓ¦¹ØÏµ
+  å®šä¹‰é‚®ç®±ç‰©ç†é€šé“å’Œä»»åŠ¡ï¼Œæ ¸é—´ä¸­æ–­åŠæ¥æ”¶å›è°ƒå‡½æ•°ä¹‹é—´çš„å¯¹åº”å…³ç³»
 *****************************************************************************/
 struct mb_local_cfg
 {
-    unsigned int               channel_id;      /*ÓÊÏäÍ¨µÀID¡£*/
-    unsigned int               property;      /*Í¨µÀÊôĞÔ*/
-    unsigned int               int_src;         /*ÓÊÏäÍ¨µÀËùÊ¹ÓÃµÄºË¼äÖĞ¶Ï×ÊÔ´ºÅ¡£*/
-    unsigned int               dst_id;          /*ÓÊÏäÍ¨µÀËùÊ¹ÓÃµÄºË¼äÖĞ¶ÏÄ¿±êCPUºÅ*/
+    unsigned int               channel_id;      /*é‚®ç®±é€šé“IDã€‚*/
+    unsigned int               property;      /*é€šé“å±æ€§*/
+    unsigned int               int_src;         /*é‚®ç®±é€šé“æ‰€ä½¿ç”¨çš„æ ¸é—´ä¸­æ–­èµ„æºå·ã€‚*/
+    unsigned int               dst_id;          /*é‚®ç®±é€šé“æ‰€ä½¿ç”¨çš„æ ¸é—´ä¸­æ–­ç›®æ ‡CPUå·*/
 };
 
 struct mb_mutex
@@ -117,59 +117,59 @@ struct mb_mutex
 };
 
 /*****************************************************************************
-  2 È«¾Ö±äÁ¿¶¨Òå
+  2 å…¨å±€å˜é‡å®šä¹‰
 *****************************************************************************/
-static struct wake_lock mb_lpwr_lock; /*·ÀÖ¹ÔÚ»½ĞÑºó£¬´¦ÀíÓÊ¼ş¹ı³ÌÖĞ½øÈëË¯Ãß*/
+static struct wake_lock mb_lpwr_lock; /*é˜²æ­¢åœ¨å”¤é†’åï¼Œå¤„ç†é‚®ä»¶è¿‡ç¨‹ä¸­è¿›å…¥ç¡çœ */
 
-static bool is_usb_suspend = false; /*·ÀÖ¹ÔÚ»½ĞÑºó£¬´¦ÀíÓÊ¼ş¹ı³ÌÖĞ½øÈëË¯Ãß*/
+static bool is_usb_suspend = false; /*é˜²æ­¢åœ¨å”¤é†’åï¼Œå¤„ç†é‚®ä»¶è¿‡ç¨‹ä¸­è¿›å…¥ç¡çœ */
 
 
-/*ÓÊÏäÈÎÎñÊôĞÔÁĞ±í*/
+/*é‚®ç®±ä»»åŠ¡å±æ€§åˆ—è¡¨*/
 MAILBOX_LOCAL struct mb_local_proc g_mailbox_local_proc_tbl[] =
 {
-    /*ÈÎÎñ·½Ê½µÄÓÊ¼şÊı¾İ´¦Àí*/
+    /*ä»»åŠ¡æ–¹å¼çš„é‚®ä»¶æ•°æ®å¤„ç†*/
     {"mailboxNormal",   MAILBOX_RECV_TASK_NORMAL,   86,  0, },
     {"mailboxHigh",     MAILBOX_RECV_TASK_HIGH,     99,  0, },
 
-    /*tasklet ·½Ê½´¦ÀíÏûÏ¢*/
+    /*tasklet æ–¹å¼å¤„ç†æ¶ˆæ¯*/
     {"mailboxTasklet",  MAILBOX_RECV_TASKLET,     0,  0, },
     {"mailboxTasklet",  MAILBOX_RECV_TASKLET_HI,     0,  0, },
 
-    /*ÖĞ¶Ï·½Ê½µÄÓÊ¼şÊı¾İ´¦Àí*/
+    /*ä¸­æ–­æ–¹å¼çš„é‚®ä»¶æ•°æ®å¤„ç†*/
     {"mailboxInt",      MAILBOX_RECV_INT_IRQ,     0,  0, },
 
-    /*ÇëÔÚ´ËºóĞÂÔö´¦Àí·½Ê½ÏîÄ¿£¬·ñÔò»áÓ°ÏìUTÓÃÀı*/
+    /*è¯·åœ¨æ­¤åæ–°å¢å¤„ç†æ–¹å¼é¡¹ç›®ï¼Œå¦åˆ™ä¼šå½±å“UTç”¨ä¾‹*/
 
-    /*½áÊø*/
+    /*ç»“æŸ*/
 };
 
-/*AºËµÄÓÊÏäÍ¨µÀ×ÊÔ´ÓëÆ½Ì¨ÏµÍ³×ÊÔ´¶ÔÓ¦¹ØÏµÅäÖÃ±í*/
+/*Aæ ¸çš„é‚®ç®±é€šé“èµ„æºä¸å¹³å°ç³»ç»Ÿèµ„æºå¯¹åº”å…³ç³»é…ç½®è¡¨*/
 MAILBOX_LOCAL struct mb_local_cfg g_mb_local_cfg_tbl[] =
 {
-    /*½ÓÊÕÍ¨µÀµÄÅäÖÃ*/
-    /*ChannelID*/                                   /*Í¨µÀÊôĞÔ*/
+    /*æ¥æ”¶é€šé“çš„é…ç½®*/
+    /*ChannelID*/                                   /*é€šé“å±æ€§*/
     {MAILBOX_MAILCODE_RESERVED(MCU,  ACPU, MSG),    MAILBOX_RECV_TASKLET_HI,     0    },
     {MAILBOX_MAILCODE_RESERVED(HIFI, ACPU, MSG),    MAILBOX_RECV_TASKLET_HI,     0    },
     {MAILBOX_MAILCODE_RESERVED(CCPU, ACPU, MSG),    MAILBOX_RECV_TASKLET_HI,     0    },
     {MAILBOX_MAILCODE_RESERVED(CCPU, ACPU, IFC),    MAILBOX_RECV_TASK_NORMAL,   0    },
     {MAILBOX_MAILCODE_RESERVED(MCU, ACPU, IFC),     MAILBOX_RECV_TASK_HIGH,   0    },
 
-    /*·¢ËÍÍ¨µÀÅäÖÃ*/
-    /*ChannelID*/                                   /*Í¨µÀÊôĞÔ*/
+    /*å‘é€é€šé“é…ç½®*/
+    /*ChannelID*/                                   /*é€šé“å±æ€§*/
     {MAILBOX_MAILCODE_RESERVED( ACPU, MCU,  MSG),   MAILBOX_SEND | MAILBOX_LOCK_SPINLOCK,   0    },
     {MAILBOX_MAILCODE_RESERVED( ACPU, HIFI, MSG),   MAILBOX_SEND | MAILBOX_LOCK_SPINLOCK,   0    },
 
     {MAILBOX_MAILCODE_RESERVED( ACPU, CCPU, MSG),   MAILBOX_SEND |
-     MAILBOX_LOCK_SEMAPHORE /*Èç¹ûÏûÏ¢Í¨µÀ×÷ÎªIFCµÄ·µ»ØÍ¨µÀ£¬ÇÒÕâ¸öIFCÖ´ĞĞ·½µÄ
-                               º¯ÊıÓĞË¯Ãß¶¯×÷£¬´ËÏûÏ¢Í¨µÀ¾ÍÖ»ÄÜÓÃĞÅºÅÁ¿À´±£»¤*/
+     MAILBOX_LOCK_SEMAPHORE /*å¦‚æœæ¶ˆæ¯é€šé“ä½œä¸ºIFCçš„è¿”å›é€šé“ï¼Œä¸”è¿™ä¸ªIFCæ‰§è¡Œæ–¹çš„
+                               å‡½æ•°æœ‰ç¡çœ åŠ¨ä½œï¼Œæ­¤æ¶ˆæ¯é€šé“å°±åªèƒ½ç”¨ä¿¡å·é‡æ¥ä¿æŠ¤*/
     ,   0    },
 
     {MAILBOX_MAILCODE_RESERVED( ACPU, CCPU, IFC),   MAILBOX_SEND | MAILBOX_LOCK_SEMAPHORE,   0    },
     {MAILBOX_MAILCODE_RESERVED( ACPU, MCU,  IFC),   MAILBOX_SEND | MAILBOX_LOCK_SEMAPHORE,   0    },
 
-    /*ÇëÔÚ´ËºóĞÂÔöÍ¨µÀÅäÖÃ£¬·ñÔò»áÓ°ÏìUTÓÃÀı*/
+    /*è¯·åœ¨æ­¤åæ–°å¢é€šé“é…ç½®ï¼Œå¦åˆ™ä¼šå½±å“UTç”¨ä¾‹*/
 
-    /*½áÊø±êÖ¾*/
+    /*ç»“æŸæ ‡å¿—*/
     {MAILBOX_MAILCODE_INVALID, 0,0}
 };
 
@@ -183,7 +183,7 @@ void mailbox_usb_suspend(bool is_suspend)
 
 
 /*****************************************************************************
-  3 º¯Êı¶¨Òå
+  3 å‡½æ•°å®šä¹‰
 *****************************************************************************/
 MAILBOX_LOCAL void mailbox_receive_process(unsigned long data)
 {
@@ -192,7 +192,7 @@ MAILBOX_LOCAL void mailbox_receive_process(unsigned long data)
 
 
     while (MAILBOX_NULL != work) {
-        /*±éÀú±êÖ¾Î»£¬Èç¹ûÓĞÖÃÎ»£¬µ÷ÓÃ¶ÔÓ¦µÄÓÊÏäIDºÅµÄ»Øµ÷º¯Êı*/
+        /*éå†æ ‡å¿—ä½ï¼Œå¦‚æœæœ‰ç½®ä½ï¼Œè°ƒç”¨å¯¹åº”çš„é‚®ç®±IDå·çš„å›è°ƒå‡½æ•°*/
         if (MAILBOX_TRUE == work->data_flag) {
             work->data_flag = MAILBOX_FALSE;
             mailbox_record_sche_recv(work->mb_priv);
@@ -232,7 +232,7 @@ MAILBOX_LOCAL int mailbox_receive_task(void * data)
     return MAILBOX_OK;
 }
 
-/*±¾ÓÊÏäºËµÄ¶ÔÍâÌá¹©½Ó¿Ú*/
+/*æœ¬é‚®ç®±æ ¸çš„å¯¹å¤–æä¾›æ¥å£*/
 
 MAILBOX_EXTERN int mailbox_init_platform(void)
 {
@@ -243,17 +243,17 @@ MAILBOX_EXTERN int mailbox_init_platform(void)
 
     wake_lock_init(&mb_lpwr_lock, WAKE_LOCK_SUSPEND, "mailbox_low_power_wake_lock");
 
-    /*´´½¨Æ½Ì¨ÈÎÎñÖĞ¶ÏĞÅºÅÁ¿²¿·Ö*/
+    /*åˆ›å»ºå¹³å°ä»»åŠ¡ä¸­æ–­ä¿¡å·é‡éƒ¨åˆ†*/
     while(count) {
-        /*ÎªÈÎÎñ´¦Àí·½Ê½µÄÓÊÏäÍ¨µÀ´´½¨ÈÎÎñ*/
+        /*ä¸ºä»»åŠ¡å¤„ç†æ–¹å¼çš„é‚®ç®±é€šé“åˆ›å»ºä»»åŠ¡*/
         proc_id = local_proc->proc_id;
         if((proc_id > MAILBOX_RECV_TASK_START) && (proc_id < MAILBOX_RECV_TASK_END)) {
 
-            /* ´´½¨ÓÊÏä½ÓÊÕÈÎÎñµÈ´ıĞÅºÅÁ¿*/
+            /* åˆ›å»ºé‚®ç®±æ¥æ”¶ä»»åŠ¡ç­‰å¾…ä¿¡å·é‡*/
             init_waitqueue_head(&local_proc->wait);
 
-            /* ´´½¨ÓÊÏäÊÕÊı¾İ´¦ÀíÈÎÎñ*/
-            task = kthread_run(mailbox_receive_task, (void*)local_proc, local_proc->proc_name);
+            /* åˆ›å»ºé‚®ç®±æ”¶æ•°æ®å¤„ç†ä»»åŠ¡*/
+            task = kthread_run(mailbox_receive_task, (void*)local_proc, "%s", local_proc->proc_name);
             if (IS_ERR(task)) {
                 return mailbox_logerro_p1(MAILBOX_ERR_LINUX_TASK_CREATE, proc_id);
             }
@@ -282,9 +282,9 @@ MAILBOX_LOCAL int mailbox_ipc_process(
     unsigned int is_find = MAILBOX_TRUE;
 
     while (local_work) {
-        /*´ÓÓÊÏä¹¤×÷¶ÓÁĞÖĞÕÒµ½¶ÔÓ¦µÄÓÊÏä£¬ÉèÖÃ±êÖ¾Î»²¢ÊÍ·ÅĞÅºÅÁ¿Í¨Öª´¦ÀíÈÎÎñ*/
+        /*ä»é‚®ç®±å·¥ä½œé˜Ÿåˆ—ä¸­æ‰¾åˆ°å¯¹åº”çš„é‚®ç®±ï¼Œè®¾ç½®æ ‡å¿—ä½å¹¶é‡Šæ”¾ä¿¡å·é‡é€šçŸ¥å¤„ç†ä»»åŠ¡*/
         if (channel_id  == local_work->channel_id) {
-            /*ÉèÖÃÈÎÎñÓÊÏä¹¤×÷¶ÓÁĞÁ´±íÖĞ´ËÓÊÏäµÄÊı¾İ±êÖ¾Î»*/
+            /*è®¾ç½®ä»»åŠ¡é‚®ç®±å·¥ä½œé˜Ÿåˆ—é“¾è¡¨ä¸­æ­¤é‚®ç®±çš„æ•°æ®æ ‡å¿—ä½*/
             local_work->data_flag = MAILBOX_TRUE;
 
             mailbox_record_sche_send(local_work->mb_priv);
@@ -297,20 +297,20 @@ MAILBOX_LOCAL int mailbox_ipc_process(
             if ((proc_id > MAILBOX_RECV_TASK_START) /*lint !e456 */
                 && (proc_id < MAILBOX_RECV_TASK_END)) {
 
-                /*ÊÍ·ÅĞÅºÅÁ¿£¬Í¨ÖªÈÎÎñ*/
+                /*é‡Šæ”¾ä¿¡å·é‡ï¼Œé€šçŸ¥ä»»åŠ¡*/
                 local_proc->incoming = MAILBOX_TRUE;
                 wake_up(&local_proc->wait);
 
             } else if(MAILBOX_RECV_TASKLET_HI == proc_id) {
-                 /*tasklet´¦Àí·½Ê½£¬ÔÚtaskletÖĞ´¦ÀíÓÊÏäÊı¾İ*/
+                 /*taskletå¤„ç†æ–¹å¼ï¼Œåœ¨taskletä¸­å¤„ç†é‚®ç®±æ•°æ®*/
                 tasklet_hi_schedule(&local_proc->tasklet);
 
             } else if(MAILBOX_RECV_TASKLET == proc_id) {
-                 /*tasklet´¦Àí·½Ê½£¬ÔÚtaskletÖĞ´¦ÀíÓÊÏäÊı¾İ*/
+                 /*taskletå¤„ç†æ–¹å¼ï¼Œåœ¨taskletä¸­å¤„ç†é‚®ç®±æ•°æ®*/
                 tasklet_schedule(&local_proc->tasklet);
 
             } else if(MAILBOX_RECV_INT_IRQ == proc_id) {
-                /*ÖĞ¶Ï´¦Àí·½Ê½£¬ÔÚÖĞ¶ÏÖĞÖ±½Ó´¦ÀíÓÊÏäÊı¾İ*/
+                /*ä¸­æ–­å¤„ç†æ–¹å¼ï¼Œåœ¨ä¸­æ–­ä¸­ç›´æ¥å¤„ç†é‚®ç®±æ•°æ®*/
                 mailbox_receive_process((unsigned long)local_proc);
 
             } else {
@@ -337,9 +337,9 @@ MAILBOX_LOCAL int mailbox_ipc_int_handle(unsigned int int_num)
     unsigned int is_find = MAILBOX_FALSE;
     unsigned int ret_val = MAILBOX_OK;
 
-    /*ÕÒµ½´«ÈëID¶ÔÓ¦µÄÓÊÏäÅäÖÃ*/
+    /*æ‰¾åˆ°ä¼ å…¥IDå¯¹åº”çš„é‚®ç®±é…ç½®*/
     while (MAILBOX_MAILCODE_INVALID != local_cfg->channel_id) {
-        /*´¦ÀíËùÓĞ¹Ò½Óµ½Õâ¸öÖĞ¶ÏºÅµÄ½ÓÊÕÓÊÏäÍ¨µÀ*/
+        /*å¤„ç†æ‰€æœ‰æŒ‚æ¥åˆ°è¿™ä¸ªä¸­æ–­å·çš„æ¥æ”¶é‚®ç®±é€šé“*/
         proc_id = local_cfg->property;
         if ((int_num == local_cfg->int_src) && (MAILBOX_SEND
               != (MAILBOX_PROC_MASK & local_cfg->property))) {
@@ -349,7 +349,7 @@ MAILBOX_LOCAL int mailbox_ipc_int_handle(unsigned int int_num)
             local_proc   =  &g_mailbox_local_proc_tbl[0];
             count          =   sizeof(g_mailbox_local_proc_tbl)/sizeof(struct mb_local_proc);
             while (count) {
-                /*ÕÒµ½´ËÓÊÏäÍ¨µÀ¶ÔÓ¦µÄÈÎÎñĞÅÏ¢*/
+                /*æ‰¾åˆ°æ­¤é‚®ç®±é€šé“å¯¹åº”çš„ä»»åŠ¡ä¿¡æ¯*/
                 if (proc_id == local_proc->proc_id) {
                     local_work = local_proc->work_list;
                     is_find = mailbox_ipc_process( local_work,
@@ -389,7 +389,7 @@ MAILBOX_EXTERN int mailbox_process_register(
     unsigned int count = sizeof(g_mailbox_local_proc_tbl)/sizeof(struct mb_local_proc);
 
 	while (MAILBOX_MAILCODE_INVALID != local_cfg->channel_id) {
-		/*ÕÒµ½Óë´«ÈëÓÊÏäID×îÊÊÅäµÄÏµÍ³ÓÊÏäÅäÖÃ*/
+		/*æ‰¾åˆ°ä¸ä¼ å…¥é‚®ç®±IDæœ€é€‚é…çš„ç³»ç»Ÿé‚®ç®±é…ç½®*/
 		if (local_cfg->channel_id ==  channel_id) {
 			find_cfg = local_cfg;
 			break;
@@ -398,7 +398,7 @@ MAILBOX_EXTERN int mailbox_process_register(
 	}
 
 	if (find_cfg) {
-		/*¼ÓÈëÓÊÏäÈÎÎñ¶ÔÓ¦µÄÓÊÏä¹¤×÷¶ÓÁĞ*/
+		/*åŠ å…¥é‚®ç®±ä»»åŠ¡å¯¹åº”çš„é‚®ç®±å·¥ä½œé˜Ÿåˆ—*/
 		while (count) {
 			if (find_cfg->property == local_proc->proc_id) {
 				if (local_proc->work_list) {
@@ -458,7 +458,7 @@ MAILBOX_EXTERN int mailbox_channel_register(
 				return mailbox_logerro_p1(MAILBOX_CRIT_PORT_CONFIG, channel_id);
 			}
 
-			/*Í¨µÀ×ÊÔ´ÅäÖÃÒÑÕÒµ½£¬×¢²áIPCÖĞ¶Ï*/
+			/*é€šé“èµ„æºé…ç½®å·²æ‰¾åˆ°ï¼Œæ³¨å†ŒIPCä¸­æ–­*/
 			local_cfg->int_src = int_src;
 			local_cfg->dst_id  = dst_id;
 
@@ -466,7 +466,7 @@ MAILBOX_EXTERN int mailbox_channel_register(
 				IPC_IntConnect((IPC_INT_LEV_E)int_src , (VOIDFUNCPTR)mailbox_ipc_int_handle, int_src);
 				IPC_IntEnable ((IPC_INT_LEV_E)int_src);
 
-				/*°å²àSTÓÃÀıÍ¨µÀ×¢²á*/
+				/*æ¿ä¾§STç”¨ä¾‹é€šé“æ³¨å†Œ*/
 				//test_mailbox_msg_reg(channel_id);
 			}
 			break;
@@ -475,7 +475,7 @@ MAILBOX_EXTERN int mailbox_channel_register(
 		local_cfg++;
 	}
 
-	/*Èç¹ûÊÊÅä²ãÕÒ²»µ½¶ÔÓ¦µÄÅäÖÃ£¬±¨´í*/
+	/*å¦‚æœé€‚é…å±‚æ‰¾ä¸åˆ°å¯¹åº”çš„é…ç½®ï¼ŒæŠ¥é”™*/
 	if (MAILBOX_MAILCODE_INVALID == local_cfg->channel_id) {
 		return mailbox_logerro_p1(MAILBOX_ERR_LINUX_CHANNEL_NOT_FIND, channel_id);
 	}
@@ -490,7 +490,7 @@ MAILBOX_EXTERN int mailbox_delivery(unsigned int channel_id)
 	struct mb_local_cfg 	*find_cfg		=	MAILBOX_NULL;
 
 	while (MAILBOX_MAILCODE_INVALID != local_cfg->channel_id) {
-		/*ÕÒµ½Óë´«ÈëÓÊÏäID×îÊÊÅäµÄÏµÍ³ÓÊÏäÅäÖÃ*/
+		/*æ‰¾åˆ°ä¸ä¼ å…¥é‚®ç®±IDæœ€é€‚é…çš„ç³»ç»Ÿé‚®ç®±é…ç½®*/
 		if (local_cfg->channel_id == channel_id) {
 			find_cfg = local_cfg;
 			break;
@@ -513,7 +513,7 @@ MAILBOX_LOCAL void *mailbox_mutex_create(struct mb_local_cfg *local_cfg)
     unsigned int channel_id = local_cfg->channel_id;
 	struct mb_mutex* mtx = MAILBOX_NULL;
 
-	/*¸ù¾İ²»Í¬Í¨µÀÀàĞÍÉêÇë²»Í¬µÄ×ÊÔ´±£»¤Ëø*/
+	/*æ ¹æ®ä¸åŒé€šé“ç±»å‹ç”³è¯·ä¸åŒçš„èµ„æºä¿æŠ¤é”*/
 	mtx = (struct mb_mutex*)kzalloc(sizeof(struct mb_mutex), GFP_KERNEL);
 	if (!mtx) {
 		mailbox_logerro_p1(MAILBOX_ERR_LINUX_CHANNEL_NOT_FIND, channel_id);
@@ -522,7 +522,7 @@ MAILBOX_LOCAL void *mailbox_mutex_create(struct mb_local_cfg *local_cfg)
 
 	if ((local_cfg->property > MAILBOX_RECEV_START) &&
 		(local_cfg->property < MAILBOX_RECV_END)) {
-		/*½ÓÊÕÍ¨µÀ»¥³âÊ¹ÓÃ×ÔĞıËø£¬ÓÃÓÚ»Øµ÷×¢²á±£»¤*/
+		/*æ¥æ”¶é€šé“äº’æ–¥ä½¿ç”¨è‡ªæ—‹é”ï¼Œç”¨äºå›è°ƒæ³¨å†Œä¿æŠ¤*/
 		mtx->lock = kzalloc(sizeof(spinlock_t), GFP_KERNEL);
 		if (mtx->lock) {
 			spin_lock_init((spinlock_t*)mtx->lock);

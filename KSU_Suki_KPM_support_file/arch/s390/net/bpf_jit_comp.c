@@ -1,4 +1,4 @@
-﻿/*
+/*
  * BPF Jit compiler for s390.
  *
  * Minimum build requirements:

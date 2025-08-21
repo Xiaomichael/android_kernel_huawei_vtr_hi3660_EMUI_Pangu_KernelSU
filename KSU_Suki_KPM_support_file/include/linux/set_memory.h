@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright 2017, Michael Ellerman, IBM Corporation.
  *
  * This program is free software; you can redistribute it and/or

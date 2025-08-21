@@ -1,4 +1,4 @@
-﻿#ifndef _ASM_X86_CACHEFLUSH_H
+#ifndef _ASM_X86_CACHEFLUSH_H
 #define _ASM_X86_CACHEFLUSH_H
 
 /* Caches aren't brain-dead on the intel. */

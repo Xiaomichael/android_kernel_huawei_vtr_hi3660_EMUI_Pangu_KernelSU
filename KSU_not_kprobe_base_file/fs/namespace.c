@@ -1,4 +1,4 @@
-﻿/*
+/*
  *  linux/fs/namespace.c
  *
  * (C) Copyright Al Viro 2000, 2001

@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright IBM Corp. 2011
  * Author(s): Jan Glauber <jang@linux.vnet.ibm.com>
  */

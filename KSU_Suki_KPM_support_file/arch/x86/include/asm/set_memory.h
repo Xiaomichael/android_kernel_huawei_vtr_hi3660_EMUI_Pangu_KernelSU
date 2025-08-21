@@ -1,4 +1,4 @@
-﻿#ifndef _ASM_X86_SET_MEMORY_H
+#ifndef _ASM_X86_SET_MEMORY_H
 #define _ASM_X86_SET_MEMORY_H
 
 #include <asm/page.h>

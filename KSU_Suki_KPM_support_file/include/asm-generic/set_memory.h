@@ -1,4 +1,4 @@
-﻿#ifndef __ASM_SET_MEMORY_H
+#ifndef __ASM_SET_MEMORY_H
 #define __ASM_SET_MEMORY_H
 
 /*

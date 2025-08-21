@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Just-In-Time compiler for BPF filters on 32bit ARM
  *
  * Copyright (c) 2011 Mircea Gherzan <mgherzan@gmail.com>

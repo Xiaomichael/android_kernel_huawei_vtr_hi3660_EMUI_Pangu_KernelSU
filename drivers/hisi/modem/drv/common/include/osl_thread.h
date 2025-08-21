@@ -65,11 +65,11 @@
 #include <linux/sched.h>
 #include <linux/delay.h>
 
-/*╢к╢╕сцсз╢Ф╥ехннЯсеох╪╤ ---begin*/
+/*О©╫к╢О©╫О©╫О©╫О©╫з╢О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫х╪О©╫ ---begin*/
 #define  ICC_TASK_PRIVATE_PRI         (91)
 #define  ICC_TASK_SHARED_PRI          (90)
 
-/*╢к╢╕сцсз╢Ф╥ехннЯсеох╪╤ ---end*/
+/*О©╫к╢О©╫О©╫О©╫О©╫з╢О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫х╪О©╫ ---end*/
 
 typedef struct task_struct* OSL_TASK_ID;
 typedef void (*OSL_TASK_FUNC)(void* para);
@@ -87,7 +87,7 @@ static inline s32  osl_task_init(
 
 	sch_para.sched_priority = (int)priority;
 
-	tsk =  kthread_run((void*)entry, para, name);
+	tsk =  kthread_run((void*)entry, para, "%s", name);
 	if (IS_ERR(tsk))
 	{
 		printk("create kthread %s failed!\n", name);
@@ -112,12 +112,12 @@ static __inline__ void osl_task_delay(int ticks )
 
 #include <taskLib.h>
 #include <logLib.h>
-/*╢к╢╕сцсз╢Ф╥ехннЯсеох╪╤ ---begin*/
+/*О©╫к╢О©╫О©╫О©╫О©╫з╢О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫х╪О©╫ ---begin*/
 #define  ICC_TASK_PRIVATE_PRI         (4)
 #define  ICC_TASK_SHARED_PRI          (4)
 
 #define OS_MAX_TASK_ID     255
-/*╢к╢╕сцсз╢Ф╥ехннЯсеох╪╤ ---end*/
+/*О©╫к╢О©╫О©╫О©╫О©╫з╢О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫х╪О©╫ ---end*/
 
 #define VX_DEFAULT_PRIORITY      150
 #define VX_DEFAULT_STACK_SIZE    8192
@@ -209,12 +209,12 @@ static inline int  osl_task_check(unsigned int taskid)
 #include "sre_task.h"
 #include <sre_sys.h>
 #include <sre_tick.h>
-/*╢к╢╕сцсз╢Ф╥ехннЯсеох╪╤ ---begin*/
+/*О©╫к╢О©╫О©╫О©╫О©╫з╢О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫х╪О©╫ ---begin*/
 #define  ICC_TASK_PRIVATE_PRI         (4)
 #define  ICC_TASK_SHARED_PRI          (4)
 
 #define OS_MAX_TASK_ID     62
-/*╢к╢╕сцсз╢Ф╥ехннЯсеох╪╤ ---end*/
+/*О©╫к╢О©╫О©╫О©╫О©╫з╢О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫х╪О©╫ ---end*/
 
 #define VX_DEFAULT_PRIORITY      63
 #define OSL_TASK_FUNC   TSK_ENTRY_FUNC
@@ -378,10 +378,10 @@ static __inline__ u32 osl_task_core_unbind(OSL_TASK_ID uwTaskPID)
 #endif
 #elif defined(__CMSIS_RTOS) /* rtx(cm3 os) */
 
-/*╢к╢╕сцсз╢Ф╥ехннЯсеох╪╤ ---begin*/
+/*О©╫к╢О©╫О©╫О©╫О©╫з╢О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫х╪О©╫ ---begin*/
 
 
-/*╢к╢╕сцсз╢Ф╥ехннЯсеох╪╤ ---end*/
+/*О©╫к╢О©╫О©╫О©╫О©╫з╢О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫х╪О©╫ ---end*/
 
 #endif /* __KERNEL__ */
 

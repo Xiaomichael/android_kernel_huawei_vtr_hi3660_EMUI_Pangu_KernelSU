@@ -1,4 +1,4 @@
-﻿/*
+/*
  * CFI (Control Flow Integrity) error and slowpath handling
  *
  * Copyright (C) 2017 Google, Inc.

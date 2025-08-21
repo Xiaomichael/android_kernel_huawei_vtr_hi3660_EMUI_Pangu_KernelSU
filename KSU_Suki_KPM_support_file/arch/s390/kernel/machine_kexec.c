@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright IBM Corp. 2005, 2011
  *
  * Author(s): Rolf Adelsberger,

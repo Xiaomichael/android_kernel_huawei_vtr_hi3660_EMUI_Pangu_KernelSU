@@ -85,14 +85,14 @@ SOCP_DEBUG_INFO_S g_stSocpDebugInfo;
 EXPORT_SYMBOL(g_stSocpDebugInfo);
 
  struct socp_enc_dst_log_cfg *SocpLogConfig =NULL ;
-/* ÈÎÎñÓÅÏÈ¼¶¶¨Òå */
+/* ä»»åŠ¡ä¼˜å…ˆçº§å®šä¹‰ */
 #define SOCP_ENCSRC_TASK_PRO    79
 #define SOCP_ENCDST_TASK_PRO    81
 #define SOCP_DECSRC_TASK_PRO    79
 #define SOCP_DECDST_TASK_PRO    81
-/* SOCP»ùµØÖ· */
+/* SOCPåŸºåœ°å€ */
 u32 g_SocpRegBaseAddr = 0;
-/* ÖĞ¶Ï´¦Àíº¯Êı */
+/* ä¸­æ–­å¤„ç†å‡½æ•° */
 u32 socp_app_int_handler(void);
 
 spinlock_t lock;
@@ -131,13 +131,13 @@ void socp_global_ctrl_init(void)
 {
     unsigned int i;
 
-    /* ³õÊ¼»¯È«¾Ö×´Ì¬½á¹¹Ìå */
-    /* ÈÎÎñID³õÊ¼»¯ */
+    /* åˆå§‹åŒ–å…¨å±€çŠ¶æ€ç»“æ„ä½“ */
+    /* ä»»åŠ¡IDåˆå§‹åŒ– */
     g_strSocpStat.u32EncSrcTskID     = 0;
     g_strSocpStat.u32DecDstTskID     = 0;
     g_strSocpStat.u32EncDstTskID     = 0;
     g_strSocpStat.u32DecSrcTskID     = 0;
-    /* °üÍ·´íÎó±êÖ¾³õÊ¼»¯ */
+    /* åŒ…å¤´é”™è¯¯æ ‡å¿—åˆå§‹åŒ– */
     g_strSocpStat.u32IntEncSrcHeader = 0;
     g_strSocpStat.u32IntEncSrcRD     = 0;
     g_strSocpStat.u32IntDecDstTfr    = 0;
@@ -207,22 +207,22 @@ s32 socp_clk_enable(void)
 
 
 /*****************************************************************************
-* º¯ Êı Ãû  : socp_get_idle_buffer
+* å‡½ æ•° å  : socp_get_idle_buffer
 *
-* ¹¦ÄÜÃèÊö  : ²éÑ¯¿ÕÏĞ»º³åÇø
+* åŠŸèƒ½æè¿°  : æŸ¥è¯¢ç©ºé—²ç¼“å†²åŒº
 *
-* ÊäÈë²ÎÊı  :  pRingBuffer       ´ı²éÑ¯µÄ»·ĞÎbuffer
-                    pRWBuffer         Êä³öµÄ»·ĞÎbuffer
+* è¾“å…¥å‚æ•°  :  pRingBuffer       å¾…æŸ¥è¯¢çš„ç¯å½¢buffer
+                    pRWBuffer         è¾“å‡ºçš„ç¯å½¢buffer
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ  :  ÎŞ
+* è¿” å› å€¼  :  æ— 
 *****************************************************************************/
 void socp_get_idle_buffer(SOCP_RING_BUF_S *pRingBuffer, SOCP_BUFFER_RW_STRU *pRWBuffer)
 {
     	if(pRingBuffer->u32Write < pRingBuffer->u32Read)
     	{
-        	/* ¶ÁÖ¸Õë´óÓÚĞ´Ö¸Õë£¬Ö±½Ó¼ÆËã */
+        	/* è¯»æŒ‡é’ˆå¤§äºå†™æŒ‡é’ˆï¼Œç›´æ¥è®¡ç®— */
         	pRWBuffer->pBuffer = (char *)((unsigned long)pRingBuffer->u32Write);
         	pRWBuffer->u32Size = (u32)(pRingBuffer->u32Read - pRingBuffer->u32Write - 1);
         	pRWBuffer->pRbBuffer = (char *)BSP_NULL;
@@ -230,7 +230,7 @@ void socp_get_idle_buffer(SOCP_RING_BUF_S *pRingBuffer, SOCP_BUFFER_RW_STRU *pRW
     	}
     	else
     	{
-        	/* Ğ´Ö¸Õë´óÓÚ¶ÁÖ¸Õë£¬ĞèÒª¿¼ÂÇ»Ø¾í */
+        	/* å†™æŒ‡é’ˆå¤§äºè¯»æŒ‡é’ˆï¼Œéœ€è¦è€ƒè™‘å›å· */
         	if(pRingBuffer->u32Read != (u32)pRingBuffer->Start)
         	{
             		pRWBuffer->pBuffer = (char *)((unsigned long)pRingBuffer->u32Write);
@@ -251,22 +251,22 @@ void socp_get_idle_buffer(SOCP_RING_BUF_S *pRingBuffer, SOCP_BUFFER_RW_STRU *pRW
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû  : socp_get_data_buffer
+* å‡½ æ•° å  : socp_get_data_buffer
 *
-* ¹¦ÄÜÃèÊö  : »ñÈ¡¿ÕÏĞ»º³åÇøµÄÊı¾İ
+* åŠŸèƒ½æè¿°  : è·å–ç©ºé—²ç¼“å†²åŒºçš„æ•°æ®
 *
-* ÊäÈë²ÎÊı  :  pRingBuffer       ´ı²éÑ¯µÄ»·ĞÎbuffer
-                    pRWBuffer         Êä³öµÄ»·ĞÎbuffer
+* è¾“å…¥å‚æ•°  :  pRingBuffer       å¾…æŸ¥è¯¢çš„ç¯å½¢buffer
+                    pRWBuffer         è¾“å‡ºçš„ç¯å½¢buffer
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ  :  ÎŞ
+* è¿” å› å€¼  :  æ— 
 *****************************************************************************/
 void socp_get_data_buffer(SOCP_RING_BUF_S *pRingBuffer, SOCP_BUFFER_RW_STRU *pRWBuffer)
 {
     if(pRingBuffer->u32Read <= pRingBuffer->u32Write)
     {
-        /* Ğ´Ö¸Õë´óÓÚ¶ÁÖ¸Õë£¬Ö±½Ó¼ÆËã */
+        /* å†™æŒ‡é’ˆå¤§äºè¯»æŒ‡é’ˆï¼Œç›´æ¥è®¡ç®— */
         pRWBuffer->pBuffer = (char *)((unsigned long)pRingBuffer->u32Read);
         pRWBuffer->u32Size = (u32)(pRingBuffer->u32Write - pRingBuffer->u32Read);
         pRWBuffer->pRbBuffer = (char *)BSP_NULL;
@@ -274,7 +274,7 @@ void socp_get_data_buffer(SOCP_RING_BUF_S *pRingBuffer, SOCP_BUFFER_RW_STRU *pRW
     }
     else
     {
-        /* ¶ÁÖ¸Õë´óÓÚĞ´Ö¸Õë£¬ĞèÒª¿¼ÂÇ»Ø¾í */
+        /* è¯»æŒ‡é’ˆå¤§äºå†™æŒ‡é’ˆï¼Œéœ€è¦è€ƒè™‘å›å· */
         pRWBuffer->pBuffer = (char *)((unsigned long)pRingBuffer->u32Read);
         pRWBuffer->u32Size = (u32)(pRingBuffer->End - pRingBuffer->u32Read + 1);
         pRWBuffer->pRbBuffer = (char *)pRingBuffer->Start;
@@ -284,16 +284,16 @@ void socp_get_data_buffer(SOCP_RING_BUF_S *pRingBuffer, SOCP_BUFFER_RW_STRU *pRW
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû  : socp_write_done
+* å‡½ æ•° å  : socp_write_done
 *
-* ¹¦ÄÜÃèÊö  : ¸üĞÂ»º³åÇøµÄĞ´Ö¸Õë
+* åŠŸèƒ½æè¿°  : æ›´æ–°ç¼“å†²åŒºçš„å†™æŒ‡é’ˆ
 *
-* ÊäÈë²ÎÊı  :  pRingBuffer       ´ı¸üĞÂµÄ»·ĞÎbuffer
-                    u32Size          ¸üĞÂµÄÊı¾İ³¤¶È
+* è¾“å…¥å‚æ•°  :  pRingBuffer       å¾…æ›´æ–°çš„ç¯å½¢buffer
+                    u32Size          æ›´æ–°çš„æ•°æ®é•¿åº¦
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ  :  ÎŞ
+* è¿” å› å€¼  :  æ— 
 *****************************************************************************/
 void socp_write_done(SOCP_RING_BUF_S *pRingBuffer, u32 u32Size)
 {
@@ -312,16 +312,16 @@ void socp_write_done(SOCP_RING_BUF_S *pRingBuffer, u32 u32Size)
     return;
 }
 /*****************************************************************************
-* º¯ Êı Ãû  : socp_read_done
+* å‡½ æ•° å  : socp_read_done
 *
-* ¹¦ÄÜÃèÊö  : ¸üĞÂ»º³åÇøµÄ¶ÁÖ¸Õë
+* åŠŸèƒ½æè¿°  : æ›´æ–°ç¼“å†²åŒºçš„è¯»æŒ‡é’ˆ
 *
-* ÊäÈë²ÎÊı  :  pRingBuffer       ´ı¸üĞÂµÄ»·ĞÎbuffer
-                    u32Size          ¸üĞÂµÄÊı¾İ³¤¶È
+* è¾“å…¥å‚æ•°  :  pRingBuffer       å¾…æ›´æ–°çš„ç¯å½¢buffer
+                    u32Size          æ›´æ–°çš„æ•°æ®é•¿åº¦
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ  :  ÎŞ
+* è¿” å› å€¼  :  æ— 
 *****************************************************************************/
 void socp_read_done(SOCP_RING_BUF_S *pRingBuffer, u32 u32Size)
 {
@@ -333,15 +333,15 @@ void socp_read_done(SOCP_RING_BUF_S *pRingBuffer, u32 u32Size)
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû  : bsp_socp_clean_encsrc_chan
+* å‡½ æ•° å  : bsp_socp_clean_encsrc_chan
 *
-* ¹¦ÄÜÃèÊö  : Çå¿Õ±àÂëÔ´Í¨µÀ£¬Í¬²½V9 SOCP½Ó¿Ú
+* åŠŸèƒ½æè¿°  : æ¸…ç©ºç¼–ç æºé€šé“ï¼ŒåŒæ­¥V9 SOCPæ¥å£
 *
-* ÊäÈë²ÎÊı  : enSrcChanID       ±àÂëÍ¨µÀºÅ
+* è¾“å…¥å‚æ•°  : enSrcChanID       ç¼–ç é€šé“å·
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ  : BSP_OK
+* è¿” å› å€¼  : BSP_OK
 *****************************************************************************/
 u32 bsp_socp_clean_encsrc_chan(SOCP_CODER_SRC_ENUM_U32 enSrcChanID)
 {
@@ -356,10 +356,10 @@ u32 bsp_socp_clean_encsrc_chan(SOCP_CODER_SRC_ENUM_U32 enSrcChanID)
     SOCP_CHECK_CHAN_TYPE(ulChanType, SOCP_CODER_SRC_CHAN);
     SOCP_CHECK_ENCSRC_CHAN_ID(ulChanID);
 
-    /* ¸´Î»Í¨µÀ */
+    /* å¤ä½é€šé“ */
     SOCP_REG_SETBITS(SOCP_REG_ENCRST, ulChanID, 1, 1);
 
-    /* µÈ´ıÍ¨µÀ×ÔÇå */
+    /* ç­‰å¾…é€šé“è‡ªæ¸… */
     for(i=0; i< SOCP_RESET_TIME; i++)
     {
         ulResetFlag = SOCP_REG_GETBITS(SOCP_REG_ENCRST, ulChanID, 1);
@@ -381,32 +381,32 @@ u32 bsp_socp_clean_encsrc_chan(SOCP_CODER_SRC_ENUM_U32 enSrcChanID)
 
 
 /***************************************************************************************
-* º¯ Êı Ãû  : socp_reset_chan_reg_wr_addr
+* å‡½ æ•° å  : socp_reset_chan_reg_wr_addr
 *
-* ¹¦ÄÜÃèÊö  : socp¸´Î»Í¨µÀµØÖ·ºÍ¶ÁĞ´Ö¸Õë¼Ä´æÆ÷£¬ÄÚ²¿Çø·Ösocp32Î»ºÍ64Î»Ñ°Ö·
+* åŠŸèƒ½æè¿°  : socpå¤ä½é€šé“åœ°å€å’Œè¯»å†™æŒ‡é’ˆå¯„å­˜å™¨ï¼Œå†…éƒ¨åŒºåˆ†socp32ä½å’Œ64ä½å¯»å€
 *
-* ÊäÈë²ÎÊı  : ChanId: Í¨µÀºÅ£¬°üÀ¨Í¨µÀÀàĞÍºÍÍ¨µÀID
-              type: Í¨µÀÀàĞÍ£¬Çø·Ö±àÂëÍ¨µÀºÍ½âÂëÍ¨µÀ
-              Enc_pChan: ±àÂëÍ¨µÀ²ÎÊı½á¹¹Ìå
-              Dec_pChan: ½âÂëÍ¨µÀ²ÎÊı½á¹¹Ìå
+* è¾“å…¥å‚æ•°  : ChanId: é€šé“å·ï¼ŒåŒ…æ‹¬é€šé“ç±»å‹å’Œé€šé“ID
+              type: é€šé“ç±»å‹ï¼ŒåŒºåˆ†ç¼–ç é€šé“å’Œè§£ç é€šé“
+              Enc_pChan: ç¼–ç é€šé“å‚æ•°ç»“æ„ä½“
+              Dec_pChan: è§£ç é€šé“å‚æ•°ç»“æ„ä½“
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ  : ÎŞ
+* è¿” å› å€¼  : æ— 
 ****************************************************************************************/
 void socp_reset_chan_reg_wr_addr(u32 ChanId, u32 Type, SOCP_ENCSRC_CHAN_S *Enc_pChan, SOCP_DECSRC_CHAN_S *Dec_pChan)
 {    
 
-    if(Type == SOCP_CODER_SRC_CHAN)   // ±àÂëÍ¨µÀ
+    if(Type == SOCP_CODER_SRC_CHAN)   // ç¼–ç é€šé“
     {
         SOCP_REG_WRITE(SOCP_REG_ENCSRC_BUFADDR(ChanId), (u32)Enc_pChan->sEncSrcBuf.Start);
         SOCP_REG_WRITE(SOCP_REG_ENCSRC_BUFWPTR(ChanId), (u32)Enc_pChan->sEncSrcBuf.Start);
         SOCP_REG_WRITE(SOCP_REG_ENCSRC_BUFRPTR(ChanId),  (u32)Enc_pChan->sEncSrcBuf.Start);
-        /* ¸üĞÂ¶ÁĞ´Ö¸Õë*/
+        /* æ›´æ–°è¯»å†™æŒ‡é’ˆ*/
         g_strSocpStat.sEncSrcChan[ChanId].sEncSrcBuf.u32Read  = (u32)(Enc_pChan->sEncSrcBuf.Start);
         g_strSocpStat.sEncSrcChan[ChanId].sEncSrcBuf.u32Write = (u32)(Enc_pChan->sEncSrcBuf.Start);
 
-        /* Èç¹ûÊÇÓÃÁ´±í»º³åÇø£¬ÔòÅäÖÃRDbufferµÄÆğÊ¼µØÖ·ºÍ³¤¶È */
+        /* å¦‚æœæ˜¯ç”¨é“¾è¡¨ç¼“å†²åŒºï¼Œåˆ™é…ç½®RDbufferçš„èµ·å§‹åœ°å€å’Œé•¿åº¦ */
         if(SOCP_ENCSRC_CHNMODE_LIST == Enc_pChan->eChnMode)
         {
             SOCP_REG_WRITE(SOCP_REG_ENCSRC_RDQADDR(ChanId), (u32)Enc_pChan->sRdBuf.Start);
@@ -422,13 +422,13 @@ void socp_reset_chan_reg_wr_addr(u32 ChanId, u32 Type, SOCP_ENCSRC_CHAN_S *Enc_p
         }
     }
     
-    else if(Type == SOCP_DECODER_SRC_CHAN)   // ½âÂëÍ¨µÀ
+    else if(Type == SOCP_DECODER_SRC_CHAN)   // è§£ç é€šé“
     {
-    	/* Ê¹ÓÃÅäÖÃ²ÎÊı½øĞĞÅäÖÃ */
+    	/* ä½¿ç”¨é…ç½®å‚æ•°è¿›è¡Œé…ç½® */
     	SOCP_REG_WRITE(SOCP_REG_DECSRC_BUFADDR(ChanId), (u32)Dec_pChan->sDecSrcBuf.Start);
     	SOCP_REG_WRITE(SOCP_REG_DECSRC_BUFWPTR(ChanId), (u32)Dec_pChan->sDecSrcBuf.Start);
     	SOCP_REG_WRITE(SOCP_REG_DECSRC_BUFRPTR(ChanId), (u32)Dec_pChan->sDecSrcBuf.Start);
-    	/* ¸üĞÂ¶ÔÓ¦Í¨µÀµÄ¶ÁĞ´Ö¸Õë*/
+    	/* æ›´æ–°å¯¹åº”é€šé“çš„è¯»å†™æŒ‡é’ˆ*/
     	g_strSocpStat.sDecSrcChan[ChanId].sDecSrcBuf.u32Read  = (u32)(Dec_pChan->sDecSrcBuf.Start);
     	g_strSocpStat.sDecSrcChan[ChanId].sDecSrcBuf.u32Write = (u32)(Dec_pChan->sDecSrcBuf.Start);
     }
@@ -436,15 +436,15 @@ void socp_reset_chan_reg_wr_addr(u32 ChanId, u32 Type, SOCP_ENCSRC_CHAN_S *Enc_p
 
 
 /*****************************************************************************
-* º¯ Êı Ãû  : socp_reset_enc_chan
+* å‡½ æ•° å  : socp_reset_enc_chan
 *
-* ¹¦ÄÜÃèÊö  : ¸´Î»±àÂëÍ¨µÀ
+* åŠŸèƒ½æè¿°  : å¤ä½ç¼–ç é€šé“
 *
-* ÊäÈë²ÎÊı  : u32ChanID       ±àÂëÍ¨µÀºÅ
+* è¾“å…¥å‚æ•°  : u32ChanID       ç¼–ç é€šé“å·
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ  : ÊÍ·Å³É¹¦Óë·ñµÄ±êÊ¶Âë
+* è¿” å› å€¼  : é‡Šæ”¾æˆåŠŸä¸å¦çš„æ ‡è¯†ç 
 *****************************************************************************/
 s32 socp_reset_enc_chan(u32 u32ChanID)
 {
@@ -454,10 +454,10 @@ s32 socp_reset_enc_chan(u32 u32ChanID)
 
     pChan = &g_strSocpStat.sEncSrcChan[u32ChanID];
 
-    /* ¸´Î»Í¨µÀ */
+    /* å¤ä½é€šé“ */
     SOCP_REG_SETBITS(SOCP_REG_ENCRST, u32ChanID, 1, 1);
 
-    /* µÈ´ıÍ¨µÀ×ÔÇå */
+    /* ç­‰å¾…é€šé“è‡ªæ¸… */
     for(i=0; i<SOCP_RESET_TIME; i++)
     {
         ResetFlag = SOCP_REG_GETBITS(SOCP_REG_ENCRST, u32ChanID, 1);
@@ -474,7 +474,7 @@ s32 socp_reset_enc_chan(u32 u32ChanID)
 
     socp_reset_chan_reg_wr_addr(u32ChanID, SOCP_CODER_SRC_CHAN, pChan, NULL);
 
-    /*ÅäÖÃÆäËü²ÎÊı*/
+    /*é…ç½®å…¶å®ƒå‚æ•°*/
 	/*lint -save -e647*/
     SOCP_REG_SETBITS(SOCP_REG_ENCSRC_BUFCFG1(u32ChanID), 1, 2, pChan->eChnMode);
     SOCP_REG_SETBITS(SOCP_REG_ENCSRC_BUFCFG1(u32ChanID), 4, 4, pChan->u32DestChanID);
@@ -484,7 +484,7 @@ s32 socp_reset_enc_chan(u32 u32ChanID)
     SOCP_REG_SETBITS(SOCP_REG_ENCSRC_BUFCFG1(u32ChanID), 11, 1, pChan->eDataTypeEn);
     SOCP_REG_SETBITS(SOCP_REG_ENCSRC_BUFCFG1(u32ChanID), 31, 1, pChan->eDebugEn);
 	
-    /*Èç¹ûÍ¨µÀÊÇÆô¶¯×´Ì¬£¬Ê¹ÄÜÍ¨µÀ*/
+    /*å¦‚æœé€šé“æ˜¯å¯åŠ¨çŠ¶æ€ï¼Œä½¿èƒ½é€šé“*/
     if(pChan->u32ChanEn)
     {
         SOCP_REG_SETBITS(SOCP_REG_ENCSRC_BUFCFG1(u32ChanID), 0, 1, 1);
@@ -494,15 +494,15 @@ s32 socp_reset_enc_chan(u32 u32ChanID)
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû  : socp_reset_dec_chan
+* å‡½ æ•° å  : socp_reset_dec_chan
 *
-* ¹¦ÄÜÃèÊö  : ¸´Î»½âÂëÍ¨µÀ
+* åŠŸèƒ½æè¿°  : å¤ä½è§£ç é€šé“
 *
-* ÊäÈë²ÎÊı  : u32ChanID       ½âÂëÍ¨µÀºÅ
+* è¾“å…¥å‚æ•°  : u32ChanID       è§£ç é€šé“å·
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ  : ÊÍ·Å³É¹¦Óë·ñµÄ±êÊ¶Âë
+* è¿” å› å€¼  : é‡Šæ”¾æˆåŠŸä¸å¦çš„æ ‡è¯†ç 
 *****************************************************************************/
 s32 socp_reset_dec_chan(u32 u32ChanID)
 {
@@ -517,10 +517,10 @@ s32 socp_reset_dec_chan(u32 u32ChanID)
 
     pChan = &g_strSocpStat.sDecSrcChan[u32ChanID];
 
-    /* ¸´Î»Í¨µÀ */
+    /* å¤ä½é€šé“ */
     SOCP_REG_SETBITS(SOCP_REG_DECRST, u32ChanID, 1, 1);
 
-    /* µÈ´ıÍ¨µÀ×ÔÇå */
+    /* ç­‰å¾…é€šé“è‡ªæ¸… */
     for(i=0; i<SOCP_RESET_TIME; i++)
     {
         u32ResetFlag = SOCP_REG_GETBITS(SOCP_REG_DECRST, u32ChanID, 1);
@@ -544,15 +544,15 @@ s32 socp_reset_dec_chan(u32 u32ChanID)
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû  : socp_soft_free_encdst_chan
+* å‡½ æ•° å  : socp_soft_free_encdst_chan
 *
-* ¹¦ÄÜÃèÊö  : ÈíÊÍ·Å±àÂëÄ¿µÄÍ¨µÀ
+* åŠŸèƒ½æè¿°  : è½¯é‡Šæ”¾ç¼–ç ç›®çš„é€šé“
 *
-* ÊäÈë²ÎÊı  : u32EncDstChanId       ±àÂëÍ¨µÀºÅ
+* è¾“å…¥å‚æ•°  : u32EncDstChanId       ç¼–ç é€šé“å·
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ  : ÊÍ·Å³É¹¦Óë·ñµÄ±êÊ¶Âë
+* è¿” å› å€¼  : é‡Šæ”¾æˆåŠŸä¸å¦çš„æ ‡è¯†ç 
 *****************************************************************************/
 s32 socp_soft_free_encdst_chan(u32 u32EncDstChanId)
 {
@@ -568,7 +568,7 @@ s32 socp_soft_free_encdst_chan(u32 u32EncDstChanId)
 
     pChan = &g_strSocpStat.sEncDstChan[u32ChanID];
 
-    /* Ğ´ÈëÆğÊ¼µØÖ·µ½Ä¿µÄbufferÆğÊ¼µØÖ·¼Ä´æÆ÷*/
+    /* å†™å…¥èµ·å§‹åœ°å€åˆ°ç›®çš„bufferèµ·å§‹åœ°å€å¯„å­˜å™¨*/
     SOCP_REG_WRITE(SOCP_REG_ENCDEST_BUFADDR(u32ChanID), (u32)pChan->sEncDstBuf.Start);
     SOCP_REG_WRITE(SOCP_REG_ENCDEST_BUFRPTR(u32ChanID), (u32)pChan->sEncDstBuf.Start);
     SOCP_REG_WRITE(SOCP_REG_ENCDEST_BUFWPTR(u32ChanID), (u32)pChan->sEncDstBuf.Start);
@@ -583,15 +583,15 @@ s32 socp_soft_free_encdst_chan(u32 u32EncDstChanId)
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû  : socp_soft_free_decsrc_chan
+* å‡½ æ•° å  : socp_soft_free_decsrc_chan
 *
-* ¹¦ÄÜÃèÊö  : ÈíÊÍ·Å½âÂëÔ´Í¨µÀ
+* åŠŸèƒ½æè¿°  : è½¯é‡Šæ”¾è§£ç æºé€šé“
 *
-* ÊäÈë²ÎÊı  : u32DecSrcChanId       ½âÂëÍ¨µÀºÅ
+* è¾“å…¥å‚æ•°  : u32DecSrcChanId       è§£ç é€šé“å·
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ  : ÊÍ·Å³É¹¦Óë·ñµÄ±êÊ¶Âë
+* è¿” å› å€¼  : é‡Šæ”¾æˆåŠŸä¸å¦çš„æ ‡è¯†ç 
 *****************************************************************************/
 s32 socp_soft_free_decsrc_chan(u32 u32DecSrcChanId)
 {
@@ -607,7 +607,7 @@ s32 socp_soft_free_decsrc_chan(u32 u32DecSrcChanId)
 
     pDecSrcChan = &g_strSocpStat.sDecSrcChan[u32ChanID];
 
-    	/* Ğ´ÈëÆğÊ¼µØÖ·µ½Ä¿µÄbufferÆğÊ¼µØÖ·¼Ä´æÆ÷*/
+    	/* å†™å…¥èµ·å§‹åœ°å€åˆ°ç›®çš„bufferèµ·å§‹åœ°å€å¯„å­˜å™¨*/
    	SOCP_REG_WRITE(SOCP_REG_DECSRC_BUFWPTR(u32ChanID), (u32)pDecSrcChan->sDecSrcBuf.Start);
     SOCP_REG_WRITE(SOCP_REG_DECSRC_BUFADDR(u32ChanID), (u32)pDecSrcChan->sDecSrcBuf.Start);
     SOCP_REG_WRITE(SOCP_REG_DECSRC_BUFRPTR(u32ChanID), (u32)pDecSrcChan->sDecSrcBuf.Start);
@@ -622,15 +622,15 @@ s32 socp_soft_free_decsrc_chan(u32 u32DecSrcChanId)
 
 
 /*****************************************************************************
-* º¯ Êı Ãû  : socp_get_enc_rd_size
+* å‡½ æ•° å  : socp_get_enc_rd_size
 *
-* ¹¦ÄÜÃèÊö  :  »ñÈ¡±àÂëÔ´Í¨µÀRDbuffer
+* åŠŸèƒ½æè¿°  :  è·å–ç¼–ç æºé€šé“RDbuffer
 *
-* ÊäÈë²ÎÊı  : ÎŞ
+* è¾“å…¥å‚æ•°  : æ— 
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ  : ÊÍ·Å³É¹¦Óë·ñµÄ±êÊ¶Âë
+* è¿” å› å€¼  : é‡Šæ”¾æˆåŠŸä¸å¦çš„æ ‡è¯†ç 
 *****************************************************************************/
 u32 socp_get_enc_rd_size(u32 u32ChanID)
 {
@@ -647,15 +647,15 @@ u32 socp_get_enc_rd_size(u32 u32ChanID)
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû   : socp_encsrc_rd_handler
+* å‡½ æ•° å   : socp_encsrc_rd_handler
 *
-* ¹¦ÄÜÃèÊö  :  ±àÂëÔ´Í¨µÀRDbufferÖĞ¶Ï´¦Àíº¯Êı
+* åŠŸèƒ½æè¿°  :  ç¼–ç æºé€šé“RDbufferä¸­æ–­å¤„ç†å‡½æ•°
 *
-* ÊäÈë²ÎÊı  : ÎŞ
+* è¾“å…¥å‚æ•°  : æ— 
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ   : ÎŞ
+* è¿” å› å€¼   : æ— 
 *****************************************************************************/
 void socp_encsrc_rd_handler(u32 RdSize, u32 i)
 {
@@ -682,14 +682,14 @@ void socp_encsrc_rd_handler(u32 RdSize, u32 i)
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû  : socp_encsrc_task
+* å‡½ æ•° å  : socp_encsrc_task
 *
-* ¹¦ÄÜÃèÊö  : Ä£¿éÈÎÎñº¯Êı:±àÂëÔ´ÖĞ¶Ï£¬Ë«ºË
-* ÊäÈë²ÎÊı  : ÎŞ
+* åŠŸèƒ½æè¿°  : æ¨¡å—ä»»åŠ¡å‡½æ•°:ç¼–ç æºä¸­æ–­ï¼ŒåŒæ ¸
+* è¾“å…¥å‚æ•°  : æ— 
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ   : ÎŞ
+* è¿” å› å€¼   : æ— 
 *****************************************************************************/
 int socp_encsrc_task(void * data)
 {
@@ -700,7 +700,7 @@ int socp_encsrc_task(void * data)
     u32 head_err = 0;
     /* coverity[no_escape] */
     do{
-        /* ³¬Ê±»òÕß±»ÖĞ¶Ï£¬·ÇÕı³£·µ»Ø */
+        /* è¶…æ—¶æˆ–è€…è¢«ä¸­æ–­ï¼Œéæ­£å¸¸è¿”å› */
         if(0 != down_interruptible(&g_strSocpStat.u32EncSrcSemID))
         {
             continue;
@@ -712,12 +712,12 @@ int socp_encsrc_task(void * data)
         g_strSocpStat.u32IntEncSrcRD = 0;
         spin_unlock_irqrestore(&lock, lock_flag);
 
-        /* ´¦Àí±àÂë°üÍ·'HISI'¼ìÑé´íÎó*/
+        /* å¤„ç†ç¼–ç åŒ…å¤´'HISI'æ£€éªŒé”™è¯¯*/
         if (IntHeadState)
         {
             for (i = 0; i < SOCP_MAX_ENCSRC_CHN; i++)
             {
-                /* ¼ì²âÍ¨µÀÊÇ·ñÉêÇë*/
+                /* æ£€æµ‹é€šé“æ˜¯å¦ç”³è¯·*/
                 if (SOCP_CHN_ALLOCATED == g_strSocpStat.sEncSrcChan[i].u32AllocStat)
                 {
                     if (IntHeadState & ((u32)1 << i))
@@ -743,14 +743,14 @@ int socp_encsrc_task(void * data)
 
 #define TIMEOUT_30S       (32764*30)
 /*****************************************************************************
-* º¯ Êı Ãû  : socp_encdst_task
+* å‡½ æ•° å  : socp_encdst_task
 *
-* ¹¦ÄÜÃèÊö  : Ä£¿éÈÎÎñº¯Êı:±àÂëÄ¿µÄ£¬AppºË
-* ÊäÈë²ÎÊı  : ÎŞ
+* åŠŸèƒ½æè¿°  : æ¨¡å—ä»»åŠ¡å‡½æ•°:ç¼–ç ç›®çš„ï¼ŒAppæ ¸
+* è¾“å…¥å‚æ•°  : æ— 
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ   : ÎŞ
+* è¿” å› å€¼   : æ— 
 *****************************************************************************/
 int socp_encdst_task(void * data)
 {
@@ -768,7 +768,7 @@ int socp_encdst_task(void * data)
 
     /* coverity[no_escape] */
     do{
-        /* ³¬Ê±»òÕß±»ÖĞ¶Ï£¬·ÇÕı³£·µ»Ø */
+        /* è¶…æ—¶æˆ–è€…è¢«ä¸­æ–­ï¼Œéæ­£å¸¸è¿”å› */
         if(0 != down_interruptible(&g_strSocpStat.u32EncDstSemID))
         {
             continue;
@@ -783,12 +783,12 @@ int socp_encdst_task(void * data)
         g_strSocpStat.u32IntEncDstThresholdOvf = 0;
         spin_unlock_irqrestore(&lock, lock_flag);
 
-        /* ´¦Àí±àÂë´«ÊäÍê³ÉÖĞ¶Ï*/
+        /* å¤„ç†ç¼–ç ä¼ è¾“å®Œæˆä¸­æ–­*/
         if (IntTfrState)
         {
             for (i = 0; i < SOCP_MAX_ENCDST_CHN; i++)
             {
-                /* ¼ì²âÍ¨µÀÊÇ·ñÅäÖÃ*/
+                /* æ£€æµ‹é€šé“æ˜¯å¦é…ç½®*/
                 if (SOCP_CHN_SET == g_strSocpStat.sEncDstChan[i].u32SetStat)
                 {
                     if (IntTfrState & ((u32)1 << i))
@@ -824,12 +824,12 @@ int socp_encdst_task(void * data)
             }
         }
 
-        /* ´¦Àí±àÂëÄ¿µÄ buffer Òç³öÖĞ¶Ï*/
+        /* å¤„ç†ç¼–ç ç›®çš„ buffer æº¢å‡ºä¸­æ–­*/
         if (IntOvfState)
         {
             for (i = 0; i < SOCP_MAX_ENCDST_CHN; i++)
             {
-                /* ¼ì²âÍ¨µÀÊÇ·ñÅäÖÃ*/
+                /* æ£€æµ‹é€šé“æ˜¯å¦é…ç½®*/
                 if (SOCP_CHN_SET == g_strSocpStat.sEncDstChan[i].u32SetStat)
                 {
                     if (IntOvfState & ((u32)1 << i))
@@ -862,12 +862,12 @@ int socp_encdst_task(void * data)
             }
         }
 
-        /* ´¦Àí±àÂëÄ¿µÄ buffer ãĞÖµÒç³öÖĞ¶Ï*/
+        /* å¤„ç†ç¼–ç ç›®çš„ buffer é˜ˆå€¼æº¢å‡ºä¸­æ–­*/
         if (IntThresholdOvfState)
         {
             for (i = 0; i < SOCP_MAX_ENCDST_CHN; i++)
             {
-                /* ¼ì²âÍ¨µÀÊÇ·ñÅäÖÃ*/
+                /* æ£€æµ‹é€šé“æ˜¯å¦é…ç½®*/
                 if (SOCP_CHN_SET == g_strSocpStat.sEncDstChan[i].u32SetStat)
                 {
                     if (IntThresholdOvfState & ((u32)1 << (i + SOCP_ENC_DST_BUFF_THRESHOLD_OVF_BEGIN)))
@@ -906,14 +906,14 @@ int socp_encdst_task(void * data)
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû  : socp_decsrc_event_handler
+* å‡½ æ•° å  : socp_decsrc_event_handler
 *
-* ¹¦ÄÜÃèÊö  : ½âÂëÔ´Í¨µÀÊÂ¼ş´¦Àíº¯Êı
-* ÊäÈë²ÎÊı  : ÎŞ
+* åŠŸèƒ½æè¿°  : è§£ç æºé€šé“äº‹ä»¶å¤„ç†å‡½æ•°
+* è¾“å…¥å‚æ•°  : æ— 
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ   : ÎŞ
+* è¿” å› å€¼   : æ— 
 *****************************************************************************/
 void  socp_decsrc_event_handler(u32 id, u32 secIntState)
 {
@@ -969,14 +969,14 @@ void  socp_decsrc_event_handler(u32 id, u32 secIntState)
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû  : socp_decsrc_handler
+* å‡½ æ•° å  : socp_decsrc_handler
 *
-* ¹¦ÄÜÃèÊö  : ½âÂëÔ´Í¨µÀÖĞ¶Ï´¦Àíº¯Êı
-* ÊäÈë²ÎÊı  : ÎŞ
+* åŠŸèƒ½æè¿°  : è§£ç æºé€šé“ä¸­æ–­å¤„ç†å‡½æ•°
+* è¾“å…¥å‚æ•°  : æ— 
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ   : ÎŞ
+* è¿” å› å€¼   : æ— 
 *****************************************************************************/
 void  socp_decsrc_handler(void)
 {
@@ -991,7 +991,7 @@ void  socp_decsrc_handler(void)
 
         for(i=0;i<SOCP_MAX_DECSRC_CHN;i++)
         {
-            /* ¼ì²âÍ¨µÀÊÇ·ñÅäÖÃ*/
+            /* æ£€æµ‹é€šé“æ˜¯å¦é…ç½®*/
 
             if(SOCP_CHN_SET == g_strSocpStat.sDecSrcChan[i].u32SetStat)
             {
@@ -1013,27 +1013,27 @@ void  socp_decsrc_handler(void)
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû  : socp_decsrc_task
+* å‡½ æ•° å  : socp_decsrc_task
 *
-* ¹¦ÄÜÃèÊö  : Ä£¿éÈÎÎñº¯Êı:½âÂëÔ´£¬AºË
-* ÊäÈë²ÎÊı  : ÎŞ
+* åŠŸèƒ½æè¿°  : æ¨¡å—ä»»åŠ¡å‡½æ•°:è§£ç æºï¼ŒAæ ¸
+* è¾“å…¥å‚æ•°  : æ— 
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ   : ÎŞ
+* è¿” å› å€¼   : æ— 
 *****************************************************************************/
 int socp_decsrc_task(void * data)
 {
     unsigned long lock_flag;
     /* coverity[no_escape] */
     do{
-        /* ³¬Ê±»òÕß±»ÖĞ¶Ï£¬·ÇÕı³£·µ»Ø */
+        /* è¶…æ—¶æˆ–è€…è¢«ä¸­æ–­ï¼Œéæ­£å¸¸è¿”å› */
         if(0 != down_interruptible(&g_strSocpStat.u32DecSrcSemID))
         {
             continue;
         }
         spin_lock_irqsave(&lock, lock_flag);
-        /* ´¦Àí½âÂëÔ´ÖĞ¶Ï*/
+        /* å¤„ç†è§£ç æºä¸­æ–­*/
         socp_decsrc_handler();
         spin_unlock_irqrestore(&lock, lock_flag);
     }while(1);
@@ -1042,14 +1042,14 @@ int socp_decsrc_task(void * data)
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû  : socp_decdst_task
+* å‡½ æ•° å  : socp_decdst_task
 *
-* ¹¦ÄÜÃèÊö  : Ä£¿éÈÎÎñº¯Êı:½âÂëÄ¿µÄ£¬Ë«ºË
-* ÊäÈë²ÎÊı  : ÎŞ
+* åŠŸèƒ½æè¿°  : æ¨¡å—ä»»åŠ¡å‡½æ•°:è§£ç ç›®çš„ï¼ŒåŒæ ¸
+* è¾“å…¥å‚æ•°  : æ— 
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ   : ÎŞ
+* è¿” å› å€¼   : æ— 
 *****************************************************************************/
 int socp_decdst_task(void * data)
 {
@@ -1060,7 +1060,7 @@ int socp_decdst_task(void * data)
     unsigned long lock_flag;
     /* coverity[no_escape] */
     do{
-        /* ³¬Ê±»òÕß±»ÖĞ¶Ï£¬·ÇÕı³£·µ»Ø */
+        /* è¶…æ—¶æˆ–è€…è¢«ä¸­æ–­ï¼Œéæ­£å¸¸è¿”å› */
         if(0 != down_interruptible(&g_strSocpStat.u32DecDstSemID))
         {
             continue;
@@ -1073,12 +1073,12 @@ int socp_decdst_task(void * data)
         g_strSocpStat.u32IntDecDstOvf = 0;
         spin_unlock_irqrestore(&lock, lock_flag);
 
-        /* ´¦Àí½âÂë´«ÊäÍê³ÉÖĞ¶Ï*/
+        /* å¤„ç†è§£ç ä¼ è¾“å®Œæˆä¸­æ–­*/
         if (IntTfrState)
         {
             for (i = 0; i < SOCP_MAX_DECDST_CHN; i++)
             {
-                /* ¼ì²âÍ¨µÀÊÇ·ñÉêÇë*/
+                /* æ£€æµ‹é€šé“æ˜¯å¦ç”³è¯·*/
                 if (SOCP_CHN_ALLOCATED == g_strSocpStat.sDecDstChan[i].u32AllocStat)
                 {
                     if (IntTfrState & ((u32)1 << i))
@@ -1097,12 +1097,12 @@ int socp_decdst_task(void * data)
             }
         }
 
-        /* ´¦Àí½âÂëÄ¿µÄ buffer Òç³öÖĞ¶Ï*/
+        /* å¤„ç†è§£ç ç›®çš„ buffer æº¢å‡ºä¸­æ–­*/
         if (IntOvfState)
         {
             for (i = 0; i < SOCP_MAX_DECDST_CHN; i++)
             {
-                /* ¼ì²âÍ¨µÀÊÇ·ñÉêÇë*/
+                /* æ£€æµ‹é€šé“æ˜¯å¦ç”³è¯·*/
                 if (SOCP_CHN_ALLOCATED == g_strSocpStat.sDecDstChan[i].u32AllocStat)
                 {
                     if (IntOvfState & ((u32)1 << i))
@@ -1127,14 +1127,14 @@ int socp_decdst_task(void * data)
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû  : socp_create_task
+* å‡½ æ•° å  : socp_create_task
 *
-* ¹¦ÄÜÃèÊö  : socpÈÎÎñ´´½¨º¯Êı
-* ÊäÈë²ÎÊı  : ÎŞ
+* åŠŸèƒ½æè¿°  : socpä»»åŠ¡åˆ›å»ºå‡½æ•°
+* è¾“å…¥å‚æ•°  : æ— 
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ  : ´´½¨³É¹¦Óë·ñµÄ±êÊ¶Âë
+* è¿” å› å€¼  : åˆ›å»ºæˆåŠŸä¸å¦çš„æ ‡è¯†ç 
 *****************************************************************************/
 s32 socp_create_task( s8 * puchName,
                         unsigned long * pu32TaskID,
@@ -1146,7 +1146,7 @@ s32 socp_create_task( s8 * puchName,
     struct task_struct  *tsk;
     struct sched_param  param;
 
-    tsk = kthread_run(pfnFunc, pParam, puchName);
+    tsk = kthread_run(pfnFunc, pParam, "%s", puchName);
     if (IS_ERR(tsk))
     {
         socp_printf("socp_create_task: create kthread failed!\n");
@@ -1166,20 +1166,20 @@ s32 socp_create_task( s8 * puchName,
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû  : socp_init_task
+* å‡½ æ•° å  : socp_init_task
 *
-* ¹¦ÄÜÃèÊö  : ´´½¨±à½âÂëÈÎÎñ
-* ÊäÈë²ÎÊı  : ÎŞ
+* åŠŸèƒ½æè¿°  : åˆ›å»ºç¼–è§£ç ä»»åŠ¡
+* è¾“å…¥å‚æ•°  : æ— 
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ  : ´´½¨³É¹¦Óë·ñµÄ±êÊ¶Âë
+* è¿” å› å€¼  : åˆ›å»ºæˆåŠŸä¸å¦çš„æ ‡è¯†ç 
 *****************************************************************************/
 s32 socp_init_task(void)
 {
     u32 aulArguments[4] = {0,0,0,0};
 
-    /* ±àÂëÔ´Í¨µÀÈÎÎñ*/
+    /* ç¼–ç æºé€šé“ä»»åŠ¡*/
     sema_init(&g_strSocpStat.u32EncSrcSemID, 0);
     if(!g_strSocpStat.u32EncSrcTskID)
     {
@@ -1191,7 +1191,7 @@ s32 socp_init_task(void)
         }
     }
 
-    /* ±àÂëÊä³öÍ¨µÀÈÎÎñ*/
+    /* ç¼–ç è¾“å‡ºé€šé“ä»»åŠ¡*/
     sema_init(&g_strSocpStat.u32EncDstSemID, 0);
     if(!g_strSocpStat.u32EncDstTskID)
     {
@@ -1203,7 +1203,7 @@ s32 socp_init_task(void)
         }
     }
 
-    /* ½âÂëÔ´Í¨µÀÈÎÎñ*/
+    /* è§£ç æºé€šé“ä»»åŠ¡*/
     sema_init(&g_strSocpStat.u32DecSrcSemID, 0);
     if(!g_strSocpStat.u32DecSrcTskID)
     {
@@ -1215,7 +1215,7 @@ s32 socp_init_task(void)
         }
     }
 
-    /* ½âÂëÄ¿µÄÍ¨µÀÈÎÎñ*/
+    /* è§£ç ç›®çš„é€šé“ä»»åŠ¡*/
     sema_init(&g_strSocpStat.u32DecDstSemID, 0);
     if(!g_strSocpStat.u32DecDstTskID)
     {
@@ -1231,14 +1231,14 @@ s32 socp_init_task(void)
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû   : socp_handler_encsrc
+* å‡½ æ•° å   : socp_handler_encsrc
 *
-* ¹¦ÄÜÃèÊö  : ±àÂëÔ´Í¨µÀ´¦Àíº¯Êı£¬RD´¦ÀíÓÉÉÏ²ãÍê³É£¬Çı¶¯RDÖĞ¶Ï¿ÉÒÔ²»×ö´¦Àí
-* ÊäÈë²ÎÊı  : ÎŞ
+* åŠŸèƒ½æè¿°  : ç¼–ç æºé€šé“å¤„ç†å‡½æ•°ï¼ŒRDå¤„ç†ç”±ä¸Šå±‚å®Œæˆï¼Œé©±åŠ¨RDä¸­æ–­å¯ä»¥ä¸åšå¤„ç†
+* è¾“å…¥å‚æ•°  : æ— 
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ   : ÎŞ
+* è¿” å› å€¼   : æ— 
 *****************************************************************************/
 void  socp_handler_encsrc(void)
 {
@@ -1249,7 +1249,7 @@ void  socp_handler_encsrc(void)
 
     /*read and clear the interrupt flags*/
     SOCP_REG_READ(SOCP_REG_GBL_INTSTAT, IntFlag);
-    /* ´¦Àí°üÍ·´íÎó */
+    /* å¤„ç†åŒ…å¤´é”™è¯¯ */
     if (IntFlag & SOCP_APP_ENC_FLAGINT_MASK)
     {
         socp_printf("IntFlag = 0x%x\n", IntFlag);
@@ -1263,7 +1263,7 @@ void  socp_handler_encsrc(void)
         {
             if (IntState & ((u32)1 << i))
             {
-                /* debugÄ£Ê½ÆÁ±Î°üÍ·´íÎóÖĞ¶Ï */
+                /* debugæ¨¡å¼å±è”½åŒ…å¤´é”™è¯¯ä¸­æ–­ */
                 if(SOCP_REG_GETBITS(SOCP_REG_ENCSRC_BUFCFG1(i), 31, 1))/*lint !e647*/
                 {
                     SOCP_REG_SETBITS(SOCP_REG_APP_MASK1, i, 1,1);
@@ -1274,7 +1274,7 @@ void  socp_handler_encsrc(void)
         }
     }
 
-    /*²»ÔÙ´¦ÀíRDÍê³ÉÖĞ¶Ï£¬³õÊ¼»¯Ê±±£³ÖÆÁ±Î */
+    /*ä¸å†å¤„ç†RDå®Œæˆä¸­æ–­ï¼Œåˆå§‹åŒ–æ—¶ä¿æŒå±è”½ */
 
     if(bHandle)
     {
@@ -1286,14 +1286,14 @@ void  socp_handler_encsrc(void)
 
 
 /*****************************************************************************
-* º¯ Êı Ãû   : socp_handler_encdst
+* å‡½ æ•° å   : socp_handler_encdst
 *
-* ¹¦ÄÜÃèÊö  : ±àÂëÄ¿µÄÖĞ¶Ï´¦Àíº¯Êı
-* ÊäÈë²ÎÊı  : ÎŞ
+* åŠŸèƒ½æè¿°  : ç¼–ç ç›®çš„ä¸­æ–­å¤„ç†å‡½æ•°
+* è¾“å…¥å‚æ•°  : æ— 
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ   : ÎŞ
+* è¿” å› å€¼   : æ— 
 *****************************************************************************/
 /*lint -save -e550*/
 void socp_handler_encdst(void)
@@ -1310,7 +1310,7 @@ void socp_handler_encdst(void)
     int countFlag = BSP_FALSE;
     u32  ModeState = 0;
 
-    /*±àÂëÄ¿µÄ´«ÊäÖĞ¶Ï*/
+    /*ç¼–ç ç›®çš„ä¼ è¾“ä¸­æ–­*/
     SOCP_REG_READ(SOCP_REG_GBL_INTSTAT, IntFlag);
     if (IntFlag & SOCP_APP_ENC_TFRINT_MASK)
     {
@@ -1318,7 +1318,7 @@ void socp_handler_encdst(void)
         SOCP_REG_READ(SOCP_REG_ENC_INTSTAT0, IntState);
         SOCP_REG_READ(SOCP_REG_ENC_MASK0, mask);
         SOCP_REG_WRITE(SOCP_REG_ENC_MASK0, (IntState | mask));   // mask int 2011.7.27 by yangzhi
-        /* ÆÁ±ÎÒç³öÖĞ¶Ï */
+        /* å±è”½æº¢å‡ºä¸­æ–­ */
         SOCP_REG_READ(SOCP_REG_ENC_MASK2, mask2);
         SOCP_REG_WRITE(SOCP_REG_ENC_MASK2, ((IntState << 16) | mask2));
         SOCP_REG_WRITE(SOCP_REG_ENC_RAWINT0, IntState);
@@ -1354,11 +1354,11 @@ void socp_handler_encdst(void)
             }
         }
     }
-    // ÉÏÒçÖĞ¶ÏÓëãĞÖµÖĞ¶Ï¹²ÓÃÒ»¸ö¼Ä´æÆ÷
+    // ä¸Šæº¢ä¸­æ–­ä¸é˜ˆå€¼ä¸­æ–­å…±ç”¨ä¸€ä¸ªå¯„å­˜å™¨
     else if (IntFlag & SOCP_APP_ENC_OUTOVFINT_MASK)
     {
         SOCP_REG_READ(SOCP_REG_ENC_INTSTAT2, IntState);
-        // ±àÂëÄ¿µÄbufferãĞÖµÖĞ¶Ï´¦Àí
+        // ç¼–ç ç›®çš„bufferé˜ˆå€¼ä¸­æ–­å¤„ç†
         if(0 != (IntState & SOCP_ENC_DST_BUFF_THRESHOLD_OVF_MASK))
         {
             spin_lock_irqsave(&lock, lock_flag);
@@ -1379,7 +1379,7 @@ void socp_handler_encdst(void)
             }
 
         }
-        // ±àÂëÄ¿µÄbufferÉÏÒçÖĞ¶Ï
+        // ç¼–ç ç›®çš„bufferä¸Šæº¢ä¸­æ–­
         if (0 != (IntState & SOCP_ENC_DST_BUFF_OVF_MASK))
         {
             spin_lock_irqsave(&lock, lock_flag);
@@ -1406,7 +1406,7 @@ void socp_handler_encdst(void)
         return ;
     }
 
-    /* ±àÂëÄ¿µÄbufferÄ£Ê½ÇĞ»»Íê³É */
+    /* ç¼–ç ç›®çš„bufferæ¨¡å¼åˆ‡æ¢å®Œæˆ */
     else if (IntFlag & SOCP_CORE0_ENC_MODESWT_MASK)
     {
         spin_lock_irqsave(&lock, lock_flag);
@@ -1415,7 +1415,7 @@ void socp_handler_encdst(void)
         SOCP_REG_READ(SOCP_REG_ENC_MASK0, mask);
         SOCP_REG_SETBITS(SOCP_REG_ENC_MASK0, 16, 7, (((IntState | mask)>>16)&0x7f));
 
-        /* ÇåÔ­Ê¼ÖĞ¶Ï×´Ì¬ */
+        /* æ¸…åŸå§‹ä¸­æ–­çŠ¶æ€ */
         SOCP_REG_SETBITS(SOCP_REG_ENC_RAWINT0, 16, 7, ((IntState>>16)&0x7f));
 
         mask = 0;
@@ -1428,7 +1428,7 @@ void socp_handler_encdst(void)
             	}
         }
 
-        /* ÆÁ±Î´¦ÓÚÑ­»·Ä£Ê½Í¨µÀµÄ´«ÊäÖĞ¶ÏºÍãĞÖµÒç³öÖĞ¶Ï */
+        /* å±è”½å¤„äºå¾ªç¯æ¨¡å¼é€šé“çš„ä¼ è¾“ä¸­æ–­å’Œé˜ˆå€¼æº¢å‡ºä¸­æ–­ */
         SOCP_REG_SETBITS(SOCP_REG_ENC_MASK0, 0, 7, mask);
         SOCP_REG_SETBITS(SOCP_REG_ENC_MASK2, 0, 7, mask);
         SOCP_REG_SETBITS(SOCP_REG_ENC_MASK2, 16, 7, mask);
@@ -1453,14 +1453,14 @@ void socp_handler_encdst(void)
 /*lint -restore +e550*/
 
 /*****************************************************************************
-* º¯ Êı Ãû   : socp_handler_decsrc
+* å‡½ æ•° å   : socp_handler_decsrc
 *
-* ¹¦ÄÜÃèÊö  : ½âÂëÔ´Í¨µÀÖĞ¶Ï´¦Àíº¯Êı
-* ÊäÈë²ÎÊı  : ÎŞ
+* åŠŸèƒ½æè¿°  : è§£ç æºé€šé“ä¸­æ–­å¤„ç†å‡½æ•°
+* è¾“å…¥å‚æ•°  : æ— 
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ   : ÎŞ
+* è¿” å› å€¼   : æ— 
 *****************************************************************************/
 void socp_handler_decsrc(void)
 {
@@ -1469,7 +1469,7 @@ void socp_handler_decsrc(void)
     int bHandle = BSP_FALSE;
     u32 i = 0;
 
-    /*±àÂëÊäÈë´íÎó*/
+    /*ç¼–ç è¾“å…¥é”™è¯¯*/
     SOCP_REG_READ(SOCP_REG_GBL_INTSTAT, IntFlag);
     if (IntFlag & SOCP_DEC_INERRINT_MASK)
     {
@@ -1498,14 +1498,14 @@ void socp_handler_decsrc(void)
 
 
 /*****************************************************************************
-* º¯ Êı Ãû   : socp_handler_decdst
+* å‡½ æ•° å   : socp_handler_decdst
 *
-* ¹¦ÄÜÃèÊö  : ½âÂëÄ¿µÄÍ¨µÀÖĞ¶Ï´¦Àíº¯Êı
-* ÊäÈë²ÎÊı  : ÎŞ
+* åŠŸèƒ½æè¿°  : è§£ç ç›®çš„é€šé“ä¸­æ–­å¤„ç†å‡½æ•°
+* è¾“å…¥å‚æ•°  : æ— 
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ   : ÎŞ
+* è¿” å› å€¼   : æ— 
 *****************************************************************************/
 
 void socp_handler_decdst(void)
@@ -1526,7 +1526,7 @@ void socp_handler_decdst(void)
     OvMask  = SOCP_CORE0_DEC_OUTOVFINT_MASK;
     OvState = SOCP_REG_DEC_CORE0ISTAT2;
 
-    /*½âÂë´«ÊäÖĞ¶Ï*/
+    /*è§£ç ä¼ è¾“ä¸­æ–­*/
     SOCP_REG_READ(SOCP_REG_GBL_INTSTAT, IntFlag);
     if (IntFlag & TfMask)
     {
@@ -1549,7 +1549,7 @@ void socp_handler_decdst(void)
         }
     }
 
-    /*½âÂëÄ¿µÄbuffer ÉÏÒç*/
+    /*è§£ç ç›®çš„buffer ä¸Šæº¢*/
     SOCP_REG_READ(SOCP_REG_GBL_INTSTAT, IntFlag);
     if (IntFlag & OvMask)
     {
@@ -1579,14 +1579,14 @@ void socp_handler_decdst(void)
 
 
 /*****************************************************************************
-* º¯ Êı Ãû   : socp_app_int_handler
+* å‡½ æ•° å   : socp_app_int_handler
 *
-* ¹¦ÄÜÃèÊö  : APP ºËÖĞ¶Ï´¦Àíº¯Êı
-* ÊäÈë²ÎÊı  : ÎŞ
+* åŠŸèƒ½æè¿°  : APP æ ¸ä¸­æ–­å¤„ç†å‡½æ•°
+* è¾“å…¥å‚æ•°  : æ— 
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ   : ÎŞ
+* è¿” å› å€¼   : æ— 
 *****************************************************************************/
 u32 socp_app_int_handler(void)
 {
@@ -1604,15 +1604,15 @@ u32 socp_app_int_handler(void)
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû  : socp_init
+* å‡½ æ•° å  : socp_init
 *
-* ¹¦ÄÜÃèÊö  : Ä£¿é³õÊ¼»¯º¯Êı
+* åŠŸèƒ½æè¿°  : æ¨¡å—åˆå§‹åŒ–å‡½æ•°
 *
-* ÊäÈë²ÎÊı  : ÎŞ
+* è¾“å…¥å‚æ•°  : æ— 
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ  : ³õÊ¼»¯³É¹¦µÄ±êÊ¶Âë
+* è¿” å› å€¼  : åˆå§‹åŒ–æˆåŠŸçš„æ ‡è¯†ç 
 *****************************************************************************/
 s32 socp_init(void)
 {
@@ -1641,10 +1641,10 @@ s32 socp_init(void)
     if(0 == g_strSocpStat.baseAddr)
     {
         socp_printf("socp_init:base addr is error!\n");
-        return BSP_ERROR; /* [false alarm]:ÆÁ±ÎFortify´íÎó */
+        return BSP_ERROR; /* [false alarm]:å±è”½Fortifyé”™è¯¯ */
     }
 
-    /* bsp_memmap.hÀïÃæ»¹Ã»ÓĞ¶ÔBBP¼Ä´æÆ÷¿Õ¼ä×öÓ³Éä */
+    /* bsp_memmap.hé‡Œé¢è¿˜æ²¡æœ‰å¯¹BBPå¯„å­˜å™¨ç©ºé—´åšæ˜ å°„ */
     g_strSocpStat.armBaseAddr = (unsigned long)BBP_REG_ARM_BASEADDR;
     /* coverity[secure_coding] */
     Socp_Memset(&g_stSocpDebugInfo, 0x0 ,sizeof(SOCP_DEBUG_INFO_S));
@@ -1663,7 +1663,7 @@ s32 socp_init(void)
 
     bsp_socp_ind_delay_init();
 
-    /* ´´½¨±à½âÂëÈÎÎñ */
+    /* åˆ›å»ºç¼–è§£ç ä»»åŠ¡ */
     ret = socp_init_task();
     if (BSP_OK != ret)
     {
@@ -1671,7 +1671,7 @@ s32 socp_init(void)
         return (s32)ret;
     }
 
-    /* ¹ÒÖĞ¶Ï */
+    /* æŒ‚ä¸­æ–­ */
     irq = irq_of_parse_and_map(dev,0);
     ret = request_irq(irq, (irq_handler_t)socp_app_int_handler, 0, "SOCP_APP_IRQ",  BSP_NULL);
     if (BSP_OK != ret)
@@ -1681,7 +1681,7 @@ s32 socp_init(void)
     }
 
 
-    /* ÉèÖÃ³õÊ¼»¯×´Ì¬ */
+    /* è®¾ç½®åˆå§‹åŒ–çŠ¶æ€ */
     g_strSocpStat.bInitFlag = BSP_TRUE;
 
     (void)bsp_socp_dst_init();
@@ -1695,18 +1695,18 @@ s32 socp_init(void)
 
 
 /***************************************************************************************
-* º¯ Êı Ãû  : socp_set_reg_wr_addr
+* å‡½ æ•° å  : socp_set_reg_wr_addr
 *
-* ¹¦ÄÜÃèÊö  : ÅäÖÃÍ¨µÀ»ùµØÖ·¼Ä´æÆ÷ºÍ¶ÁĞ´Ö¸Õë¼Ä´æÆ÷£¬º¯ÊıÄÚÇø·ÖSOCP32Î»ºÍ64Î»Ñ°Ö·ÊÊÅä
+* åŠŸèƒ½æè¿°  : é…ç½®é€šé“åŸºåœ°å€å¯„å­˜å™¨å’Œè¯»å†™æŒ‡é’ˆå¯„å­˜å™¨ï¼Œå‡½æ•°å†…åŒºåˆ†SOCP32ä½å’Œ64ä½å¯»å€é€‚é…
 *
-* ÊäÈë²ÎÊı  : ChanId: Í¨µÀºÅ£¬°üÀ¨Í¨µÀÀàĞÍºÍÍ¨µÀID
-*             pAttr: Í¨µÀÅäÖÃ²ÎÊı
-              start: Í¨µÀbufferÆğÊ¼µØÖ·
-              end: Í¨µÀbuffer½áÊøµØÖ·
+* è¾“å…¥å‚æ•°  : ChanId: é€šé“å·ï¼ŒåŒ…æ‹¬é€šé“ç±»å‹å’Œé€šé“ID
+*             pAttr: é€šé“é…ç½®å‚æ•°
+              start: é€šé“bufferèµ·å§‹åœ°å€
+              end: é€šé“bufferç»“æŸåœ°å€
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ  : ÎŞ
+* è¿” å› å€¼  : æ— 
 ****************************************************************************************/
 void socp_set_reg_wr_addr(u32 ChanId, void *pAttr, unsigned long start, unsigned long end)
 {
@@ -1723,7 +1723,7 @@ void socp_set_reg_wr_addr(u32 ChanId, void *pAttr, unsigned long start, unsigned
     ChanType  = SOCP_REAL_CHAN_TYPE(ChanId);
     
 
-    if(ChanType == SOCP_CODER_SRC_CHAN)   // ±àÂëÔ´Í¨µÀ
+    if(ChanType == SOCP_CODER_SRC_CHAN)   // ç¼–ç æºé€šé“
     {
         SOCP_REG_WRITE(SOCP_REG_ENCSRC_BUFADDR(RealChanId),(u32)start);
         SOCP_REG_WRITE(SOCP_REG_ENCSRC_BUFWPTR(RealChanId),(u32)start);
@@ -1762,7 +1762,7 @@ void socp_set_reg_wr_addr(u32 ChanId, void *pAttr, unsigned long start, unsigned
         }
     }
     
-    else if(ChanType == SOCP_CODER_DEST_CHAN)   // ±àÂëÄ¿µÄÍ¨µÀ
+    else if(ChanType == SOCP_CODER_DEST_CHAN)   // ç¼–ç ç›®çš„é€šé“
     {
         SOCP_REG_WRITE(SOCP_REG_ENCDEST_BUFADDR(RealChanId), (u32)start);
         SOCP_REG_WRITE(SOCP_REG_ENCDEST_BUFRPTR(RealChanId), (u32)start);
@@ -1774,11 +1774,11 @@ void socp_set_reg_wr_addr(u32 ChanId, void *pAttr, unsigned long start, unsigned
         pEncDstChan->sEncDstBuf.u32Read     = (u32)start;
         pEncDstChan->sEncDstBuf.u32Write    = (u32)start;
         pEncDstChan->sEncDstBuf.u32Length   = end - start + 1;//lint !e834
-        /* ±íÃ÷¸ÃÍ¨µÀÒÑ¾­ÅäÖÃ */
+        /* è¡¨æ˜è¯¥é€šé“å·²ç»é…ç½® */
         pEncDstChan->u32SetStat = SOCP_CHN_SET;
     }
     
-    else if(ChanType == SOCP_DECODER_SRC_CHAN)   // ½âÂëÔ´Í¨µÀ
+    else if(ChanType == SOCP_DECODER_SRC_CHAN)   // è§£ç æºé€šé“
     {
         SOCP_REG_WRITE(SOCP_REG_DECSRC_BUFWPTR(RealChanId), (u32)start);
         SOCP_REG_WRITE(SOCP_REG_DECSRC_BUFADDR(RealChanId), (u32)start);
@@ -1795,7 +1795,7 @@ void socp_set_reg_wr_addr(u32 ChanId, void *pAttr, unsigned long start, unsigned
         pDecSrcChan->u32SetStat = SOCP_CHN_SET;
     }
     
-    else if(ChanType == SOCP_DECODER_DEST_CHAN)   // ½âÂëÄ¿µÄÍ¨µÀ
+    else if(ChanType == SOCP_DECODER_DEST_CHAN)   // è§£ç ç›®çš„é€šé“
     {
         SOCP_REG_WRITE(SOCP_REG_DECDEST_BUFRPTR(RealChanId), (u32)start);
         SOCP_REG_WRITE(SOCP_REG_DECDEST_BUFADDR(RealChanId), (u32)start);
@@ -1812,16 +1812,16 @@ void socp_set_reg_wr_addr(u32 ChanId, void *pAttr, unsigned long start, unsigned
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû  : bsp_socp_coder_set_src_chan
+* å‡½ æ•° å  : bsp_socp_coder_set_src_chan
 *
-* ¹¦ÄÜÃèÊö  : ±àÂëÔ´Í¨µÀÅäÖÃº¯Êı
+* åŠŸèƒ½æè¿°  : ç¼–ç æºé€šé“é…ç½®å‡½æ•°
 *
-* ÊäÈë²ÎÊı  : pSrcAttr     ±àÂëÔ´Í¨µÀÅäÖÃ²ÎÊı
-*             ulSrcChanID  ±àÂëÔ´Í¨µÀID
+* è¾“å…¥å‚æ•°  : pSrcAttr     ç¼–ç æºé€šé“é…ç½®å‚æ•°
+*             ulSrcChanID  ç¼–ç æºé€šé“ID
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ  : ÉêÇë¼°ÅäÖÃ³É¹¦Óë·ñµÄ±êÊ¶Âë
+* è¿” å› å€¼  : ç”³è¯·åŠé…ç½®æˆåŠŸä¸å¦çš„æ ‡è¯†ç 
 *****************************************************************************/
 s32 bsp_socp_coder_set_src_chan(SOCP_CODER_SRC_ENUM_U32 enSrcChanID, SOCP_CODER_SRC_CHAN_S *pSrcAttr)
 {
@@ -1841,10 +1841,10 @@ s32 bsp_socp_coder_set_src_chan(SOCP_CODER_SRC_ENUM_U32 enSrcChanID, SOCP_CODER_
 
     g_stSocpDebugInfo.sSocpDebugGBl.u32SocpAllocEncSrcCnt++;
 
-    /* ÅĞ¶ÏÊÇ·ñÒÑ¾­³õÊ¼»¯ */
+    /* åˆ¤æ–­æ˜¯å¦å·²ç»åˆå§‹åŒ– */
     SOCP_CHECK_INIT();
 
-    /* ÅĞ¶Ï²ÎÊıÓĞĞ§ĞÔ */
+    /* åˆ¤æ–­å‚æ•°æœ‰æ•ˆæ€§ */
     SOCP_CHECK_PARA(pSrcAttr);
     SOCP_CHECK_CHAN_PRIORITY(pSrcAttr->ePriority);
     SOCP_CHECK_DATA_TYPE(pSrcAttr->eDataType);
@@ -1869,8 +1869,8 @@ s32 bsp_socp_coder_set_src_chan(SOCP_CODER_SRC_ENUM_U32 enSrcChanID, SOCP_CODER_
         return BSP_ERR_SOCP_INVALID_PARA;
     }
 
-    /* Ê¹ÓÃÅäÖÃ²ÎÊı½øĞĞÅäÖÃ */
-    /* ÅĞ¶ÏÆğÊ¼µØÖ·ÊÇ·ñ8×Ö½Ú¶ÔÆë */
+    /* ä½¿ç”¨é…ç½®å‚æ•°è¿›è¡Œé…ç½® */
+    /* åˆ¤æ–­èµ·å§‹åœ°å€æ˜¯å¦8å­—èŠ‚å¯¹é½ */
     start   = (unsigned long)pSrcAttr->sCoderSetSrcBuf.pucInputStart;
     end     = (unsigned long)pSrcAttr->sCoderSetSrcBuf.pucInputEnd;
 	
@@ -1891,10 +1891,10 @@ s32 bsp_socp_coder_set_src_chan(SOCP_CODER_SRC_ENUM_U32 enSrcChanID, SOCP_CODER_
         }
     }
 
-    /* Èç¹ûÊÇÓÃÁ´±í»º³åÇø£¬ÔòÅäÖÃRDbufferµÄÆğÊ¼µØÖ·ºÍ³¤¶È */
+    /* å¦‚æœæ˜¯ç”¨é“¾è¡¨ç¼“å†²åŒºï¼Œåˆ™é…ç½®RDbufferçš„èµ·å§‹åœ°å€å’Œé•¿åº¦ */
     if(SOCP_ENCSRC_CHNMODE_LIST == pSrcAttr->eMode)
     {
-        /* ÅĞ¶ÏRDBufferµÄÆğÊ¼µØÖ·ÊÇ·ñ8×Ö½Ú¶ÔÆë */
+        /* åˆ¤æ–­RDBufferçš„èµ·å§‹åœ°å€æ˜¯å¦8å­—èŠ‚å¯¹é½ */
         base_addr_rdstart = (unsigned long)pSrcAttr->sCoderSetSrcBuf.pucRDStart;
         base_addr_rdend   = (unsigned long)pSrcAttr->sCoderSetSrcBuf.pucRDEnd;
 
@@ -1902,7 +1902,7 @@ s32 bsp_socp_coder_set_src_chan(SOCP_CODER_SRC_ENUM_U32 enSrcChanID, SOCP_CODER_
         SOCP_CHECK_8BYTESALIGN(base_addr_rdstart);
         SOCP_CHECK_PARA(base_addr_rdend);
         SOCP_CHECK_BUF_ADDR(base_addr_rdstart, base_addr_rdend);
-        /* RDãĞÖµÃ»ÓĞÊ¹ÓÃ */
+        /* RDé˜ˆå€¼æ²¡æœ‰ä½¿ç”¨ */
         //SOCP_CHECK_PARA(pSrcAttr->sCoderSetSrcBuf.u32RDThreshold);
         Rdbuflength = (u32)(base_addr_rdend - base_addr_rdstart + 1);
 
@@ -1914,10 +1914,10 @@ s32 bsp_socp_coder_set_src_chan(SOCP_CODER_SRC_ENUM_U32 enSrcChanID, SOCP_CODER_
         }
     }
 
-    /* ¸´Î»Í¨µÀ */
+    /* å¤ä½é€šé“ */
     SOCP_REG_SETBITS(SOCP_REG_ENCRST, srcChanId, 1, 1);
 
-    /* µÈ´ıÍ¨µÀ×ÔÇå */
+    /* ç­‰å¾…é€šé“è‡ªæ¸… */
     for (i = 0; i < SOCP_RESET_TIME; i++)
     {
         ResetFlag = SOCP_REG_GETBITS(SOCP_REG_ENCRST, srcChanId, 1);
@@ -1932,7 +1932,7 @@ s32 bsp_socp_coder_set_src_chan(SOCP_CODER_SRC_ENUM_U32 enSrcChanID, SOCP_CODER_
         }
     }
 
-    /* ÅäÖÃ±àÂëÔ´Í¨µÀ²ÎÊı */
+    /* é…ç½®ç¼–ç æºé€šé“å‚æ•° */
 	/*lint -save -e647*/
     SOCP_REG_SETBITS(SOCP_REG_ENCSRC_BUFCFG1(srcChanId), 1, 2, pSrcAttr->eMode);
     SOCP_REG_SETBITS(SOCP_REG_ENCSRC_BUFCFG1(srcChanId), 4, 4, pSrcAttr->u32DestChanID);
@@ -1964,7 +1964,7 @@ s32 bsp_socp_coder_set_src_chan(SOCP_CODER_SRC_ENUM_U32 enSrcChanID, SOCP_CODER_
     
     socp_set_reg_wr_addr(enSrcChanID, (void*)pSrcAttr, start, end);
     
-    /* ±ê¼ÇÍ¨µÀ×´Ì¬ */
+    /* æ ‡è®°é€šé“çŠ¶æ€ */
     g_strSocpStat.sEncSrcChan[srcChanId].u32AllocStat = SOCP_CHN_ALLOCATED;
     g_stSocpDebugInfo.sSocpDebugGBl.u32SocpAllocEncSrcSucCnt++;
     return BSP_OK;
@@ -1972,17 +1972,17 @@ s32 bsp_socp_coder_set_src_chan(SOCP_CODER_SRC_ENUM_U32 enSrcChanID, SOCP_CODER_
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû  : bsp_socp_decoder_set_dest_chan
+* å‡½ æ•° å  : bsp_socp_decoder_set_dest_chan
 *
-* ¹¦ÄÜÃèÊö  : ½âÂëÄ¿µÄÍ¨µÀÉêÇë¼°ÅäÖÃº¯Êı
+* åŠŸèƒ½æè¿°  : è§£ç ç›®çš„é€šé“ç”³è¯·åŠé…ç½®å‡½æ•°
 *
-* ÊäÈë²ÎÊı  : pAttr           ½âÂëÄ¿µÄÍ¨µÀÅäÖÃ²ÎÊı
-*             pDestChanID     ³õÊ¼»¯½âÂëÄ¿µÄÍ¨µÀID£¬½âÂëÍ¨µÀÔ´ÓëÄ¿µÄIDÓĞ¶ÔÓ¦¹ØÏµ
+* è¾“å…¥å‚æ•°  : pAttr           è§£ç ç›®çš„é€šé“é…ç½®å‚æ•°
+*             pDestChanID     åˆå§‹åŒ–è§£ç ç›®çš„é€šé“IDï¼Œè§£ç é€šé“æºä¸ç›®çš„IDæœ‰å¯¹åº”å…³ç³»
                               SrcID = DestChanID%4
 *
-* Êä³ö²ÎÊı  :
+* è¾“å‡ºå‚æ•°  :
 *
-* ·µ »Ø Öµ  : ÉêÇë¼°ÅäÖÃ³É¹¦Óë·ñµÄ±êÊ¶Âë
+* è¿” å› å€¼  : ç”³è¯·åŠé…ç½®æˆåŠŸä¸å¦çš„æ ‡è¯†ç 
 *****************************************************************************/
 s32 bsp_socp_decoder_set_dest_chan(SOCP_DECODER_DST_ENUM_U32 enDestChanID,
                                                 SOCP_DECODER_DEST_CHAN_STRU *pAttr)
@@ -1998,10 +1998,10 @@ s32 bsp_socp_decoder_set_dest_chan(SOCP_DECODER_DST_ENUM_U32 enDestChanID,
 
     g_stSocpDebugInfo.sSocpDebugGBl.u32SocpAllocDecDstCnt++;
 
-    /* ÅĞ¶ÏÊÇ·ñÒÑ¾­³õÊ¼»¯ */
+    /* åˆ¤æ–­æ˜¯å¦å·²ç»åˆå§‹åŒ– */
     SOCP_CHECK_INIT();
 
-    /* ÅĞ¶Ï²ÎÊıÓĞĞ§ĞÔ */
+    /* åˆ¤æ–­å‚æ•°æœ‰æ•ˆæ€§ */
     SOCP_CHECK_PARA(pAttr);
     SOCP_CHECK_DATA_TYPE(pAttr->eDataType);
 
@@ -2015,14 +2015,14 @@ s32 bsp_socp_decoder_set_dest_chan(SOCP_DECODER_DST_ENUM_U32 enDestChanID,
     SOCP_CHECK_CHAN_TYPE(u32ChanType, SOCP_DECODER_SRC_CHAN);
     SOCP_CHECK_CHAN_ID(u32SrcChanID, SOCP_MAX_DECSRC_CHN);
 
-    /* ÅĞ¶ÏÍ¨µÀID¶ÔÓ¦¹ØÏµ */
+    /* åˆ¤æ–­é€šé“IDå¯¹åº”å…³ç³» */
     if(u32SrcChanID != u32ChanID%4)
     {
         socp_printf("bsp_socp_decoder_set_dest_chan: dest ID(%d) is not matching src ID(%d)!\n", u32ChanID, u32SrcChanID);
         return BSP_ERR_SOCP_INVALID_PARA;
     }
 
-    /* ÅĞ¶Ï¸ø¶¨µÄµØÖ·ºÍ³¤¶ÈÊÇ·ñÎª°Ë×Ö½Ú±¶Êı*/
+    /* åˆ¤æ–­ç»™å®šçš„åœ°å€å’Œé•¿åº¦æ˜¯å¦ä¸ºå…«å­—èŠ‚å€æ•°*/
     start           = (unsigned long)pAttr->sDecoderDstSetBuf.pucOutputStart;
     end             = (unsigned long)pAttr->sDecoderDstSetBuf.pucOutputEnd;
     bufThreshold    = pAttr->sDecoderDstSetBuf.u32Threshold;
@@ -2054,14 +2054,14 @@ s32 bsp_socp_decoder_set_dest_chan(SOCP_DECODER_DST_ENUM_U32 enDestChanID,
 	
     socp_set_reg_wr_addr(enDestChanID, (void*)pAttr, start, end);
 
-    /* ÏÈÇåÖĞ¶Ï£¬ÔÙ´ò¿ªÖĞ¶Ï*/
+    /* å…ˆæ¸…ä¸­æ–­ï¼Œå†æ‰“å¼€ä¸­æ–­*/
     SOCP_REG_SETBITS(SOCP_REG_DEC_RAWINT0, u32ChanID, 1, 1);
     SOCP_REG_SETBITS(SOCP_REG_DEC_CORE0MASK0, u32ChanID, 1, 0);
     SOCP_REG_SETBITS(SOCP_REG_DEC_RAWINT2, u32ChanID, 1, 1);
     SOCP_REG_SETBITS(SOCP_REG_DEC_CORE0MASK2, u32ChanID, 1, 0);
 	/*lint -restore +e647*/
 	
-    /* ±ê¼ÇÍ¨µÀ·ÖÅä×´Ì¬ */
+    /* æ ‡è®°é€šé“åˆ†é…çŠ¶æ€ */
     g_strSocpStat.sDecDstChan[u32ChanID].u32AllocStat = SOCP_CHN_ALLOCATED;
     g_stSocpDebugInfo.sSocpDebugGBl.u32SocpAllocDecDstSucCnt++;
 
@@ -2069,15 +2069,15 @@ s32 bsp_socp_decoder_set_dest_chan(SOCP_DECODER_DST_ENUM_U32 enDestChanID,
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû  : bsp_socp_coder_set_dest_chan_attr
+* å‡½ æ•° å  : bsp_socp_coder_set_dest_chan_attr
 *
-* ¹¦ÄÜÃèÊö  : ±àÂëÄ¿µÄÍ¨µÀÅäÖÃº¯Êı
+* åŠŸèƒ½æè¿°  : ç¼–ç ç›®çš„é€šé“é…ç½®å‡½æ•°
 *
-* ÊäÈë²ÎÊı  : u32DestChanID      ±àÂëÄ¿µÄÍ¨µÀID
-              pDestAttr          ±àÂëÄ¿µÄÍ¨µÀÅäÖÃ²ÎÊı
+* è¾“å…¥å‚æ•°  : u32DestChanID      ç¼–ç ç›®çš„é€šé“ID
+              pDestAttr          ç¼–ç ç›®çš„é€šé“é…ç½®å‚æ•°
 *
-* Êä³ö²ÎÊı  : ÎŞ
-* ·µ »Ø Öµ  : ÅäÖÃ³É¹¦Óë·ñµÄ±êÊ¶Âë
+* è¾“å‡ºå‚æ•°  : æ— 
+* è¿” å› å€¼  : é…ç½®æˆåŠŸä¸å¦çš„æ ‡è¯†ç 
 *****************************************************************************/
 
 s32 bsp_socp_coder_set_dest_chan_attr(u32 u32DestChanID, SOCP_CODER_DEST_CHAN_S *pDestAttr)
@@ -2093,10 +2093,10 @@ s32 bsp_socp_coder_set_dest_chan_attr(u32 u32DestChanID, SOCP_CODER_DEST_CHAN_S 
 
     g_stSocpDebugInfo.sSocpDebugGBl.u32SocpSetEncDstCnt++;
 
-    /* ÅĞ¶ÏÊÇ·ñÒÑ¾­³õÊ¼»¯ */
+    /* åˆ¤æ–­æ˜¯å¦å·²ç»åˆå§‹åŒ– */
     SOCP_CHECK_INIT();
 
-    /* ÅĞ¶Ï²ÎÊıÓĞĞ§ĞÔ */
+    /* åˆ¤æ–­å‚æ•°æœ‰æ•ˆæ€§ */
     SOCP_CHECK_PARA(pDestAttr);
     u32ChanID   = SOCP_REAL_CHAN_ID(u32DestChanID);
     u32ChanType = SOCP_REAL_CHAN_TYPE(u32DestChanID);
@@ -2130,8 +2130,8 @@ s32 bsp_socp_coder_set_dest_chan_attr(u32 u32DestChanID, SOCP_CODER_DEST_CHAN_S 
             return BSP_ERR_SOCP_INVALID_PARA;
         }
     }
-    /* Èç¹û¾­¹ıÅäÖÃÔò²»ÄÜÔÙ´ÎÅäÖÃ,Í¨µÀ¸´Î»Ö®ºóÖ»ÅäÖÃÒ»´Î */
-    /* Ê¹ÓÃÅäÖÃ²ÎÊı½øĞĞÅäÖÃ */
+    /* å¦‚æœç»è¿‡é…ç½®åˆ™ä¸èƒ½å†æ¬¡é…ç½®,é€šé“å¤ä½ä¹‹ååªé…ç½®ä¸€æ¬¡ */
+    /* ä½¿ç”¨é…ç½®å‚æ•°è¿›è¡Œé…ç½® */
 	/*lint -save -e647*/
     if (SOCP_CHN_SET == g_strSocpStat.sEncDstChan[u32ChanID].u32SetStat)
     {
@@ -2154,12 +2154,12 @@ s32 bsp_socp_coder_set_dest_chan_attr(u32 u32DestChanID, SOCP_CODER_DEST_CHAN_S 
 
     socp_set_reg_wr_addr(u32DestChanID, (void*)pDestAttr, start, end);        
 
-    /* ÏÈÇåÖĞ¶Ï£¬ÔÙ´ò¿ªÖĞ¶Ï */
+    /* å…ˆæ¸…ä¸­æ–­ï¼Œå†æ‰“å¼€ä¸­æ–­ */
     SOCP_REG_SETBITS(SOCP_REG_ENC_RAWINT0, u32ChanID, 1, 1);
     SOCP_REG_SETBITS(SOCP_REG_ENC_MASK0, u32ChanID, 1, 0);
     SOCP_REG_SETBITS(SOCP_REG_ENC_RAWINT2, u32ChanID, 1, 1);
     SOCP_REG_SETBITS(SOCP_REG_ENC_MASK2, u32ChanID, 1, 0);
-    // ±àÂëÄ¿µÄbufferãĞÖµÖĞ¶Ï
+    // ç¼–ç ç›®çš„bufferé˜ˆå€¼ä¸­æ–­
     SOCP_REG_SETBITS(SOCP_REG_ENC_RAWINT2, u32ChanID+16, 1, 1);
     SOCP_REG_SETBITS(SOCP_REG_ENC_MASK2, u32ChanID+16, 1, 0);
 	/*lint -restore +e647*/
@@ -2170,16 +2170,16 @@ s32 bsp_socp_coder_set_dest_chan_attr(u32 u32DestChanID, SOCP_CODER_DEST_CHAN_S 
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû  : bsp_socp_decoder_set_src_chan_attr
+* å‡½ æ•° å  : bsp_socp_decoder_set_src_chan_attr
 *
-* ¹¦ÄÜÃèÊö  : ½âÂëÔ´Í¨µÀÅäÖÃº¯Êı
+* åŠŸèƒ½æè¿°  : è§£ç æºé€šé“é…ç½®å‡½æ•°
 *
-* ÊäÈë²ÎÊı  : u32SrcChanID    ½âÂëÔ´Í¨µÀID
-*             pInputAttr      ½âÂëÔ´Í¨µÀÅäÖÃ²ÎÊı
+* è¾“å…¥å‚æ•°  : u32SrcChanID    è§£ç æºé€šé“ID
+*             pInputAttr      è§£ç æºé€šé“é…ç½®å‚æ•°
 *
-* Êä³ö²ÎÊı  :
+* è¾“å‡ºå‚æ•°  :
 *
-* ·µ »Ø Öµ  : ÅäÖÃ³É¹¦Óë·ñµÄ±êÊ¶Âë
+* è¿” å› å€¼  : é…ç½®æˆåŠŸä¸å¦çš„æ ‡è¯†ç 
 *****************************************************************************/
 s32 bsp_socp_decoder_set_src_chan_attr(u32 u32SrcChanID, SOCP_DECODER_SRC_CHAN_STRU *pInputAttr)
 {
@@ -2194,10 +2194,10 @@ s32 bsp_socp_decoder_set_src_chan_attr(u32 u32SrcChanID, SOCP_DECODER_SRC_CHAN_S
 
     g_stSocpDebugInfo.sSocpDebugGBl.u32SocpSetDecSrcCnt++;
 
-    /* ÅĞ¶ÏÊÇ·ñÒÑ¾­³õÊ¼»¯ */
+    /* åˆ¤æ–­æ˜¯å¦å·²ç»åˆå§‹åŒ– */
     SOCP_CHECK_INIT();
 
-    /* ÅĞ¶Ï²ÎÊıÓĞĞ§ĞÔ */
+    /* åˆ¤æ–­å‚æ•°æœ‰æ•ˆæ€§ */
     SOCP_CHECK_PARA(pInputAttr);
     u32ChanID   = SOCP_REAL_CHAN_ID(u32SrcChanID);
     u32ChanType = SOCP_REAL_CHAN_TYPE(u32SrcChanID);
@@ -2226,10 +2226,10 @@ s32 bsp_socp_decoder_set_src_chan_attr(u32 u32SrcChanID, SOCP_DECODER_SRC_CHAN_S
         return BSP_ERR_SOCP_DECSRC_SET;
     }
 
-    /* Ê×ÏÈ¸´Î»Í¨µÀ */
+    /* é¦–å…ˆå¤ä½é€šé“ */
     SOCP_REG_SETBITS(SOCP_REG_DECRST, u32ChanID, 1, 1);
 
-    /* µÈ´ıÍ¨µÀ¸´Î»×´Ì¬×ÔÇå */
+    /* ç­‰å¾…é€šé“å¤ä½çŠ¶æ€è‡ªæ¸… */
     for (i = 0; i < SOCP_RESET_TIME; i++)
     {
         u32ResetFlag = SOCP_REG_GETBITS(SOCP_REG_DECRST, u32ChanID, 1);
@@ -2257,35 +2257,35 @@ s32 bsp_socp_decoder_set_src_chan_attr(u32 u32SrcChanID, SOCP_DECODER_SRC_CHAN_S
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû  : bsp_socp_decoder_get_err_cnt
+* å‡½ æ•° å  : bsp_socp_decoder_get_err_cnt
 *
-* ¹¦ÄÜÃèÊö  : ½âÂëÍ¨µÀÖĞ»ñÈ¡´íÎó¼ÆÊıº¯Êı
+* åŠŸèƒ½æè¿°  : è§£ç é€šé“ä¸­è·å–é”™è¯¯è®¡æ•°å‡½æ•°
 *
-* ÊäÈë²ÎÊı  : u32ChanID       ½âÂëÍ¨µÀID
+* è¾“å…¥å‚æ•°  : u32ChanID       è§£ç é€šé“ID
 
-* Êä³ö²ÎÊı  : pErrCnt         ½âÂëÍ¨µÀ´íÎó¼ÆÊı½á¹¹ÌåÖ¸Õë
+* è¾“å‡ºå‚æ•°  : pErrCnt         è§£ç é€šé“é”™è¯¯è®¡æ•°ç»“æ„ä½“æŒ‡é’ˆ
 *
-* ·µ »Ø Öµ  : »ñÈ¡³É¹¦Óë·ñµÄ±êÊ¶Âë
+* è¿” å› å€¼  : è·å–æˆåŠŸä¸å¦çš„æ ‡è¯†ç 
 *****************************************************************************/
 s32 bsp_socp_decoder_get_err_cnt(u32 u32DstChanID, SOCP_DECODER_ERROR_CNT_STRU *pErrCnt)
 {
     u32 u32ChanID;
     u32 u32ChanType;
 
-    /* ÅĞ¶ÏÊÇ·ñÒÑ¾­³õÊ¼»¯ */
+    /* åˆ¤æ–­æ˜¯å¦å·²ç»åˆå§‹åŒ– */
     SOCP_CHECK_INIT();
 
-    /* ÅĞ¶ÏÍ¨µÀIDÊÇ·ñÓĞĞ§ */
+    /* åˆ¤æ–­é€šé“IDæ˜¯å¦æœ‰æ•ˆ */
     u32ChanID   = SOCP_REAL_CHAN_ID(u32DstChanID);
     u32ChanType = SOCP_REAL_CHAN_TYPE(u32DstChanID);
     SOCP_CHECK_CHAN_TYPE(u32ChanType, SOCP_DECODER_SRC_CHAN);
     SOCP_CHECK_CHAN_ID(u32ChanID, SOCP_MAX_DECSRC_CHN);
     SOCP_CHECK_DECSRC_SET(u32ChanID);
 
-    /* ÅĞ¶Ï²ÎÊıÓĞĞ§ĞÔ */
+    /* åˆ¤æ–­å‚æ•°æœ‰æ•ˆæ€§ */
     SOCP_CHECK_PARA(pErrCnt);
 
-    /* ÅĞ¶ÏÍ¨µÀÊÇ·ñ´ò¿ª£¬²¢ÉèÖÃÎªdebugÄ£Ê½*/
+    /* åˆ¤æ–­é€šé“æ˜¯å¦æ‰“å¼€ï¼Œå¹¶è®¾ç½®ä¸ºdebugæ¨¡å¼*/
     if (g_strSocpStat.sDecSrcChan[u32ChanID].u32ChanEn)
     {	
     	/*lint -save -e647*/
@@ -2305,23 +2305,23 @@ s32 bsp_socp_decoder_get_err_cnt(u32 u32DstChanID, SOCP_DECODER_ERROR_CNT_STRU *
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû  : bsp_socp_set_timeout
+* å‡½ æ•° å  : bsp_socp_set_timeout
 *
-* ¹¦ÄÜÃèÊö  : ³¬Ê±ãĞÖµÉèÖÃº¯Êı
+* åŠŸèƒ½æè¿°  : è¶…æ—¶é˜ˆå€¼è®¾ç½®å‡½æ•°
 *
-* ÊäÈë²ÎÊı  :   eTmOutEn          ÉèÖÃ¶ÔÏóÑ¡Ôñ¼°Ê¹ÄÜ
-                u32Timeout        ³¬Ê±ãĞÖµ
+* è¾“å…¥å‚æ•°  :   eTmOutEn          è®¾ç½®å¯¹è±¡é€‰æ‹©åŠä½¿èƒ½
+                u32Timeout        è¶…æ—¶é˜ˆå€¼
 *
-* Êä³ö²ÎÊı  :
+* è¾“å‡ºå‚æ•°  :
 *
-* ·µ »Ø Öµ  : ÉèÖÃ³É¹¦Óë·ñµÄ±êÊ¶Âë
+* è¿” å› å€¼  : è®¾ç½®æˆåŠŸä¸å¦çš„æ ‡è¯†ç 
 *****************************************************************************/
 s32 bsp_socp_set_timeout (SOCP_TIMEOUT_EN_ENUM_UIN32 eTmOutEn, u32 u32Timeout)
 {
     u32 u32newtime;
 
     DECODE_TIMEOUT_MODULE decode_timeout_module = DECODE_TIMEOUT_INT_TIMEOUT;
-    /* ÅĞ¶ÏÊÇ·ñÒÑ¾­³õÊ¼»¯ */
+    /* åˆ¤æ–­æ˜¯å¦å·²ç»åˆå§‹åŒ– */
     SOCP_CHECK_INIT();
 
     u32newtime = (socp_version >= SOCP_3_4MS_VERSION) ? SOCP_CLK_RATIO(u32Timeout) : u32Timeout;
@@ -2336,7 +2336,7 @@ s32 bsp_socp_set_timeout (SOCP_TIMEOUT_EN_ENUM_UIN32 eTmOutEn, u32 u32Timeout)
         case SOCP_TIMEOUT_BUFOVF_ENABLE:
         {
             SOCP_REG_SETBITS(SOCP_REG_BUFTIMEOUT, 31, 1, 1);
-            /* Ôö¼Ó»»ËãµÄ·½·¨ */
+            /* å¢åŠ æ¢ç®—çš„æ–¹æ³• */
             SOCP_REG_SETBITS(SOCP_REG_BUFTIMEOUT, 0, 16, u32newtime);
             break;
         }
@@ -2344,10 +2344,10 @@ s32 bsp_socp_set_timeout (SOCP_TIMEOUT_EN_ENUM_UIN32 eTmOutEn, u32 u32Timeout)
         {
             printk(KERN_ERR"bsp_socp_set_timeout 0x%x.\n", u32newtime);
 
-            /* ´«Êä³¬Ê±Ê±¼äÉèÖÃ²»ĞèÒªÉæ¼°Í¨µÀID*/
+            /* ä¼ è¾“è¶…æ—¶æ—¶é—´è®¾ç½®ä¸éœ€è¦æ¶‰åŠé€šé“ID*/
             /*
-                            µ±GLOBAL_CTRL[1]=0, bit[7:0]ÓĞĞ§
-                            µ±GLOBAL_CTRL[1]=1, bit[31:0]ÓĞĞ§
+                            å½“GLOBAL_CTRL[1]=0, bit[7:0]æœ‰æ•ˆ
+                            å½“GLOBAL_CTRL[1]=1, bit[31:0]æœ‰æ•ˆ
                     */
             /*SOCP_REG_WRITE(SOCP_REG_INTTIMEOUT, u32newtime);*/
             decode_timeout_module = (DECODE_TIMEOUT_MODULE)SOCP_REG_GETBITS(SOCP_REG_GBLRST, 1, 1);
@@ -2390,25 +2390,25 @@ s32 bsp_socp_set_timeout (SOCP_TIMEOUT_EN_ENUM_UIN32 eTmOutEn, u32 u32Timeout)
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû  : bsp_socp_set_dec_pkt_lgth
+* å‡½ æ•° å  : bsp_socp_set_dec_pkt_lgth
 *
-* ¹¦ÄÜÃèÊö  : ³¬Ê±ãĞÖµÉèÖÃº¯Êı
+* åŠŸèƒ½æè¿°  : è¶…æ—¶é˜ˆå€¼è®¾ç½®å‡½æ•°
 *
-* ÊäÈë²ÎÊı  :   pPktlgth          ½âÂë°ü³¤¶ÈÉèÖÃ²ÎÊı½á¹¹Ìå
+* è¾“å…¥å‚æ•°  :   pPktlgth          è§£ç åŒ…é•¿åº¦è®¾ç½®å‚æ•°ç»“æ„ä½“
 *
-* Êä³ö²ÎÊı  :
+* è¾“å‡ºå‚æ•°  :
 *
-* ·µ »Ø Öµ  : ÉèÖÃ³É¹¦Óë·ñµÄ±êÊ¶Âë
+* è¿” å› å€¼  : è®¾ç½®æˆåŠŸä¸å¦çš„æ ‡è¯†ç 
 *****************************************************************************/
 s32 bsp_socp_set_dec_pkt_lgth(SOCP_DEC_PKTLGTH_STRU *pPktlgth)
 {
     u32 u32PktMaxLgth;
     u32 u32PktMinLgth;
 
-    /* ÅĞ¶ÏÊÇ·ñÒÑ¾­³õÊ¼»¯ */
+    /* åˆ¤æ–­æ˜¯å¦å·²ç»åˆå§‹åŒ– */
     SOCP_CHECK_INIT();
 
-    /* ÅĞ¶Ï²ÎÊıÓĞĞ§ĞÔ */
+    /* åˆ¤æ–­å‚æ•°æœ‰æ•ˆæ€§ */
     SOCP_CHECK_PARA(pPktlgth);
     u32PktMaxLgth = pPktlgth->u32PktMax;
     u32PktMinLgth = pPktlgth->u32PktMin;
@@ -2426,7 +2426,7 @@ s32 bsp_socp_set_dec_pkt_lgth(SOCP_DEC_PKTLGTH_STRU *pPktlgth)
         return BSP_ERR_SOCP_INVALID_PARA;
     }
 
-    /* ÅäÖÃ½âÂëÍ¨Â·°ü³¤¶ÈÅäÖÃ¼Ä´æÆ÷*/
+    /* é…ç½®è§£ç é€šè·¯åŒ…é•¿åº¦é…ç½®å¯„å­˜å™¨*/
     SOCP_REG_SETBITS(SOCP_REG_DEC_PKTLEN, 0, 12, u32PktMaxLgth);
     SOCP_REG_SETBITS(SOCP_REG_DEC_PKTLEN, 12, 5, u32PktMinLgth);
 
@@ -2434,33 +2434,33 @@ s32 bsp_socp_set_dec_pkt_lgth(SOCP_DEC_PKTLGTH_STRU *pPktlgth)
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû  : bsp_socp_set_debug
+* å‡½ æ•° å  : bsp_socp_set_debug
 *
-* ¹¦ÄÜÃèÊö  : ÉèÖÃ½âÂëÔ´Í¨µÀdebugÄ£Ê½º¯Êı
+* åŠŸèƒ½æè¿°  : è®¾ç½®è§£ç æºé€šé“debugæ¨¡å¼å‡½æ•°
 *
-* ÊäÈë²ÎÊı  : u32DecChanID  ½âÂëÔ´Í¨µÀID
-              u32DebugEn    debugÄ£Ê½Ê¹ÄÜ±êÊ¶
+* è¾“å…¥å‚æ•°  : u32DecChanID  è§£ç æºé€šé“ID
+              u32DebugEn    debugæ¨¡å¼ä½¿èƒ½æ ‡è¯†
 *
-* Êä³ö²ÎÊı  :
+* è¾“å‡ºå‚æ•°  :
 *
-* ·µ »Ø Öµ  : ÉèÖÃ³É¹¦Óë·ñµÄ±êÊ¶Âë
+* è¿” å› å€¼  : è®¾ç½®æˆåŠŸä¸å¦çš„æ ‡è¯†ç 
 *****************************************************************************/
 s32 bsp_socp_set_debug(u32 u32DecChanID, u32 u32DebugEn)
 {
     u32 u32ChanID;
     u32 u32ChanType;
 
-    /* ÅĞ¶ÏÊÇ·ñÒÑ¾­³õÊ¼»¯ */
+    /* åˆ¤æ–­æ˜¯å¦å·²ç»åˆå§‹åŒ– */
     SOCP_CHECK_INIT();
 
-    /* ÅĞ¶ÏÍ¨µÀIDÊÇ·ñÓĞĞ§ */
+    /* åˆ¤æ–­é€šé“IDæ˜¯å¦æœ‰æ•ˆ */
     u32ChanID = SOCP_REAL_CHAN_ID(u32DecChanID);
     u32ChanType = SOCP_REAL_CHAN_TYPE(u32DecChanID);
     SOCP_CHECK_CHAN_TYPE(u32ChanType, SOCP_DECODER_SRC_CHAN);
     SOCP_CHECK_CHAN_ID(u32ChanID, SOCP_MAX_DECSRC_CHN);
     SOCP_CHECK_DECSRC_SET(u32ChanID);
 
-    /* ÅĞ¶Ï¸ÃÍ¨µÀ´ò¿ªÄ£Ê½£¬Ã»ÓĞ´ò¿ªµÄ»°£¬¿ÉÒÔÉèÖÃ */
+    /* åˆ¤æ–­è¯¥é€šé“æ‰“å¼€æ¨¡å¼ï¼Œæ²¡æœ‰æ‰“å¼€çš„è¯ï¼Œå¯ä»¥è®¾ç½® */
     if(g_strSocpStat.sDecSrcChan[u32ChanID].u32ChanEn)
     {
         socp_printf("SetDebug: decoder channel is open, can't set debug bit\n");
@@ -2478,25 +2478,25 @@ s32 bsp_socp_set_debug(u32 u32DecChanID, u32 u32DebugEn)
 
 
 /*****************************************************************************
-* º¯ Êı Ãû  : bsp_socp_free_channel
+* å‡½ æ•° å  : bsp_socp_free_channel
 *
-* ¹¦ÄÜÃèÊö  : Í¨µÀÊÍ·Åº¯Êı
+* åŠŸèƒ½æè¿°  : é€šé“é‡Šæ”¾å‡½æ•°
 *
-* ÊäÈë²ÎÊı  : u32ChanID       ±à½âÂëÍ¨µÀÖ¸Õë
+* è¾“å…¥å‚æ•°  : u32ChanID       ç¼–è§£ç é€šé“æŒ‡é’ˆ
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ  : ÊÍ·Å³É¹¦Óë·ñµÄ±êÊ¶Âë
+* è¿” å› å€¼  : é‡Šæ”¾æˆåŠŸä¸å¦çš„æ ‡è¯†ç 
 *****************************************************************************/
 s32 bsp_socp_free_channel(u32 u32ChanID)
 {
     u32 u32RealChanID;
     u32 u32ChanType;
 
-    /* ÅĞ¶ÏÊÇ·ñÒÑ¾­³õÊ¼»¯ */
+    /* åˆ¤æ–­æ˜¯å¦å·²ç»åˆå§‹åŒ– */
     SOCP_CHECK_INIT();
 
-    /* ÅĞ¶ÏÍ¨µÀIDÊÇ·ñÓĞĞ§ */
+    /* åˆ¤æ–­é€šé“IDæ˜¯å¦æœ‰æ•ˆ */
     u32RealChanID = SOCP_REAL_CHAN_ID(u32ChanID);
     u32ChanType = SOCP_REAL_CHAN_TYPE(u32ChanID);
 
@@ -2525,7 +2525,7 @@ s32 bsp_socp_free_channel(u32 u32ChanID)
         SOCP_CHECK_CHAN_ID(u32RealChanID, SOCP_MAX_DECDST_CHN);
         SOCP_CHECK_DECDST_ALLOC(u32RealChanID);
 
-        /* ÉèÖÃÊı¾İÀàĞÍÎŞĞ§ */
+        /* è®¾ç½®æ•°æ®ç±»å‹æ— æ•ˆ */
 		/*lint -save -e647*/
         SOCP_REG_SETBITS(SOCP_REG_DECDEST_BUFCFG(u32RealChanID), 24, 8, 0xff);
 		/*lint -restore +e647*/
@@ -2544,29 +2544,29 @@ s32 bsp_socp_free_channel(u32 u32ChanID)
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû  : bsp_socp_chan_soft_reset
+* å‡½ æ•° å  : bsp_socp_chan_soft_reset
 *
-* ¹¦ÄÜÃèÊö  : Í¨µÀÈí¸´Î»º¯Êı
+* åŠŸèƒ½æè¿°  : é€šé“è½¯å¤ä½å‡½æ•°
 *
-* ÊäÈë²ÎÊı  : u32ChanID       ±à½âÂëÍ¨µÀID
+* è¾“å…¥å‚æ•°  : u32ChanID       ç¼–è§£ç é€šé“ID
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ  : ÊÍ·Å³É¹¦Óë·ñµÄ±êÊ¶Âë
+* è¿” å› å€¼  : é‡Šæ”¾æˆåŠŸä¸å¦çš„æ ‡è¯†ç 
 *****************************************************************************/
 s32 bsp_socp_chan_soft_reset(u32 u32ChanID)
 {
     u32 u32RealChanID;
     u32 u32ChanType;
 
-    /* ÅĞ¶ÏÊÇ·ñÒÑ¾­³õÊ¼»¯ */
+    /* åˆ¤æ–­æ˜¯å¦å·²ç»åˆå§‹åŒ– */
     SOCP_CHECK_INIT();
 
-    /* ÅĞ¶ÏÍ¨µÀIDÊÇ·ñÓĞĞ§ */
+    /* åˆ¤æ–­é€šé“IDæ˜¯å¦æœ‰æ•ˆ */
     u32RealChanID = SOCP_REAL_CHAN_ID(u32ChanID);
     u32ChanType = SOCP_REAL_CHAN_TYPE(u32ChanID);
-    /* ±àÂëÔ´Í¨µÀ¸´Î»ÔİÖ»´¦Àí¶¯Ì¬·ÖÅä¼°LTE DSP/BBPÍ¨µÀ */
-    /* ÆäÓàÍ¨µÀµÄ¸´Î»²Ù×÷¿ÉÄÜÉæ¼°ÌØÊâµÄ´¦Àí£¬ĞèºóĞøÌí¼Ó½Ó¿Ú */
+    /* ç¼–ç æºé€šé“å¤ä½æš‚åªå¤„ç†åŠ¨æ€åˆ†é…åŠLTE DSP/BBPé€šé“ */
+    /* å…¶ä½™é€šé“çš„å¤ä½æ“ä½œå¯èƒ½æ¶‰åŠç‰¹æ®Šçš„å¤„ç†ï¼Œéœ€åç»­æ·»åŠ æ¥å£ */
     if (SOCP_CODER_SRC_CHAN == u32ChanType)
     {
         SOCP_CHECK_ENCSRC_CHAN_ID(u32RealChanID);
@@ -2593,14 +2593,14 @@ s32 bsp_socp_chan_soft_reset(u32 u32ChanID)
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû  : bsp_socp_start
+* å‡½ æ•° å  : bsp_socp_start
 *
-* ¹¦ÄÜÃèÊö  : ±àÂë»òÕß½âÂëÆô¶¯º¯Êı
+* åŠŸèƒ½æè¿°  : ç¼–ç æˆ–è€…è§£ç å¯åŠ¨å‡½æ•°
 *
-* ÊäÈë²ÎÊı  : u32SrcChanID      Í¨µÀID
-* Êä³ö²ÎÊı  :
+* è¾“å…¥å‚æ•°  : u32SrcChanID      é€šé“ID
+* è¾“å‡ºå‚æ•°  :
 *
-* ·µ »Ø Öµ  : Æô¶¯³É¹¦Óë·ñµÄ±êÊ¶Âë
+* è¿” å› å€¼  : å¯åŠ¨æˆåŠŸä¸å¦çš„æ ‡è¯†ç 
 *****************************************************************************/
 s32 bsp_socp_start(u32 u32SrcChanID)
 {
@@ -2612,14 +2612,14 @@ s32 bsp_socp_start(u32 u32SrcChanID)
     u32 IntIDMask = 0;
 
 
-    /* ÅĞ¶ÏÊÇ·ñÒÑ¾­³õÊ¼»¯ */
+    /* åˆ¤æ–­æ˜¯å¦å·²ç»åˆå§‹åŒ– */
     SOCP_CHECK_INIT();
 
-    /* ÅĞ¶ÏÍ¨µÀIDÊÇ·ñÓĞĞ§ */
+    /* åˆ¤æ–­é€šé“IDæ˜¯å¦æœ‰æ•ˆ */
     u32RealChanID = SOCP_REAL_CHAN_ID(u32SrcChanID);
     u32ChanType = SOCP_REAL_CHAN_TYPE(u32SrcChanID);
 
-    /* ±àÂëÍ¨µÀ */
+    /* ç¼–ç é€šé“ */
     if (SOCP_CODER_SRC_CHAN == u32ChanType)
     {
         if (u32RealChanID < SOCP_MAX_ENCSRC_CHN)
@@ -2641,18 +2641,18 @@ s32 bsp_socp_start(u32 u32SrcChanID)
             return BSP_ERR_SOCP_DEST_CHAN;
         }
 
-        /* ÏÈÇåÖĞ¶Ï£¬ÔÙ´ò¿ªÖĞ¶Ï*/
+        /* å…ˆæ¸…ä¸­æ–­ï¼Œå†æ‰“å¼€ä¸­æ–­*/
         SOCP_REG_SETBITS(SOCP_REG_ENC_RAWINT1, u32RealChanID, 1, 1);
         SOCP_REG_SETBITS(SOCP_REG_APP_MASK1, u32RealChanID, 1, 0);
 
         if (SOCP_ENCSRC_CHNMODE_LIST == g_strSocpStat.sEncSrcChan[u32RealChanID].eChnMode)
         {
             SOCP_REG_SETBITS(SOCP_REG_ENC_RAWINT3, u32RealChanID, 1, 1);
-            /* ±£³ÖRDÖĞ¶ÏÆÁ±Î */
+            /* ä¿æŒRDä¸­æ–­å±è”½ */
             //SOCP_REG_SETBITS(SOCP_REG_APP_MASK3, u32RealChanID, 1, 0);
         }
 
-        /* ÉèÖÃ´ò¿ª×´Ì¬*/
+        /* è®¾ç½®æ‰“å¼€çŠ¶æ€*/
         SOCP_REG_SETBITS(SOCP_REG_ENCSRC_BUFCFG1(u32RealChanID), 0, 1, 1);
         if(u32RealChanID < SOCP_MAX_ENCSRC_CHN)
         {
@@ -2665,7 +2665,7 @@ s32 bsp_socp_start(u32 u32SrcChanID)
         SOCP_CHECK_CHAN_ID(u32RealChanID, SOCP_MAX_DECSRC_CHN);
         SOCP_CHECK_DECSRC_SET(u32RealChanID);
 
-        /* ´ò¿ªrdÍê³ÉÖĞ¶Ï*/
+        /* æ‰“å¼€rdå®Œæˆä¸­æ–­*/
         if (SOCP_DECSRC_CHNMODE_LIST == g_strSocpStat.sDecSrcChan[u32RealChanID].eChnMode)
         {
             SOCP_REG_SETBITS(SOCP_REG_DEC_RAWINT1, u32RealChanID, 1, 1);
@@ -2683,7 +2683,7 @@ s32 bsp_socp_start(u32 u32SrcChanID)
             SOCP_REG_SETBITS(SOCP_REG_DEC_MASK1, i * 4, 4, IntIDMask);
         }
 
-        /* ÉèÖÃ´ò¿ª×´Ì¬*/
+        /* è®¾ç½®æ‰“å¼€çŠ¶æ€*/
         SOCP_REG_SETBITS(SOCP_REG_DECSRC_BUFCFG0(u32RealChanID), 30, 1, 1);
         g_strSocpStat.sDecSrcChan[u32RealChanID].u32ChanEn = SOCP_CHN_ENABLE;
 
@@ -2701,15 +2701,15 @@ s32 bsp_socp_start(u32 u32SrcChanID)
 
 
 /*****************************************************************************
-* º¯ Êı Ãû  : bsp_socp_stop
+* å‡½ æ•° å  : bsp_socp_stop
 *
-* ¹¦ÄÜÃèÊö  : ±àÂë»òÕß½âÂëÍ£Ö¹º¯Êı
+* åŠŸèƒ½æè¿°  : ç¼–ç æˆ–è€…è§£ç åœæ­¢å‡½æ•°
 *
-* ÊäÈë²ÎÊı  : u32SrcChanID      Í¨µÀID
+* è¾“å…¥å‚æ•°  : u32SrcChanID      é€šé“ID
 *
-* Êä³ö²ÎÊı  :
+* è¾“å‡ºå‚æ•°  :
 *
-* ·µ »Ø Öµ  : Í£Ö¹³É¹¦Óë·ñµÄ±êÊ¶Âë
+* è¿” å› å€¼  : åœæ­¢æˆåŠŸä¸å¦çš„æ ‡è¯†ç 
 *****************************************************************************/
 
 s32 bsp_socp_stop(u32 u32SrcChanID)
@@ -2720,14 +2720,14 @@ s32 bsp_socp_stop(u32 u32SrcChanID)
     u32 i;
 
 
-    /* ÅĞ¶ÏÊÇ·ñÒÑ¾­³õÊ¼»¯ */
+    /* åˆ¤æ–­æ˜¯å¦å·²ç»åˆå§‹åŒ– */
     SOCP_CHECK_INIT();
 
-    /* ÅĞ¶ÏÍ¨µÀIDÊÇ·ñÓĞĞ§ */
+    /* åˆ¤æ–­é€šé“IDæ˜¯å¦æœ‰æ•ˆ */
     u32RealChanID = SOCP_REAL_CHAN_ID(u32SrcChanID);
     u32ChanType = SOCP_REAL_CHAN_TYPE(u32SrcChanID);
 
-    /* ±àÂëÍ¨µÀ */
+    /* ç¼–ç é€šé“ */
     if (SOCP_CODER_SRC_CHAN == u32ChanType)
     {
         if (u32RealChanID < SOCP_MAX_ENCSRC_CHN)
@@ -2747,7 +2747,7 @@ s32 bsp_socp_stop(u32 u32SrcChanID)
             SOCP_REG_SETBITS(SOCP_REG_APP_MASK3, u32RealChanID, 1, 1);
         }
 
-        /* ÉèÖÃÍ¨µÀ¹Ø±Õ×´Ì¬*/
+        /* è®¾ç½®é€šé“å…³é—­çŠ¶æ€*/
         SOCP_REG_SETBITS(SOCP_REG_ENCSRC_BUFCFG1(u32RealChanID), 0, 1, 0);
         if (u32RealChanID < SOCP_MAX_ENCSRC_CHN)
         {
@@ -2760,7 +2760,7 @@ s32 bsp_socp_stop(u32 u32SrcChanID)
         SOCP_CHECK_CHAN_ID(u32RealChanID, SOCP_MAX_DECSRC_CHN);
         SOCP_CHECK_DECSRC_SET(u32RealChanID);
 
-        /* ¹Ø±ÕÖĞ¶Ï*/
+        /* å…³é—­ä¸­æ–­*/
         if (SOCP_DECSRC_CHNMODE_LIST == g_strSocpStat.sDecSrcChan[u32RealChanID].eChnMode)
         {
             SOCP_REG_SETBITS(SOCP_REG_DEC_CORE0MASK0, u32RealChanID, 1, 1);
@@ -2773,7 +2773,7 @@ s32 bsp_socp_stop(u32 u32SrcChanID)
             SOCP_REG_SETBITS(SOCP_REG_DEC_CORE0MASK0, i * 4, 4, IntIDMask);
         }
 
-        /* ÉèÖÃÍ¨µÀ¹Ø±Õ×´Ì¬*/
+        /* è®¾ç½®é€šé“å…³é—­çŠ¶æ€*/
         SOCP_REG_SETBITS(SOCP_REG_DECSRC_BUFCFG0(u32RealChanID), 30, 1,0);
         g_strSocpStat.sDecSrcChan[u32RealChanID].u32ChanEn = SOCP_CHN_DISABLE;
 
@@ -2790,31 +2790,31 @@ s32 bsp_socp_stop(u32 u32SrcChanID)
 
 
 /*****************************************************************************
-* º¯ Êı Ãû  : bsp_socp_register_event_cb
+* å‡½ æ•° å  : bsp_socp_register_event_cb
 *
-* ¹¦ÄÜÃèÊö  : Òì³£ÊÂ¼ş»Øµ÷º¯Êı×¢²áº¯Êı
+* åŠŸèƒ½æè¿°  : å¼‚å¸¸äº‹ä»¶å›è°ƒå‡½æ•°æ³¨å†Œå‡½æ•°
 *
-* ÊäÈë²ÎÊı  : u32ChanID      Í¨µÀID
-*             EventCB        Òì³£ÊÂ¼şµÄ»Øµ÷º¯Êı
-* Êä³ö²ÎÊı  :
+* è¾“å…¥å‚æ•°  : u32ChanID      é€šé“ID
+*             EventCB        å¼‚å¸¸äº‹ä»¶çš„å›è°ƒå‡½æ•°
+* è¾“å‡ºå‚æ•°  :
 *
-* ·µ »Ø Öµ  : ×¢²á³É¹¦Óë·ñµÄ±êÊ¶Âë
+* è¿” å› å€¼  : æ³¨å†ŒæˆåŠŸä¸å¦çš„æ ‡è¯†ç 
 *****************************************************************************/
 s32 bsp_socp_register_event_cb(u32 u32ChanID, socp_event_cb EventCB)
 {
     u32  u32RealChanID;
     u32  u32ChanType;
 
-    /* ÅĞ¶ÏÊÇ·ñÒÑ¾­³õÊ¼»¯ */
+    /* åˆ¤æ–­æ˜¯å¦å·²ç»åˆå§‹åŒ– */
     SOCP_CHECK_INIT();
 
-    /* »ñÈ¡Í¨µÀÀàĞÍºÍÊµ¼ÊµÄÍ¨µÀID */
+    /* è·å–é€šé“ç±»å‹å’Œå®é™…çš„é€šé“ID */
     u32RealChanID = SOCP_REAL_CHAN_ID(u32ChanID);
     u32ChanType = SOCP_REAL_CHAN_TYPE(u32ChanID);
 
     switch (u32ChanType)
     {
-        case SOCP_CODER_SRC_CHAN:      /* ±àÂëÔ´Í¨µÀ */
+        case SOCP_CODER_SRC_CHAN:      /* ç¼–ç æºé€šé“ */
         {
             if (u32RealChanID < SOCP_MAX_ENCSRC_CHN)
             {
@@ -2826,7 +2826,7 @@ s32 bsp_socp_register_event_cb(u32 u32ChanID, socp_event_cb EventCB)
             }
             break;
         }
-        case SOCP_CODER_DEST_CHAN:       /* ±àÂëÄ¿µÄÍ¨µÀ*/
+        case SOCP_CODER_DEST_CHAN:       /* ç¼–ç ç›®çš„é€šé“*/
         {
             SOCP_CHECK_CHAN_ID(u32RealChanID, SOCP_MAX_ENCDST_CHN);
             SOCP_CHECK_ENCDST_SET(u32RealChanID);
@@ -2836,7 +2836,7 @@ s32 bsp_socp_register_event_cb(u32 u32ChanID, socp_event_cb EventCB)
             g_stSocpDebugInfo.sSocpDebugEncDst.u32SocpRegEventEncDstCnt[u32RealChanID]++;
             break;
         }
-        case SOCP_DECODER_SRC_CHAN:       /* ½âÂëÔ´Í¨µÀ*/
+        case SOCP_DECODER_SRC_CHAN:       /* è§£ç æºé€šé“*/
         {
             SOCP_CHECK_CHAN_ID(u32RealChanID, SOCP_MAX_DECSRC_CHN);
             SOCP_CHECK_DECSRC_SET(u32RealChanID);
@@ -2846,7 +2846,7 @@ s32 bsp_socp_register_event_cb(u32 u32ChanID, socp_event_cb EventCB)
             g_stSocpDebugInfo.sSocpDebugDecSrc.u32SocpRegEventDecSrcCnt[u32RealChanID]++;
             break;
         }
-        case SOCP_DECODER_DEST_CHAN:       /* ½âÂëÄ¿µÄÍ¨µÀ*/
+        case SOCP_DECODER_DEST_CHAN:       /* è§£ç ç›®çš„é€šé“*/
         {
             SOCP_CHECK_CHAN_ID(u32RealChanID, SOCP_MAX_DECDST_CHN);
             SOCP_CHECK_DECDST_ALLOC(u32RealChanID);
@@ -2867,14 +2867,14 @@ s32 bsp_socp_register_event_cb(u32 u32ChanID, socp_event_cb EventCB)
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû  : bsp_socp_get_write_buff
+* å‡½ æ•° å  : bsp_socp_get_write_buff
 *
-* ¹¦ÄÜÃèÊö  : ÉÏ²ã»ñÈ¡Ğ´Êı¾İbufferº¯Êı
+* åŠŸèƒ½æè¿°  : ä¸Šå±‚è·å–å†™æ•°æ®bufferå‡½æ•°
 *
-* ÊäÈë²ÎÊı  : u32SrcChanID    Ô´Í¨µÀID
-* Êä³ö²ÎÊı  : pBuff           »ñÈ¡µÄbuffer
+* è¾“å…¥å‚æ•°  : u32SrcChanID    æºé€šé“ID
+* è¾“å‡ºå‚æ•°  : pBuff           è·å–çš„buffer
 *
-* ·µ »Ø Öµ  : »ñÈ¡³É¹¦Óë·ñµÄ±êÊ¶Âë
+* è¿” å› å€¼  : è·å–æˆåŠŸä¸å¦çš„æ ‡è¯†ç 
 *****************************************************************************/
 s32 bsp_socp_get_write_buff(u32 u32SrcChanID, SOCP_BUFFER_RW_STRU *pBuff)
 {
@@ -2882,26 +2882,26 @@ s32 bsp_socp_get_write_buff(u32 u32SrcChanID, SOCP_BUFFER_RW_STRU *pBuff)
     u32 u32ChanType;
     u32 uPAddr;
 
-    /* ÅĞ¶ÏÊÇ·ñÒÑ¾­³õÊ¼»¯ */
+    /* åˆ¤æ–­æ˜¯å¦å·²ç»åˆå§‹åŒ– */
     SOCP_CHECK_INIT();
 
-    /* ÅĞ¶Ï²ÎÊıÓĞĞ§ĞÔ */
+    /* åˆ¤æ–­å‚æ•°æœ‰æ•ˆæ€§ */
     SOCP_CHECK_PARA(pBuff);
 
-    /* »ñµÃÊµ¼ÊÍ¨µÀid */
+    /* è·å¾—å®é™…é€šé“id */
     u32ChanID   = SOCP_REAL_CHAN_ID(u32SrcChanID);
     u32ChanType = SOCP_REAL_CHAN_TYPE(u32SrcChanID);
 
-    /* ±àÂëÍ¨µÀ */
+    /* ç¼–ç é€šé“ */
     if (SOCP_CODER_SRC_CHAN == u32ChanType)
     {
         g_stSocpDebugInfo.sSocpDebugEncSrc.u32SocpGetWBufEncSrcEtrCnt[u32ChanID]++;
 
-        /* ¼ìÑéÍ¨µÀid */
+        /* æ£€éªŒé€šé“id */
         SOCP_CHECK_ENCSRC_CHAN_ID(u32ChanID);
         SOCP_CHECK_ENCSRC_ALLOC(u32ChanID);
 
-        /* ¸ù¾İ¶ÁĞ´Ö¸Õë»ñÈ¡buffer */
+        /* æ ¹æ®è¯»å†™æŒ‡é’ˆè·å–buffer */
         SOCP_REG_READ(SOCP_REG_ENCSRC_BUFRPTR(u32ChanID), uPAddr);
         g_strSocpStat.sEncSrcChan[u32ChanID].sEncSrcBuf.u32Read = uPAddr;
         SOCP_REG_READ(SOCP_REG_ENCSRC_BUFWPTR(u32ChanID), uPAddr);
@@ -2909,11 +2909,11 @@ s32 bsp_socp_get_write_buff(u32 u32SrcChanID, SOCP_BUFFER_RW_STRU *pBuff)
         socp_get_idle_buffer(&g_strSocpStat.sEncSrcChan[u32ChanID].sEncSrcBuf, pBuff);
         g_stSocpDebugInfo.sSocpDebugEncSrc.u32SocpGetWBufEncSrcSucCnt[u32ChanID]++;
     }
-    else if (SOCP_DECODER_SRC_CHAN == u32ChanType) /* ½âÂëÍ¨µÀ */
+    else if (SOCP_DECODER_SRC_CHAN == u32ChanType) /* è§£ç é€šé“ */
     {
         g_stSocpDebugInfo.sSocpDebugDecSrc.u32SocpGetWBufDecSrcEtrCnt[u32ChanID]++;
 
-        /* ¼ìÑéÍ¨µÀid */
+        /* æ£€éªŒé€šé“id */
         SOCP_CHECK_CHAN_ID(u32ChanID, SOCP_MAX_DECSRC_CHN);
         SOCP_CHECK_DECSRC_SET(u32ChanID);
         SOCP_REG_READ(SOCP_REG_DECSRC_BUFRPTR(u32ChanID), uPAddr);
@@ -2933,16 +2933,16 @@ s32 bsp_socp_get_write_buff(u32 u32SrcChanID, SOCP_BUFFER_RW_STRU *pBuff)
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû  : bsp_socp_write_done
+* å‡½ æ•° å  : bsp_socp_write_done
 *
-* ¹¦ÄÜÃèÊö  : Ğ´Êı¾İÍê³Éº¯Êı
+* åŠŸèƒ½æè¿°  : å†™æ•°æ®å®Œæˆå‡½æ•°
 *
-* ÊäÈë²ÎÊı  : u32SrcChanID    Ô´Í¨µÀID
-              u32WrtSize      Ğ´ÈëÊı¾İµÄ³¤¶È
+* è¾“å…¥å‚æ•°  : u32SrcChanID    æºé€šé“ID
+              u32WrtSize      å†™å…¥æ•°æ®çš„é•¿åº¦
 *
-* Êä³ö²ÎÊı  :
+* è¾“å‡ºå‚æ•°  :
 *
-* ·µ »Ø Öµ  : ²Ù×÷Íê³ÉÓë·ñµÄ±êÊ¶Âë
+* è¿” å› å€¼  : æ“ä½œå®Œæˆä¸å¦çš„æ ‡è¯†ç 
 *****************************************************************************/
 s32 bsp_socp_write_done(u32 u32SrcChanID, u32 u32WrtSize)
 {
@@ -2952,24 +2952,24 @@ s32 bsp_socp_write_done(u32 u32SrcChanID, u32 u32WrtSize)
     SOCP_BUFFER_RW_STRU RwBuff;
     u32  uPAddr;
 
-    /* ÅĞ¶ÏÊÇ·ñÒÑ¾­³õÊ¼»¯ */
+    /* åˆ¤æ–­æ˜¯å¦å·²ç»åˆå§‹åŒ– */
     SOCP_CHECK_INIT();
 
-    /* ÅĞ¶Ï²ÎÊıÓĞĞ§ĞÔ */
+    /* åˆ¤æ–­å‚æ•°æœ‰æ•ˆæ€§ */
     SOCP_CHECK_PARA(u32WrtSize);
 
-    /* »ñµÃÊµ¼ÊÍ¨µÀid */
+    /* è·å¾—å®é™…é€šé“id */
     u32ChanID   = SOCP_REAL_CHAN_ID(u32SrcChanID);
     u32ChanType = SOCP_REAL_CHAN_TYPE(u32SrcChanID);
 
-    /* ±àÂëÍ¨µÀ */
+    /* ç¼–ç é€šé“ */
     if (SOCP_CODER_SRC_CHAN == u32ChanType)
     {
         SOCP_ENCSRC_CHAN_S *pChan;
 
         g_stSocpDebugInfo.sSocpDebugEncSrc.u32socp_write_doneEncSrcEtrCnt[u32ChanID]++;
 
-        /* ¼ìÑéÍ¨µÀid */
+        /* æ£€éªŒé€šé“id */
         SOCP_CHECK_ENCSRC_CHAN_ID(u32ChanID);
         SOCP_CHECK_ENCSRC_ALLOC(u32ChanID);
 
@@ -2997,21 +2997,21 @@ s32 bsp_socp_write_done(u32 u32SrcChanID, u32 u32WrtSize)
             return BSP_ERR_SOCP_INVALID_PARA;
         }
 
-        /* ÉèÖÃ¶ÁĞ´Ö¸Õë */
+        /* è®¾ç½®è¯»å†™æŒ‡é’ˆ */
         socp_write_done(&pChan->sEncSrcBuf, u32WrtSize);
 
-        /* Ğ´ÈëĞ´Ö¸Õëµ½Ğ´Ö¸Õë¼Ä´æÆ÷*/
-        uPAddr = pChan->sEncSrcBuf.u32Write; /* [false alarm]:ÆÁ±ÎFortify´íÎó */
+        /* å†™å…¥å†™æŒ‡é’ˆåˆ°å†™æŒ‡é’ˆå¯„å­˜å™¨*/
+        uPAddr = pChan->sEncSrcBuf.u32Write; /* [false alarm]:å±è”½Fortifyé”™è¯¯ */
         SOCP_REG_WRITE(SOCP_REG_ENCSRC_BUFWPTR(u32ChanID), uPAddr);
         g_stSocpDebugInfo.sSocpDebugEncSrc.u32socp_write_doneEncSrcSucCnt[u32ChanID]++;
     }
-    else  if(SOCP_DECODER_SRC_CHAN == u32ChanType) /* ½âÂëÍ¨µÀ */
+    else  if(SOCP_DECODER_SRC_CHAN == u32ChanType) /* è§£ç é€šé“ */
     {
         SOCP_DECSRC_CHAN_S  *pChan;
 
         g_stSocpDebugInfo.sSocpDebugDecSrc.u32socp_write_doneDecSrcEtrCnt[u32ChanID]++;
 
-        /* ¼ìÑéÍ¨µÀid */
+        /* æ£€éªŒé€šé“id */
         SOCP_CHECK_CHAN_ID(u32ChanID, SOCP_MAX_DECSRC_CHN);
         SOCP_CHECK_DECSRC_SET(u32ChanID);
         pChan = &g_strSocpStat.sDecSrcChan[u32ChanID];
@@ -3032,11 +3032,11 @@ s32 bsp_socp_write_done(u32 u32SrcChanID, u32 u32WrtSize)
             return BSP_ERR_SOCP_INVALID_PARA;
         }
 
-        /* ÉèÖÃ¶ÁĞ´Ö¸Õë */
+        /* è®¾ç½®è¯»å†™æŒ‡é’ˆ */
         socp_write_done(&pChan->sDecSrcBuf, u32WrtSize);
 
-        /* Ğ´ÈëĞ´Ö¸Õëµ½Ğ´Ö¸Õë¼Ä´æÆ÷*/
-        uPAddr = pChan->sDecSrcBuf.u32Write; /* [false alarm]:ÆÁ±ÎFortify´íÎó */
+        /* å†™å…¥å†™æŒ‡é’ˆåˆ°å†™æŒ‡é’ˆå¯„å­˜å™¨*/
+        uPAddr = pChan->sDecSrcBuf.u32Write; /* [false alarm]:å±è”½Fortifyé”™è¯¯ */
         SOCP_REG_WRITE(SOCP_REG_DECSRC_BUFWPTR(u32ChanID), uPAddr);
         g_stSocpDebugInfo.sSocpDebugDecSrc.u32socp_write_doneDecSrcSucCnt[u32ChanID]++;
     }
@@ -3050,30 +3050,30 @@ s32 bsp_socp_write_done(u32 u32SrcChanID, u32 u32WrtSize)
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû  : bsp_socp_register_rd_cb
+* å‡½ æ•° å  : bsp_socp_register_rd_cb
 *
-* ¹¦ÄÜÃèÊö  : RDbuffer»Øµ÷º¯Êı×¢²áº¯Êı
+* åŠŸèƒ½æè¿°  : RDbufferå›è°ƒå‡½æ•°æ³¨å†Œå‡½æ•°
 *
-* ÊäÈë²ÎÊı  : u32SrcChanID    Ô´Í¨µÀID
-              RdCB            RDbufferÍê³É»Øµ÷º¯Êı
+* è¾“å…¥å‚æ•°  : u32SrcChanID    æºé€šé“ID
+              RdCB            RDbufferå®Œæˆå›è°ƒå‡½æ•°
 *
-* Êä³ö²ÎÊı  :
+* è¾“å‡ºå‚æ•°  :
 *
-* ·µ »Ø Öµ  : ×¢²á³É¹¦Óë·ñµÄ±êÊ¶Âë
+* è¿” å› å€¼  : æ³¨å†ŒæˆåŠŸä¸å¦çš„æ ‡è¯†ç 
 *****************************************************************************/
 s32 bsp_socp_register_rd_cb(u32 u32SrcChanID, socp_rd_cb RdCB)
 {
     u32 u32RealChanID;
     u32 u32ChanType;
 
-    /* ÅĞ¶ÏÊÇ·ñÒÑ¾­³õÊ¼»¯ */
+    /* åˆ¤æ–­æ˜¯å¦å·²ç»åˆå§‹åŒ– */
     SOCP_CHECK_INIT();
 
-    /* »ñÈ¡Í¨µÀÀàĞÍºÍÊµ¼ÊµÄÍ¨µÀID */
+    /* è·å–é€šé“ç±»å‹å’Œå®é™…çš„é€šé“ID */
     u32RealChanID = SOCP_REAL_CHAN_ID(u32SrcChanID);
     u32ChanType = SOCP_REAL_CHAN_TYPE(u32SrcChanID);
 
-    /* ±àÂëÍ¨µÀ */
+    /* ç¼–ç é€šé“ */
     if (SOCP_CODER_SRC_CHAN == u32ChanType)
     {
         SOCP_CHECK_ENCSRC_CHAN_ID(u32RealChanID);
@@ -3081,7 +3081,7 @@ s32 bsp_socp_register_rd_cb(u32 u32SrcChanID, socp_rd_cb RdCB)
 
         if (SOCP_ENCSRC_CHNMODE_LIST == g_strSocpStat.sEncSrcChan[u32RealChanID].eChnMode)
         {
-            /* ÉèÖÃ¶ÔÓ¦Í¨µÀµÄ»Øµ÷º¯Êı*/
+            /* è®¾ç½®å¯¹åº”é€šé“çš„å›è°ƒå‡½æ•°*/
             g_strSocpStat.sEncSrcChan[u32RealChanID].rd_cb = RdCB;
         }
         else
@@ -3102,15 +3102,15 @@ s32 bsp_socp_register_rd_cb(u32 u32SrcChanID, socp_rd_cb RdCB)
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû  : bsp_socp_get_rd_buffer
+* å‡½ æ•° å  : bsp_socp_get_rd_buffer
 *
-* ¹¦ÄÜÃèÊö  : »ñÈ¡RDbufferº¯Êı
+* åŠŸèƒ½æè¿°  : è·å–RDbufferå‡½æ•°
 *
-* ÊäÈë²ÎÊı  : u32SrcChanID    Ô´Í¨µÀID
+* è¾“å…¥å‚æ•°  : u32SrcChanID    æºé€šé“ID
 *
-* Êä³ö²ÎÊı  : pBuff           »ñÈ¡µÄRDbuffer
+* è¾“å‡ºå‚æ•°  : pBuff           è·å–çš„RDbuffer
 *
-* ·µ »Ø Öµ  : »ñÈ¡³É¹¦Óë·ñµÄ±êÊ¶Âë
+* è¿” å› å€¼  : è·å–æˆåŠŸä¸å¦çš„æ ‡è¯†ç 
 *****************************************************************************/
 s32 bsp_socp_get_rd_buffer(u32 u32SrcChanID, SOCP_BUFFER_RW_STRU *pBuff)
 {
@@ -3118,26 +3118,26 @@ s32 bsp_socp_get_rd_buffer(u32 u32SrcChanID, SOCP_BUFFER_RW_STRU *pBuff)
     u32 u32ChanType;
     u32 uPAddr;
 
-    /* ÅĞ¶ÏÊÇ·ñÒÑ¾­³õÊ¼»¯ */
+    /* åˆ¤æ–­æ˜¯å¦å·²ç»åˆå§‹åŒ– */
     SOCP_CHECK_INIT();
 
-    /* ÅĞ¶Ï²ÎÊıÓĞĞ§ĞÔ */
+    /* åˆ¤æ–­å‚æ•°æœ‰æ•ˆæ€§ */
     SOCP_CHECK_PARA(pBuff);
 
-    /* »ñµÃÊµ¼ÊÍ¨µÀid */
+    /* è·å¾—å®é™…é€šé“id */
     u32ChanID   = SOCP_REAL_CHAN_ID(u32SrcChanID);
     u32ChanType = SOCP_REAL_CHAN_TYPE(u32SrcChanID);
 
-    /* ±àÂëÍ¨µÀ */
+    /* ç¼–ç é€šé“ */
     if (SOCP_CODER_SRC_CHAN == u32ChanType)
     {
         g_stSocpDebugInfo.sSocpDebugEncSrc.u32SocpGetRdBufEncSrcEtrCnt[u32ChanID]++;
 
-        /* ¼ìÑéÍ¨µÀid */
+        /* æ£€éªŒé€šé“id */
         SOCP_CHECK_ENCSRC_CHAN_ID(u32ChanID);
         SOCP_CHECK_ENCSRC_ALLOC(u32ChanID);
 
-        /* ¸ù¾İ¶ÁĞ´Ö¸Õë»ñÈ¡buffer */
+        /* æ ¹æ®è¯»å†™æŒ‡é’ˆè·å–buffer */
         SOCP_REG_READ(SOCP_REG_ENCSRC_RDQRPTR(u32ChanID), uPAddr);
         g_strSocpStat.sEncSrcChan[u32ChanID].sRdBuf.u32Read = uPAddr;
         SOCP_REG_READ(SOCP_REG_ENCSRC_RDQWPTR(u32ChanID), uPAddr);
@@ -3156,16 +3156,16 @@ s32 bsp_socp_get_rd_buffer(u32 u32SrcChanID, SOCP_BUFFER_RW_STRU *pBuff)
 
 
 /*****************************************************************************
-* º¯ Êı Ãû  : bsp_socp_read_rd_done
+* å‡½ æ•° å  : bsp_socp_read_rd_done
 *
-* ¹¦ÄÜÃèÊö  : ¶ÁÈ¡RDbufferÊı¾İÍê³Éº¯Êı
+* åŠŸèƒ½æè¿°  : è¯»å–RDbufferæ•°æ®å®Œæˆå‡½æ•°
 *
-* ÊäÈë²ÎÊı  : u32SrcChanID   Ô´Í¨µÀID
-              u32RDSize      ¶ÁÈ¡µÄRDbufferÊı¾İ³¤¶È
+* è¾“å…¥å‚æ•°  : u32SrcChanID   æºé€šé“ID
+              u32RDSize      è¯»å–çš„RDbufferæ•°æ®é•¿åº¦
 *
-* Êä³ö²ÎÊı  :
+* è¾“å‡ºå‚æ•°  :
 *
-* ·µ »Ø Öµ  : ¶ÁÈ¡³É¹¦Óë·ñµÄ±êÊ¶Âë
+* è¿” å› å€¼  : è¯»å–æˆåŠŸä¸å¦çš„æ ‡è¯†ç 
 *****************************************************************************/
 s32 bsp_socp_read_rd_done(u32 u32SrcChanID, u32 u32RDSize)
 {
@@ -3174,31 +3174,31 @@ s32 bsp_socp_read_rd_done(u32 u32SrcChanID, u32 u32RDSize)
     SOCP_BUFFER_RW_STRU RwBuff;
     u32  uPAddr;
 
-    /* ÅĞ¶ÏÊÇ·ñÒÑ¾­³õÊ¼»¯ */
+    /* åˆ¤æ–­æ˜¯å¦å·²ç»åˆå§‹åŒ– */
     SOCP_CHECK_INIT();
 
-    /* ÅĞ¶Ï²ÎÊıÓĞĞ§ĞÔ */
+    /* åˆ¤æ–­å‚æ•°æœ‰æ•ˆæ€§ */
     SOCP_CHECK_PARA(u32RDSize);
 
-    /* »ñµÃÊµ¼ÊÍ¨µÀid */
+    /* è·å¾—å®é™…é€šé“id */
     u32ChanID   = SOCP_REAL_CHAN_ID(u32SrcChanID);
     u32ChanType = SOCP_REAL_CHAN_TYPE(u32SrcChanID);
 
-    /* ±àÂëÍ¨µÀ */
+    /* ç¼–ç é€šé“ */
     if (SOCP_CODER_SRC_CHAN == u32ChanType)
     {
         SOCP_ENCSRC_CHAN_S *pChan;
 
         g_stSocpDebugInfo.sSocpDebugEncSrc.u32SocpReadRdDoneEncSrcEtrCnt[u32ChanID]++;
 
-        /* ¼ìÑéÍ¨µÀid */
+        /* æ£€éªŒé€šé“id */
         SOCP_CHECK_ENCSRC_CHAN_ID(u32ChanID);
         SOCP_CHECK_ENCSRC_ALLOC(u32ChanID);
 
         pChan = &g_strSocpStat.sEncSrcChan[u32ChanID];
         g_strSocpStat.sEncSrcChan[u32ChanID].u32LastRdSize = 0;
 
-        /* ÉèÖÃ¶ÁĞ´Ö¸Õë */
+        /* è®¾ç½®è¯»å†™æŒ‡é’ˆ */
         SOCP_REG_READ(SOCP_REG_ENCSRC_RDQWPTR(u32ChanID), uPAddr);
         pChan->sRdBuf.u32Write = uPAddr;
         SOCP_REG_READ(SOCP_REG_ENCSRC_RDQRPTR(u32ChanID), uPAddr);
@@ -3218,8 +3218,8 @@ s32 bsp_socp_read_rd_done(u32 u32SrcChanID, u32 u32RDSize)
 
         socp_read_done(&pChan->sRdBuf, u32RDSize);
 
-        /* Ğ´Èë¶ÁÖ¸Õëµ½¶ÁÖ¸Õë¼Ä´æÆ÷*/
-        uPAddr= pChan->sRdBuf.u32Read; /* [false alarm]:ÆÁ±ÎFortify´íÎó */
+        /* å†™å…¥è¯»æŒ‡é’ˆåˆ°è¯»æŒ‡é’ˆå¯„å­˜å™¨*/
+        uPAddr= pChan->sRdBuf.u32Read; /* [false alarm]:å±è”½Fortifyé”™è¯¯ */
         SOCP_REG_WRITE(SOCP_REG_ENCSRC_RDQRPTR(u32ChanID), uPAddr);
         g_stSocpDebugInfo.sSocpDebugEncSrc.u32SocpReadRdDoneEncSrcSucCnt[u32ChanID]++;
     }
@@ -3232,33 +3232,33 @@ s32 bsp_socp_read_rd_done(u32 u32SrcChanID, u32 u32RDSize)
     return BSP_OK;
 }
 
-//ÒÔÏÂÄ¿µÄÍ¨µÀ×¨ÓÃ
+//ä»¥ä¸‹ç›®çš„é€šé“ä¸“ç”¨
 
 /*****************************************************************************
-* º¯ Êı Ãû  : bsp_socp_register_read_cb
+* å‡½ æ•° å  : bsp_socp_register_read_cb
 *
-* ¹¦ÄÜÃèÊö  : ¶ÁÊı¾İ»Øµ÷º¯Êı×¢²áº¯Êı
+* åŠŸèƒ½æè¿°  : è¯»æ•°æ®å›è°ƒå‡½æ•°æ³¨å†Œå‡½æ•°
 *
-* ÊäÈë²ÎÊı  : u32DestChanID  Ä¿µÄÍ¨µÀååID
-              ReadCB         ¶ÁÊı¾İ»Øµ÷º¯Êı
+* è¾“å…¥å‚æ•°  : u32DestChanID  ç›®çš„é€šé“é‚‹ID
+              ReadCB         è¯»æ•°æ®å›è°ƒå‡½æ•°
 *
-* Êä³ö²ÎÊı  :
+* è¾“å‡ºå‚æ•°  :
 *
-* ·µ »Ø Öµ  : ×¢²á³É¹¦Óë·ñµÄ±êÊ¶Âë
+* è¿” å› å€¼  : æ³¨å†ŒæˆåŠŸä¸å¦çš„æ ‡è¯†ç 
 *****************************************************************************/
 s32 bsp_socp_register_read_cb(u32 u32DestChanID, socp_read_cb ReadCB)
 {
     u32 u32RealChanID;
     u32 u32ChanType;
 
-    /* ÅĞ¶ÏÊÇ·ñÒÑ¾­³õÊ¼»¯ */
+    /* åˆ¤æ–­æ˜¯å¦å·²ç»åˆå§‹åŒ– */
     SOCP_CHECK_INIT();
 
-    /* »ñÈ¡Í¨µÀÀàĞÍºÍÊµ¼ÊµÄÍ¨µÀID */
+    /* è·å–é€šé“ç±»å‹å’Œå®é™…çš„é€šé“ID */
     u32RealChanID = SOCP_REAL_CHAN_ID(u32DestChanID);
     u32ChanType = SOCP_REAL_CHAN_TYPE(u32DestChanID);
 
-    if (SOCP_DECODER_DEST_CHAN == u32ChanType) /* ½âÂëÍ¨µÀ */
+    if (SOCP_DECODER_DEST_CHAN == u32ChanType) /* è§£ç é€šé“ */
     {
         SOCP_CHECK_CHAN_ID(u32RealChanID, SOCP_MAX_DECDST_CHN);
         SOCP_CHECK_DECDST_ALLOC(u32RealChanID);
@@ -3267,12 +3267,12 @@ s32 bsp_socp_register_read_cb(u32 u32DestChanID, socp_read_cb ReadCB)
 
         g_stSocpDebugInfo.sSocpDebugDecDst.u32SocpRegReadCBDecDstCnt[u32RealChanID]++;
     }
-    else if (SOCP_CODER_DEST_CHAN == u32ChanType)/* ±àÂëÍ¨µÀ */
+    else if (SOCP_CODER_DEST_CHAN == u32ChanType)/* ç¼–ç é€šé“ */
     {
         SOCP_CHECK_CHAN_ID(u32RealChanID, SOCP_MAX_ENCDST_CHN);
         SOCP_CHECK_ENCDST_SET(u32RealChanID);
 
-        /* ÉèÖÃ¶ÔÓ¦Í¨µÀµÄ»Øµ÷º¯Êı*/
+        /* è®¾ç½®å¯¹åº”é€šé“çš„å›è°ƒå‡½æ•°*/
         g_strSocpStat.sEncDstChan[u32RealChanID].read_cb = ReadCB;
 
         g_stSocpDebugInfo.sSocpDebugEncDst.u32SocpRegReadCBEncDstCnt[u32RealChanID]++;
@@ -3287,15 +3287,15 @@ s32 bsp_socp_register_read_cb(u32 u32DestChanID, socp_read_cb ReadCB)
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû  : bsp_socp_get_read_buff
+* å‡½ æ•° å  : bsp_socp_get_read_buff
 *
-* ¹¦ÄÜÃèÊö  : »ñÈ¡¶ÁÊı¾İbufferº¯Êı
+* åŠŸèƒ½æè¿°  : è·å–è¯»æ•°æ®bufferå‡½æ•°
 *
-* ÊäÈë²ÎÊı  : u32DestChanID  Ä¿µÄÍ¨µÀbuffer
+* è¾“å…¥å‚æ•°  : u32DestChanID  ç›®çš„é€šé“buffer
 
-* Êä³ö²ÎÊı  : pBuffer        »ñÈ¡µÄ¶ÁÊı¾İbuffer
+* è¾“å‡ºå‚æ•°  : pBuffer        è·å–çš„è¯»æ•°æ®buffer
 *
-* ·µ »Ø Öµ  : »ñÈ¡³É¹¦Óë·ñµÄ±êÊ¶Âë
+* è¿” å› å€¼  : è·å–æˆåŠŸä¸å¦çš„æ ‡è¯†ç 
 *****************************************************************************/
 s32 bsp_socp_get_read_buff(u32 u32DestChanID, SOCP_BUFFER_RW_STRU *pBuffer)
 {
@@ -3303,27 +3303,27 @@ s32 bsp_socp_get_read_buff(u32 u32DestChanID, SOCP_BUFFER_RW_STRU *pBuffer)
     u32 u32ChanType;
     u32  uPAddr;
 
-    /* ÅĞ¶ÏÊÇ·ñÒÑ¾­³õÊ¼»¯ */
+    /* åˆ¤æ–­æ˜¯å¦å·²ç»åˆå§‹åŒ– */
     SOCP_CHECK_INIT();
 
-    /* ÅĞ¶Ï²ÎÊıÓĞĞ§ĞÔ */
+    /* åˆ¤æ–­å‚æ•°æœ‰æ•ˆæ€§ */
     SOCP_CHECK_PARA(pBuffer);
 
-    /* »ñµÃÊµ¼ÊÍ¨µÀid */
+    /* è·å¾—å®é™…é€šé“id */
     u32ChanID   = SOCP_REAL_CHAN_ID(u32DestChanID);
     u32ChanType = SOCP_REAL_CHAN_TYPE(u32DestChanID);
     pBuffer->u32Size   = 0;
     pBuffer->u32RbSize = 0;
 
-    if (SOCP_DECODER_DEST_CHAN == u32ChanType) /* ½âÂëÍ¨µÀ */
+    if (SOCP_DECODER_DEST_CHAN == u32ChanType) /* è§£ç é€šé“ */
     {
         g_stSocpDebugInfo.sSocpDebugDecDst.u32SocpGetReadBufDecDstEtrCnt[u32ChanID]++;
 
-        /* ¼ìÑéÍ¨µÀid */
+        /* æ£€éªŒé€šé“id */
         SOCP_CHECK_CHAN_ID(u32ChanID, SOCP_MAX_DECDST_CHN);
         SOCP_CHECK_DECDST_ALLOC(u32ChanID);
 
-        /* ¸ù¾İ¶ÁĞ´Ö¸Õë»ñÈ¡buffer */
+        /* æ ¹æ®è¯»å†™æŒ‡é’ˆè·å–buffer */
         SOCP_REG_READ(SOCP_REG_DECDEST_BUFRPTR(u32ChanID), uPAddr);
         g_strSocpStat.sDecDstChan[u32ChanID].sDecDstBuf.u32Read = uPAddr;
         SOCP_REG_READ(SOCP_REG_DECDEST_BUFWPTR(u32ChanID), uPAddr);
@@ -3334,7 +3334,7 @@ s32 bsp_socp_get_read_buff(u32 u32DestChanID, SOCP_BUFFER_RW_STRU *pBuffer)
     else if (SOCP_CODER_DEST_CHAN == u32ChanType)
     {
         g_stSocpDebugInfo.sSocpDebugEncDst.u32SocpGetReadBufEncDstEtrCnt[u32ChanID]++;
-        /*deflateÊ¹ÄÜ»ñÈ¡deflate buffer*/
+        /*deflateä½¿èƒ½è·å–deflate buffer*/
         if((SOCP_COMPRESS == g_strSocpStat.sEncDstChan[u32ChanID].struCompress.bcompress )
             &&(g_strSocpStat.sEncDstChan[u32ChanID].struCompress.ops.getbuffer))
         {
@@ -3342,11 +3342,11 @@ s32 bsp_socp_get_read_buff(u32 u32DestChanID, SOCP_BUFFER_RW_STRU *pBuffer)
             return BSP_OK;
         }
 
-        /* ¼ìÑéÍ¨µÀid */
+        /* æ£€éªŒé€šé“id */
         SOCP_CHECK_CHAN_ID(u32ChanID, SOCP_MAX_ENCDST_CHN);
         SOCP_CHECK_ENCDST_SET(u32ChanID);
 
-        /* ¸ù¾İ¶ÁĞ´Ö¸Õë»ñÈ¡buffer */
+        /* æ ¹æ®è¯»å†™æŒ‡é’ˆè·å–buffer */
         SOCP_REG_READ(SOCP_REG_ENCDEST_BUFRPTR(u32ChanID), uPAddr);
         g_strSocpStat.sEncDstChan[u32ChanID].sEncDstBuf.u32Read = uPAddr;
         SOCP_REG_READ(SOCP_REG_ENCDEST_BUFWPTR(u32ChanID), uPAddr);
@@ -3364,15 +3364,15 @@ s32 bsp_socp_get_read_buff(u32 u32DestChanID, SOCP_BUFFER_RW_STRU *pBuffer)
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû  : bsp_socp_read_data_done
+* å‡½ æ•° å  : bsp_socp_read_data_done
 *
-* ¹¦ÄÜÃèÊö  : ¶ÁÊı¾İÍê³Éº¯Êı
+* åŠŸèƒ½æè¿°  : è¯»æ•°æ®å®Œæˆå‡½æ•°
 *
-* ÊäÈë²ÎÊı  : u32DestChanID    Ä¿µÄÍ¨µÀID
-*             u32ReadSize      ¶ÁÈ¡Êı¾İ´óĞ¡
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å…¥å‚æ•°  : u32DestChanID    ç›®çš„é€šé“ID
+*             u32ReadSize      è¯»å–æ•°æ®å¤§å°
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ  : ¶ÁÊı¾İ³É¹¦Óë·ñµÄ±êÊ¶Âë
+* è¿” å› å€¼  : è¯»æ•°æ®æˆåŠŸä¸å¦çš„æ ‡è¯†ç 
 *****************************************************************************/
 s32 bsp_socp_read_data_done(u32 u32DestChanID, u32 u32ReadSize)
 {
@@ -3384,24 +3384,24 @@ s32 bsp_socp_read_data_done(u32 u32DestChanID, u32 u32ReadSize)
     u32  uPAddr3;
     unsigned long lock_flag;
 
-    /* ÅĞ¶ÏÊÇ·ñÒÑ¾­³õÊ¼»¯ */
+    /* åˆ¤æ–­æ˜¯å¦å·²ç»åˆå§‹åŒ– */
     SOCP_CHECK_INIT();
 
-    /*¸ù¾İMSPÒªÇóÈ¥µô¸Ã¼ì²â£¬±£Ö¤¿ÉÒÔ¸üĞÂ0×Ö½Ú£¬2011-04-29*/
+    /*æ ¹æ®MSPè¦æ±‚å»æ‰è¯¥æ£€æµ‹ï¼Œä¿è¯å¯ä»¥æ›´æ–°0å­—èŠ‚ï¼Œ2011-04-29*/
     //SOCP_CHECK_PARA(u32ReadSize);
 
-    /* »ñµÃÊµ¼ÊÍ¨µÀid */
+    /* è·å¾—å®é™…é€šé“id */
     u32ChanID   = SOCP_REAL_CHAN_ID(u32DestChanID);
     u32ChanType = SOCP_REAL_CHAN_TYPE(u32DestChanID);
 
-    if (SOCP_DECODER_DEST_CHAN == u32ChanType) /* ½âÂëÍ¨µÀ */
+    if (SOCP_DECODER_DEST_CHAN == u32ChanType) /* è§£ç é€šé“ */
     {
         u32 TfMaskReg = 0;
         SOCP_DECDST_CHAN_S *pChan;
 
         g_stSocpDebugInfo.sSocpDebugDecDst.u32socp_read_doneDecDstEtrCnt[u32ChanID]++;
 
-        /* ¼ìÑéÍ¨µÀid */
+        /* æ£€éªŒé€šé“id */
         SOCP_CHECK_CHAN_ID(u32ChanID, SOCP_MAX_DECDST_CHN);
         SOCP_CHECK_DECDST_ALLOC(u32ChanID);
 
@@ -3429,11 +3429,11 @@ s32 bsp_socp_read_data_done(u32 u32DestChanID, u32 u32ReadSize)
             return BSP_ERR_SOCP_INVALID_PARA;
         }
 
-        /* ÉèÖÃ¶ÁĞ´Ö¸Õë */
+        /* è®¾ç½®è¯»å†™æŒ‡é’ˆ */
         socp_read_done(&pChan->sDecDstBuf, u32ReadSize);
 
-        /* Ğ´ÈëĞ´Ö¸Õëµ½Ğ´Ö¸Õë¼Ä´æÆ÷*/
-        uPAddr = pChan->sDecDstBuf.u32Read; /* [false alarm]:ÆÁ±ÎFortify´íÎó */
+        /* å†™å…¥å†™æŒ‡é’ˆåˆ°å†™æŒ‡é’ˆå¯„å­˜å™¨*/
+        uPAddr = pChan->sDecDstBuf.u32Read; /* [false alarm]:å±è”½Fortifyé”™è¯¯ */
         SOCP_REG_WRITE(SOCP_REG_DECDEST_BUFRPTR(u32ChanID), uPAddr);
         //added by yangzhi 2011.7.25
         spin_lock_irqsave(&lock, lock_flag);
@@ -3452,7 +3452,7 @@ s32 bsp_socp_read_data_done(u32 u32DestChanID, u32 u32ReadSize)
 
         g_stSocpDebugInfo.sSocpDebugDecDst.u32socp_read_doneDecDstSucCnt[u32ChanID]++;
     }
-    else if (SOCP_CODER_DEST_CHAN == u32ChanType)/* ±àÂëÍ¨µÀ */
+    else if (SOCP_CODER_DEST_CHAN == u32ChanType)/* ç¼–ç é€šé“ */
     {
 
         u32 curmodestate;
@@ -3467,14 +3467,14 @@ s32 bsp_socp_read_data_done(u32 u32DestChanID, u32 u32ReadSize)
         
         g_stSocpDebugInfo.sSocpDebugEncDst.u32socp_read_doneEncDstEtrCnt[u32ChanID]++;
 
-        /* ¼ìÑéÍ¨µÀid */
+        /* æ£€éªŒé€šé“id */
         SOCP_CHECK_CHAN_ID(u32ChanID, SOCP_MAX_ENCDST_CHN);
         SOCP_CHECK_ENCDST_SET(u32ChanID);
         if(u32ChanID == 1)
         {
             g_stEncDstStat[g_ulEncDstStatCount].ulReadDoneStartSlice = bsp_get_slice_value();
         }
-        /*ÅĞ¶ÏdeflateÊ¹ÄÜ£¬deflate readdone*/
+        /*åˆ¤æ–­deflateä½¿èƒ½ï¼Œdeflate readdone*/
         if(( SOCP_COMPRESS == g_strSocpStat.sEncDstChan[u32ChanID].struCompress.bcompress)
             &&(g_strSocpStat.sEncDstChan[u32ChanID].struCompress.ops.readdone))
         {
@@ -3515,11 +3515,11 @@ s32 bsp_socp_read_data_done(u32 u32DestChanID, u32 u32ReadSize)
             return BSP_ERR_SOCP_INVALID_PARA;
         }
 
-        /* ÉèÖÃ¶ÁĞ´Ö¸Õë */
+        /* è®¾ç½®è¯»å†™æŒ‡é’ˆ */
         socp_read_done(&pChan->sEncDstBuf, u32ReadSize);
 
-        /* Ğ´Èë¶ÁÖ¸Õëµ½¶ÁÖ¸Õë¼Ä´æÆ÷*/
-        uPAddr2 = pChan->sEncDstBuf.u32Read; /* [false alarm]:ÆÁ±ÎFortify´íÎó */
+        /* å†™å…¥è¯»æŒ‡é’ˆåˆ°è¯»æŒ‡é’ˆå¯„å­˜å™¨*/
+        uPAddr2 = pChan->sEncDstBuf.u32Read; /* [false alarm]:å±è”½Fortifyé”™è¯¯ */
         /*lint -save -e732*/
         SOCP_REG_WRITE(SOCP_REG_ENCDEST_BUFRPTR(u32ChanID), uPAddr2);
         SOCP_REG_READ(SOCP_REG_ENCDEST_BUFRPTR(u32ChanID), uPAddr3);
@@ -3551,15 +3551,15 @@ s32 bsp_socp_read_data_done(u32 u32DestChanID, u32 u32ReadSize)
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû  : bsp_socp_set_bbp_enable
+* å‡½ æ•° å  : bsp_socp_set_bbp_enable
 *
-* ¹¦ÄÜÃèÊö  : Ê¹ÄÜ/½ûÖ¹BPP LOGºÍÊı²É
+* åŠŸèƒ½æè¿°  : ä½¿èƒ½/ç¦æ­¢BPP LOGå’Œæ•°é‡‡
 *
-* ÊäÈë²ÎÊı  : bEnable       Ê¹ÄÜ±êÊ¶
+* è¾“å…¥å‚æ•°  : bEnable       ä½¿èƒ½æ ‡è¯†
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ  : ¶ÁÊı¾İ³É¹¦Óë·ñµÄ±êÊ¶Âë
+* è¿” å› å€¼  : è¯»æ•°æ®æˆåŠŸä¸å¦çš„æ ‡è¯†ç 
 *****************************************************************************/
 s32 bsp_socp_set_bbp_enable(int bEnable)
 {
@@ -3576,15 +3576,15 @@ s32 bsp_socp_set_bbp_enable(int bEnable)
 
 
 /*****************************************************************************
-* º¯ Êı Ãû  : bsp_socp_set_bbp_ds_mode
+* å‡½ æ•° å  : bsp_socp_set_bbp_ds_mode
 *
-* ¹¦ÄÜÃèÊö  : ÉèÖÃBPPÊı²ÉÄ£Ê½
+* åŠŸèƒ½æè¿°  : è®¾ç½®BPPæ•°é‡‡æ¨¡å¼
 *
-* ÊäÈë²ÎÊı  : eDsMode    Êı²ÉÄ£Ê½
+* è¾“å…¥å‚æ•°  : eDsMode    æ•°é‡‡æ¨¡å¼
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ  :
+* è¿” å› å€¼  :
 *****************************************************************************/
 s32 bsp_socp_set_bbp_ds_mode(SOCP_BBP_DS_MODE_ENUM_UIN32 eDsMode)
 {
@@ -3605,7 +3605,7 @@ void bsp_socp_set_enc_dst_threshold(bool mode,u32 u32DestChanID)
     u32DestChanID = SOCP_REAL_CHAN_ID(u32DestChanID);
 
     SOCP_REG_READ(SOCP_REG_ENCDEST_BUFCFG(u32DestChanID),bufLength);
-    if(mode == true)/*trueÎªĞèÒª´ò¿ªÑÓÊ±ÉÏ±¨µÄ³¡¾°*/
+    if(mode == true)/*trueä¸ºéœ€è¦æ‰“å¼€å»¶æ—¶ä¸ŠæŠ¥çš„åœºæ™¯*/
     {
         threshold = (bufLength >> 2)*3;
     }
@@ -3620,15 +3620,15 @@ void bsp_socp_set_enc_dst_threshold(bool mode,u32 u32DestChanID)
     return;
 }
 /*****************************************************************************
-* º¯ Êı Ãû  : bsp_socp_encdst_set_cycle
+* å‡½ æ•° å  : bsp_socp_encdst_set_cycle
 *
-* ¹¦ÄÜÃèÊö  : SOCPÑ­»·Ä£Ê½ÉèÖÃ
+* åŠŸèƒ½æè¿°  : SOCPå¾ªç¯æ¨¡å¼è®¾ç½®
 *
-* ÊäÈë²ÎÊı  : Í¨µÀºÅ¡¢Ä£Ê½
+* è¾“å…¥å‚æ•°  : é€šé“å·ã€æ¨¡å¼
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ  : ÎŞ
+* è¿” å› å€¼  : æ— 
 *****************************************************************************/
 /*lint -save -e647*/
 void bsp_socp_encdst_set_cycle(u32 chanid, u32 cycle)
@@ -3636,7 +3636,7 @@ void bsp_socp_encdst_set_cycle(u32 chanid, u32 cycle)
     u32 u32modestate;
     u32 u32ChanID = SOCP_REAL_CHAN_ID(chanid);
 
-    /* ¹Ø±Õ×Ô¶¯Ê±ÖÓÃÅ¿Ø£¬·ñÔòÉÏ±¨Ä£Ê½ÅäÖÃ²»ÉúĞ§ */
+    /* å…³é—­è‡ªåŠ¨æ—¶é’Ÿé—¨æ§ï¼Œå¦åˆ™ä¸ŠæŠ¥æ¨¡å¼é…ç½®ä¸ç”Ÿæ•ˆ */
     SOCP_REG_SETBITS(SOCP_REG_CLKCTRL,0,1,0);
 
     u32modestate = SOCP_REG_GETBITS(SOCP_REG_ENCDEST_SBCFG(u32ChanID),1,1);
@@ -3696,22 +3696,22 @@ void bsp_socp_encdst_set_cycle(u32 chanid, u32 cycle)
         }
     }
 
-    /* ¹Ø±Õ×Ô¶¯Ê±ÖÓÃÅ¿Ø£¬·ñÔòÉÏ±¨Ä£Ê½ÅäÖÃ²»ÉúĞ§ */
+    /* å…³é—­è‡ªåŠ¨æ—¶é’Ÿé—¨æ§ï¼Œå¦åˆ™ä¸ŠæŠ¥æ¨¡å¼é…ç½®ä¸ç”Ÿæ•ˆ */
     SOCP_REG_SETBITS(SOCP_REG_CLKCTRL,0,1,1);
     return ;
 }
 /*lint -restore +e647*/
 
 /*****************************************************************************
-* º¯ Êı Ãû   : socp_enc_dst_stat
+* å‡½ æ•° å   : socp_enc_dst_stat
 *
-* ¹¦ÄÜÃèÊö  : »ñÈ¡socp´òÓ¡ĞÅÏ¢
+* åŠŸèƒ½æè¿°  : è·å–socpæ‰“å°ä¿¡æ¯
 *
-* ÊäÈë²ÎÊı  : ÎŞ
+* è¾“å…¥å‚æ•°  : æ— 
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ   : ÎŞ
+* è¿” å› å€¼   : æ— 
 *****************************************************************************/
 void show_socp_enc_dst_stat(void)
 {
@@ -3731,46 +3731,46 @@ void show_socp_enc_dst_stat(void)
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû   : socp_help
+* å‡½ æ•° å   : socp_help
 *
-* ¹¦ÄÜÃèÊö  : »ñÈ¡socp´òÓ¡ĞÅÏ¢
+* åŠŸèƒ½æè¿°  : è·å–socpæ‰“å°ä¿¡æ¯
 *
-* ÊäÈë²ÎÊı  : ÎŞ
+* è¾“å…¥å‚æ•°  : æ— 
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ   : ÎŞ
+* è¿” å› å€¼   : æ— 
 *****************************************************************************/
 void socp_help(void)
 {
     socp_printf("\r |*************************************|\n");
-    socp_printf("\r socp_show_debug_gbl   : ²é¿´È«¾ÖÍ³¼ÆĞÅÏ¢:Í¨µÀÉêÇë¡¢ÅäÖÃºÍÖĞ¶Ï×Ü¼ÆÊı£¬ÎŞ²ÎÊı\n");
-    socp_printf("\r socp_show_enc_src_chan_cur : ²é¿´±àÂëÔ´Í¨µÀÊôĞÔ£¬²ÎÊıÎªÍ¨µÀID\n");
-    socp_printf("\r socp_show_enc_src_chan_add : ²é¿´±àÂëÔ´Í¨µÀ²Ù×÷Í³¼ÆÖµ£¬²ÎÊıÎªÍ¨µÀID\n");
-    socp_printf("\r socp_show_enc_src_chan_add : ²é¿´ËùÓĞ±àÂëÔ´Í¨µÀÊôĞÔºÍÍ³¼ÆÖµ£¬ÎŞ²ÎÊı\n");
-    socp_printf("\r socp_show_enc_dst_chan_cur : ²é¿´±àÂëÄ¿µÄÍ¨µÀÊôĞÔ£¬²ÎÊıÎªÍ¨µÀID\n");
-    socp_printf("\r socp_show_enc_dst_chan_add : ²é¿´±àÂëÄ¿µÄÍ¨µÀ²Ù×÷Í³¼ÆÖµ£¬²ÎÊıÎªÍ¨µÀID\n");
-    socp_printf("\r socp_show_enc_dst_chan_all : ²é¿´ËùÓĞ±àÂëÄ¿µÄÍ¨µÀÊôĞÔºÍÍ³¼ÆÖµ£¬ÎŞ²ÎÊı\n");
-    socp_printf("\r socp_show_dec_src_chan_cur : ²é¿´½âÂëÔ´Í¨µÀÊôĞÔ£¬²ÎÊıÎªÍ¨µÀID\n");
-    socp_printf("\r socp_show_dec_src_chan_add : ²é¿´½âÂëÔ´Í¨µÀ²Ù×÷Í³¼ÆÖµ£¬²ÎÊıÎªÍ¨µÀID\n");
-    socp_printf("\r socp_show_dec_src_chan_all : ²é¿´ËùÓĞ½âÂëÔ´Í¨µÀÊôĞÔºÍÍ³¼ÆÖµ£¬ÎŞ²ÎÊı\n");
-    socp_printf("\r socp_show_dec_dst_chan_cur : ²é¿´½âÂëÄ¿µÄÍ¨µÀÊôĞÔ£¬²ÎÊıÎªÍ¨µÀID\n");
-    socp_printf("\r socp_show_dec_dst_chan_add : ²é¿´½âÂëÄ¿µÄÍ¨µÀ²Ù×÷Í³¼ÆÖµ£¬²ÎÊıÎªÍ¨µÀID\n");
-    socp_printf("\r socp_show_dec_dst_chan_all : ²é¿´ËùÓĞ½âÂëÄ¿µÄÍ¨µÀÊôĞÔºÍÍ³¼ÆÖµ£¬ÎŞ²ÎÊı\n");
-    socp_printf("\r socp_show_ccore_head_err_cnt : ²é¿´CºËËùÓĞ±àÂëÔ´Í¨µÀ°üÍ·´íÎóÍ³¼ÆÖµ£¬ÎŞ²ÎÊı\n");
-    socp_printf("\r socp_debug_cnt_show : ²é¿´È«²¿Í³¼ÆĞÅÏ¢£¬ÎŞ²ÎÊı\n");
+    socp_printf("\r socp_show_debug_gbl   : æŸ¥çœ‹å…¨å±€ç»Ÿè®¡ä¿¡æ¯:é€šé“ç”³è¯·ã€é…ç½®å’Œä¸­æ–­æ€»è®¡æ•°ï¼Œæ— å‚æ•°\n");
+    socp_printf("\r socp_show_enc_src_chan_cur : æŸ¥çœ‹ç¼–ç æºé€šé“å±æ€§ï¼Œå‚æ•°ä¸ºé€šé“ID\n");
+    socp_printf("\r socp_show_enc_src_chan_add : æŸ¥çœ‹ç¼–ç æºé€šé“æ“ä½œç»Ÿè®¡å€¼ï¼Œå‚æ•°ä¸ºé€šé“ID\n");
+    socp_printf("\r socp_show_enc_src_chan_add : æŸ¥çœ‹æ‰€æœ‰ç¼–ç æºé€šé“å±æ€§å’Œç»Ÿè®¡å€¼ï¼Œæ— å‚æ•°\n");
+    socp_printf("\r socp_show_enc_dst_chan_cur : æŸ¥çœ‹ç¼–ç ç›®çš„é€šé“å±æ€§ï¼Œå‚æ•°ä¸ºé€šé“ID\n");
+    socp_printf("\r socp_show_enc_dst_chan_add : æŸ¥çœ‹ç¼–ç ç›®çš„é€šé“æ“ä½œç»Ÿè®¡å€¼ï¼Œå‚æ•°ä¸ºé€šé“ID\n");
+    socp_printf("\r socp_show_enc_dst_chan_all : æŸ¥çœ‹æ‰€æœ‰ç¼–ç ç›®çš„é€šé“å±æ€§å’Œç»Ÿè®¡å€¼ï¼Œæ— å‚æ•°\n");
+    socp_printf("\r socp_show_dec_src_chan_cur : æŸ¥çœ‹è§£ç æºé€šé“å±æ€§ï¼Œå‚æ•°ä¸ºé€šé“ID\n");
+    socp_printf("\r socp_show_dec_src_chan_add : æŸ¥çœ‹è§£ç æºé€šé“æ“ä½œç»Ÿè®¡å€¼ï¼Œå‚æ•°ä¸ºé€šé“ID\n");
+    socp_printf("\r socp_show_dec_src_chan_all : æŸ¥çœ‹æ‰€æœ‰è§£ç æºé€šé“å±æ€§å’Œç»Ÿè®¡å€¼ï¼Œæ— å‚æ•°\n");
+    socp_printf("\r socp_show_dec_dst_chan_cur : æŸ¥çœ‹è§£ç ç›®çš„é€šé“å±æ€§ï¼Œå‚æ•°ä¸ºé€šé“ID\n");
+    socp_printf("\r socp_show_dec_dst_chan_add : æŸ¥çœ‹è§£ç ç›®çš„é€šé“æ“ä½œç»Ÿè®¡å€¼ï¼Œå‚æ•°ä¸ºé€šé“ID\n");
+    socp_printf("\r socp_show_dec_dst_chan_all : æŸ¥çœ‹æ‰€æœ‰è§£ç ç›®çš„é€šé“å±æ€§å’Œç»Ÿè®¡å€¼ï¼Œæ— å‚æ•°\n");
+    socp_printf("\r socp_show_ccore_head_err_cnt : æŸ¥çœ‹Cæ ¸æ‰€æœ‰ç¼–ç æºé€šé“åŒ…å¤´é”™è¯¯ç»Ÿè®¡å€¼ï¼Œæ— å‚æ•°\n");
+    socp_printf("\r socp_debug_cnt_show : æŸ¥çœ‹å…¨éƒ¨ç»Ÿè®¡ä¿¡æ¯ï¼Œæ— å‚æ•°\n");
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû   : socp_show_debug_gbl
+* å‡½ æ•° å   : socp_show_debug_gbl
 *
-* ¹¦ÄÜÃèÊö  : ÏÔÊ¾È«¾Ödebug ¼ÆÊıĞÅÏ¢
+* åŠŸèƒ½æè¿°  : æ˜¾ç¤ºå…¨å±€debug è®¡æ•°ä¿¡æ¯
 *
-* ÊäÈë²ÎÊı  : ÎŞ
+* è¾“å…¥å‚æ•°  : æ— 
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ   : ÎŞ
+* è¿” å› å€¼   : æ— 
 *****************************************************************************/
 void socp_show_debug_gbl(void)
 {
@@ -3778,52 +3778,52 @@ void socp_show_debug_gbl(void)
 
     sSocpDebugGblInfo = &g_stSocpDebugInfo.sSocpDebugGBl;
 
-    socp_printf(" SOCPÈ«¾Ö×´Ì¬Î¬»¤ĞÅÏ¢:\n");
-    socp_printf(" socp»ùµØÖ·:                           : 0x%x\n", (s32)g_strSocpStat.baseAddr);
-    socp_printf(" socpÉêÇë±àÂëÔ´Í¨µÀµÄ´ÎÊı              : 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpAllocEncSrcCnt);
-    socp_printf(" socpÉêÇë±àÂëÔ´Í¨µÀ³É¹¦µÄ´ÎÊı          : 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpAllocEncSrcSucCnt);
-    socp_printf(" socpÅäÖÃ±àÂëÄ¿µÄÍ¨µÀµÄ´ÎÊı            : 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpSetEncDstCnt);
-    socp_printf(" socpÅäÖÃ±àÂëÄ¿µÄÍ¨µÀ³É¹¦µÄ´ÎÊı        : 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpSetEncDstSucCnt);
-    socp_printf(" socpÅäÖÃ½âÂëÔ´Í¨µÀµÄ´ÎÊı              : 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpSetDecSrcCnt);
-    socp_printf(" socpÅäÖÃ½âÂëÔ´Í¨µÀ³É¹¦µÄ´ÎÊı          : 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpSetDeSrcSucCnt);
-    socp_printf(" socpÉêÇë½âÂëÄ¿µÄÍ¨µÀµÄ´ÎÊı            : 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpAllocDecDstCnt);
-    socp_printf(" socpÉêÇë½âÂëÄ¿µÄÍ¨µÀ³É¹¦µÄ´ÎÊı        : 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpAllocDecDstSucCnt);
-    socp_printf(" socp½øÈëAPPÖĞ¶ÏµÄ´ÎÊı                 : 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpAppEtrIntCnt);
-    socp_printf(" socpÍê³ÉAPPÖĞ¶ÏµÄ´ÎÊı                 : 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpAppSucIntCnt);
+    socp_printf(" SOCPå…¨å±€çŠ¶æ€ç»´æŠ¤ä¿¡æ¯:\n");
+    socp_printf(" socpåŸºåœ°å€:                           : 0x%x\n", (s32)g_strSocpStat.baseAddr);
+    socp_printf(" socpç”³è¯·ç¼–ç æºé€šé“çš„æ¬¡æ•°              : 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpAllocEncSrcCnt);
+    socp_printf(" socpç”³è¯·ç¼–ç æºé€šé“æˆåŠŸçš„æ¬¡æ•°          : 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpAllocEncSrcSucCnt);
+    socp_printf(" socpé…ç½®ç¼–ç ç›®çš„é€šé“çš„æ¬¡æ•°            : 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpSetEncDstCnt);
+    socp_printf(" socpé…ç½®ç¼–ç ç›®çš„é€šé“æˆåŠŸçš„æ¬¡æ•°        : 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpSetEncDstSucCnt);
+    socp_printf(" socpé…ç½®è§£ç æºé€šé“çš„æ¬¡æ•°              : 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpSetDecSrcCnt);
+    socp_printf(" socpé…ç½®è§£ç æºé€šé“æˆåŠŸçš„æ¬¡æ•°          : 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpSetDeSrcSucCnt);
+    socp_printf(" socpç”³è¯·è§£ç ç›®çš„é€šé“çš„æ¬¡æ•°            : 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpAllocDecDstCnt);
+    socp_printf(" socpç”³è¯·è§£ç ç›®çš„é€šé“æˆåŠŸçš„æ¬¡æ•°        : 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpAllocDecDstSucCnt);
+    socp_printf(" socpè¿›å…¥APPä¸­æ–­çš„æ¬¡æ•°                 : 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpAppEtrIntCnt);
+    socp_printf(" socpå®ŒæˆAPPä¸­æ–­çš„æ¬¡æ•°                 : 0x%x\n", (s32)sSocpDebugGblInfo->u32SocpAppSucIntCnt);
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû  : socp_show_ccore_head_err_cnt
+* å‡½ æ•° å  : socp_show_ccore_head_err_cnt
 *
-* ¹¦ÄÜÃèÊö  : ´òÓ¡CºË±àÂëÔ´Í¨µÀ°üÍ·´íÎóÍ³¼ÆÖµ
+* åŠŸèƒ½æè¿°  : æ‰“å°Cæ ¸ç¼–ç æºé€šé“åŒ…å¤´é”™è¯¯ç»Ÿè®¡å€¼
 *
-* ÊäÈë²ÎÊı  : ÎŞ
+* è¾“å…¥å‚æ•°  : æ— 
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ   : ÎŞ
+* è¿” å› å€¼   : æ— 
 *****************************************************************************/
 void socp_show_ccore_head_err_cnt(void)
 {
     int i;
     for(i = SOCP_CCORE_ENCSRC_CHN_BASE; i < SOCP_CCORE_ENCSRC_CHN_BASE + SOCP_CCORE_ENCSRC_CHN_NUM; i++)
     {
-        socp_printf("================== ±àÂëÔ´Í¨µÀ 0x%x  °üÍ·´íÎóÀÛ¼ÆÍ³¼ÆÖµ:=================\n", i);
-        socp_printf(" socp ISR ÖĞ½øÈë±àÂëÔ´Í¨µÀ°üÍ·´íÎóÖĞ¶Ï´ÎÊı                  : 0x%x\n",
+        socp_printf("================== ç¼–ç æºé€šé“ 0x%x  åŒ…å¤´é”™è¯¯ç´¯è®¡ç»Ÿè®¡å€¼:=================\n", i);
+        socp_printf(" socp ISR ä¸­è¿›å…¥ç¼–ç æºé€šé“åŒ…å¤´é”™è¯¯ä¸­æ–­æ¬¡æ•°                  : 0x%x\n",
             (s32)g_stSocpDebugInfo.sSocpDebugEncSrc.u32SocpEncSrcIsrHeadIntCnt[i]);
     }
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû   : socp_show_enc_src_chan_cur
+* å‡½ æ•° å   : socp_show_enc_src_chan_cur
 *
-* ¹¦ÄÜÃèÊö  : ´òÓ¡±àÂëÔ´Í¨µÀµ±Ç°ÊôĞÔ
+* åŠŸèƒ½æè¿°  : æ‰“å°ç¼–ç æºé€šé“å½“å‰å±æ€§
 *
-* ÊäÈë²ÎÊı  : Í¨µÀID
+* è¾“å…¥å‚æ•°  : é€šé“ID
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ   : ÎŞ
+* è¿” å› å€¼   : æ— 
 *****************************************************************************/
 
 u32 socp_show_enc_src_chan_cur(u32 u32UniqueId)
@@ -3837,28 +3837,28 @@ u32 socp_show_enc_src_chan_cur(u32 u32UniqueId)
     SOCP_CHECK_CHAN_TYPE(u32ChanType, SOCP_CODER_SRC_CHAN);
     SOCP_CHECK_ENCSRC_CHAN_ID(u32RealId);
 
-    socp_printf("================== ÉêÇëµÄ±àÂëÔ´Í¨µÀ 0x%x  ÊôĞÔ:=================\n", u32UniqueId);
-    socp_printf("Í¨µÀID:\t\t%d\n", g_strSocpStat.sEncSrcChan[u32RealId].u32ChanID);
-    socp_printf("Í¨µÀ·ÖÅä×´Ì¬:\t\t%d\n", g_strSocpStat.sEncSrcChan[u32RealId].u32AllocStat);
-    socp_printf("Í¨µÀÊ¹ÄÜ×´Ì¬:\t\t%d\n", g_strSocpStat.sEncSrcChan[u32RealId].u32ChanEn);
-    socp_printf("Ä¿µÄÍ¨µÀID:\t\t%d\n", g_strSocpStat.sEncSrcChan[u32RealId].u32DestChanID);
-    socp_printf("Í¨µÀÓÅÏÈ¼¶:\t\t%d\n", g_strSocpStat.sEncSrcChan[u32RealId].ePriority);
-    socp_printf("Í¨µÀÅÔÂ·×´Ì¬:\t\t%d\n", g_strSocpStat.sEncSrcChan[u32RealId].u32BypassEn);
-    socp_printf("Í¨µÀÊı¾İ¸ñÊ½ÀàĞÍ:\t\t%d\n", g_strSocpStat.sEncSrcChan[u32RealId].eChnMode);
-    socp_printf("Í¨µÀËùÊôÄ£ÀàĞÍ:\t\t%d\n", g_strSocpStat.sEncSrcChan[u32RealId].eDataType);
-    socp_printf("Í¨µÀbuffer ÆğÊ¼µØÖ·:\t\t0x%x\n", g_strSocpStat.sEncSrcChan[u32RealId].sEncSrcBuf.Start);
-    socp_printf("Í¨µÀbuffer ½áÊøµØÖ·:\t\t0x%x\n", g_strSocpStat.sEncSrcChan[u32RealId].sEncSrcBuf.End);
-    socp_printf("Í¨µÀbuffer ¶ÁÖ¸Õë:\t\t0x%x\n", g_strSocpStat.sEncSrcChan[u32RealId].sEncSrcBuf.u32Read);
-    socp_printf("Í¨µÀbuffer Ğ´Ö¸Õë:\t\t0x%x\n", g_strSocpStat.sEncSrcChan[u32RealId].sEncSrcBuf.u32Write);
-    socp_printf("Í¨µÀbuffer ³¤¶È:\t\t0x%x\n", g_strSocpStat.sEncSrcChan[u32RealId].sEncSrcBuf.u32Length);
+    socp_printf("================== ç”³è¯·çš„ç¼–ç æºé€šé“ 0x%x  å±æ€§:=================\n", u32UniqueId);
+    socp_printf("é€šé“ID:\t\t%d\n", g_strSocpStat.sEncSrcChan[u32RealId].u32ChanID);
+    socp_printf("é€šé“åˆ†é…çŠ¶æ€:\t\t%d\n", g_strSocpStat.sEncSrcChan[u32RealId].u32AllocStat);
+    socp_printf("é€šé“ä½¿èƒ½çŠ¶æ€:\t\t%d\n", g_strSocpStat.sEncSrcChan[u32RealId].u32ChanEn);
+    socp_printf("ç›®çš„é€šé“ID:\t\t%d\n", g_strSocpStat.sEncSrcChan[u32RealId].u32DestChanID);
+    socp_printf("é€šé“ä¼˜å…ˆçº§:\t\t%d\n", g_strSocpStat.sEncSrcChan[u32RealId].ePriority);
+    socp_printf("é€šé“æ—è·¯çŠ¶æ€:\t\t%d\n", g_strSocpStat.sEncSrcChan[u32RealId].u32BypassEn);
+    socp_printf("é€šé“æ•°æ®æ ¼å¼ç±»å‹:\t\t%d\n", g_strSocpStat.sEncSrcChan[u32RealId].eChnMode);
+    socp_printf("é€šé“æ‰€å±æ¨¡ç±»å‹:\t\t%d\n", g_strSocpStat.sEncSrcChan[u32RealId].eDataType);
+    socp_printf("é€šé“buffer èµ·å§‹åœ°å€:\t\t0x%x\n", g_strSocpStat.sEncSrcChan[u32RealId].sEncSrcBuf.Start);
+    socp_printf("é€šé“buffer ç»“æŸåœ°å€:\t\t0x%x\n", g_strSocpStat.sEncSrcChan[u32RealId].sEncSrcBuf.End);
+    socp_printf("é€šé“buffer è¯»æŒ‡é’ˆ:\t\t0x%x\n", g_strSocpStat.sEncSrcChan[u32RealId].sEncSrcBuf.u32Read);
+    socp_printf("é€šé“buffer å†™æŒ‡é’ˆ:\t\t0x%x\n", g_strSocpStat.sEncSrcChan[u32RealId].sEncSrcBuf.u32Write);
+    socp_printf("é€šé“buffer é•¿åº¦:\t\t0x%x\n", g_strSocpStat.sEncSrcChan[u32RealId].sEncSrcBuf.u32Length);
     if (SOCP_ENCSRC_CHNMODE_LIST == g_strSocpStat.sEncSrcChan[u32RealId].eChnMode)
     {
-        socp_printf("Í¨µÀRD buffer ÆğÊ¼µØÖ·:\t\t0x%x\n", g_strSocpStat.sEncSrcChan[u32RealId].sRdBuf.Start);
-        socp_printf("Í¨µÀRD buffer ½áÊøµØÖ·:\t\t0x%x\n", g_strSocpStat.sEncSrcChan[u32RealId].sRdBuf.End);
-        socp_printf("Í¨µÀRD buffer ¶ÁÖ¸Õë:\t\t0x%x\n", g_strSocpStat.sEncSrcChan[u32RealId].sRdBuf.u32Read);
-        socp_printf("Í¨µÀRD buffer Ğ´Ö¸Õë:\t\t0x%x\n", g_strSocpStat.sEncSrcChan[u32RealId].sRdBuf.u32Write);
-        socp_printf("Í¨µÀRD buffer ³¤¶È:\t\t0x%x\n", g_strSocpStat.sEncSrcChan[u32RealId].sRdBuf.u32Length);
-        socp_printf("Í¨µÀRD buffer ÃÅÏŞ:\t\t0x%x\n", g_strSocpStat.sEncSrcChan[u32RealId].u32RdThreshold);
+        socp_printf("é€šé“RD buffer èµ·å§‹åœ°å€:\t\t0x%x\n", g_strSocpStat.sEncSrcChan[u32RealId].sRdBuf.Start);
+        socp_printf("é€šé“RD buffer ç»“æŸåœ°å€:\t\t0x%x\n", g_strSocpStat.sEncSrcChan[u32RealId].sRdBuf.End);
+        socp_printf("é€šé“RD buffer è¯»æŒ‡é’ˆ:\t\t0x%x\n", g_strSocpStat.sEncSrcChan[u32RealId].sRdBuf.u32Read);
+        socp_printf("é€šé“RD buffer å†™æŒ‡é’ˆ:\t\t0x%x\n", g_strSocpStat.sEncSrcChan[u32RealId].sRdBuf.u32Write);
+        socp_printf("é€šé“RD buffer é•¿åº¦:\t\t0x%x\n", g_strSocpStat.sEncSrcChan[u32RealId].sRdBuf.u32Length);
+        socp_printf("é€šé“RD buffer é—¨é™:\t\t0x%x\n", g_strSocpStat.sEncSrcChan[u32RealId].u32RdThreshold);
     }
 
     return BSP_OK;
@@ -3867,15 +3867,15 @@ u32 socp_show_enc_src_chan_cur(u32 u32UniqueId)
 
 
 /*****************************************************************************
-* º¯ Êı Ãû   : socp_show_enc_src_chan_add
+* å‡½ æ•° å   : socp_show_enc_src_chan_add
 *
-* ¹¦ÄÜÃèÊö  : ´òÓ¡±àÂëÔ´Í¨µÀÀÛ¼ÆÍ³¼ÆÖµ
+* åŠŸèƒ½æè¿°  : æ‰“å°ç¼–ç æºé€šé“ç´¯è®¡ç»Ÿè®¡å€¼
 *
-* ÊäÈë²ÎÊı  : Í¨µÀID
+* è¾“å…¥å‚æ•°  : é€šé“ID
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ   : ÎŞ
+* è¿” å› å€¼   : æ— 
 *****************************************************************************/
 u32 socp_show_enc_src_chan_add(u32 u32UniqueId)
 {
@@ -3890,65 +3890,65 @@ u32 socp_show_enc_src_chan_add(u32 u32UniqueId)
     sSocpAddDebugEncSrc = &g_stSocpDebugInfo.sSocpDebugEncSrc;
     SOCP_CHECK_ENCSRC_CHAN_ID(u32RealChanID);
 
-    socp_printf("================== ±àÂëÔ´Í¨µÀ 0x%x  ÀÛ¼ÆÍ³¼ÆÖµ:=================\n", u32UniqueId);
-    socp_printf("socpÊÍ·Å±àÂëÔ´Í¨µÀ³É¹¦µÄ´ÎÊı                           : 0x%x\n",
+    socp_printf("================== ç¼–ç æºé€šé“ 0x%x  ç´¯è®¡ç»Ÿè®¡å€¼:=================\n", u32UniqueId);
+    socp_printf("socpé‡Šæ”¾ç¼–ç æºé€šé“æˆåŠŸçš„æ¬¡æ•°                           : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32SocpFreeEncSrcCnt[u32RealChanID]);
-    socp_printf("socpÆô¶¯±àÂëÔ´Í¨µÀ³É¹¦µÄ´ÎÊı                           : 0x%x\n",
+    socp_printf("socpå¯åŠ¨ç¼–ç æºé€šé“æˆåŠŸçš„æ¬¡æ•°                           : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32SocpStartEncSrcCnt[u32RealChanID]);
-    socp_printf("socpÍ£Ö¹±àÂëÔ´Í¨µÀ³É¹¦µÄ´ÎÊı                           : 0x%x\n",
+    socp_printf("socpåœæ­¢ç¼–ç æºé€šé“æˆåŠŸçš„æ¬¡æ•°                           : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32SocpStopEncSrcCnt[u32RealChanID]);
-    socp_printf("socpÈí¸´Î»±àÂëÔ´Í¨µÀ³É¹¦µÄ´ÎÊı                         : 0x%x\n",
+    socp_printf("socpè½¯å¤ä½ç¼–ç æºé€šé“æˆåŠŸçš„æ¬¡æ•°                         : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32SocpSoftResetEncSrcCnt[u32RealChanID]);
-    socp_printf("socp×¢²á±àÂëÔ´Í¨µÀÒì³£´¦Àíº¯ÊıµÄ´ÎÊı                   : 0x%x\n",
+    socp_printf("socpæ³¨å†Œç¼–ç æºé€šé“å¼‚å¸¸å¤„ç†å‡½æ•°çš„æ¬¡æ•°                   : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32SocpRegEventEncSrcCnt[u32RealChanID]);
-    socp_printf("socp±àÂëÔ´Í¨µÀ³¢ÊÔ»ñµÃĞ´bufferµÄ´ÎÊı                   : 0x%x\n",
+    socp_printf("socpç¼–ç æºé€šé“å°è¯•è·å¾—å†™bufferçš„æ¬¡æ•°                   : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32SocpGetWBufEncSrcEtrCnt[u32RealChanID]);
-    socp_printf("socp±àÂëÔ´Í¨µÀ»ñµÃĞ´buffer³É¹¦µÄ´ÎÊı                   : 0x%x\n",
+    socp_printf("socpç¼–ç æºé€šé“è·å¾—å†™bufferæˆåŠŸçš„æ¬¡æ•°                   : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32SocpGetWBufEncSrcSucCnt[u32RealChanID]);
-    socp_printf("socp±àÂëÔ´Í¨µÀ³¢ÊÔ¸üĞÂĞ´bufferÖ¸ÕëµÄ´ÎÊı               : 0x%x\n",
+    socp_printf("socpç¼–ç æºé€šé“å°è¯•æ›´æ–°å†™bufferæŒ‡é’ˆçš„æ¬¡æ•°               : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32socp_write_doneEncSrcEtrCnt[u32RealChanID]);
-    socp_printf("socp±àÂëÔ´Í¨µÀ¸üĞÂĞ´bufferÖ¸Õë³É¹¦µÄ´ÎÊı               : 0x%x\n",
+    socp_printf("socpç¼–ç æºé€šé“æ›´æ–°å†™bufferæŒ‡é’ˆæˆåŠŸçš„æ¬¡æ•°               : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32socp_write_doneEncSrcSucCnt[u32RealChanID]);
-    socp_printf("socp±àÂëÔ´Í¨µÀ¸üĞÂĞ´bufferÖ¸ÕëÊ§°ÜµÄ´ÎÊı               : 0x%x\n",
+    socp_printf("socpç¼–ç æºé€šé“æ›´æ–°å†™bufferæŒ‡é’ˆå¤±è´¥çš„æ¬¡æ•°               : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32socp_write_doneEncSrcFailCnt[u32RealChanID]);
-    socp_printf("socp±àÂëÔ´Í¨µÀ×¢²áRD buffer»Øµ÷º¯Êı³É¹¦µÄ´ÎÊı          : 0x%x\n",
+    socp_printf("socpç¼–ç æºé€šé“æ³¨å†ŒRD bufferå›è°ƒå‡½æ•°æˆåŠŸçš„æ¬¡æ•°          : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32SocpRegRdCBEncSrcCnt[u32RealChanID]);
-    socp_printf("socp±àÂëÔ´Í¨µÀ³¢ÊÔ»ñµÃRD bufferµÄ´ÎÊı                  : 0x%x\n",
+    socp_printf("socpç¼–ç æºé€šé“å°è¯•è·å¾—RD bufferçš„æ¬¡æ•°                  : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32SocpGetRdBufEncSrcEtrCnt[u32RealChanID]);
-    socp_printf("socp±àÂëÔ´Í¨µÀ»ñµÃRD buffer³É¹¦µÄ´ÎÊı                  : 0x%x\n",
+    socp_printf("socpç¼–ç æºé€šé“è·å¾—RD bufferæˆåŠŸçš„æ¬¡æ•°                  : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32SocpGetRdBufEncSrcSucCnt[u32RealChanID]);
-    socp_printf("socp±àÂëÔ´Í¨µÀ³¢ÊÔ¸üĞÂRDbufferÖ¸ÕëµÄ´ÎÊı               : 0x%x\n",
+    socp_printf("socpç¼–ç æºé€šé“å°è¯•æ›´æ–°RDbufferæŒ‡é’ˆçš„æ¬¡æ•°               : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32SocpReadRdDoneEncSrcEtrCnt[u32RealChanID]);
-    socp_printf("socp±àÂëÔ´Í¨µÀ¸üĞÂRDbufferÖ¸Õë³É¹¦µÄ´ÎÊı               : 0x%x\n",
+    socp_printf("socpç¼–ç æºé€šé“æ›´æ–°RDbufferæŒ‡é’ˆæˆåŠŸçš„æ¬¡æ•°               : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32SocpReadRdDoneEncSrcSucCnt[u32RealChanID]);
-    socp_printf("socp±àÂëÔ´Í¨µÀ¸üĞÂRDbufferÖ¸ÕëÊ§°ÜµÄ´ÎÊı               : 0x%x\n",
+    socp_printf("socpç¼–ç æºé€šé“æ›´æ–°RDbufferæŒ‡é’ˆå¤±è´¥çš„æ¬¡æ•°               : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32SocpReadRdDoneEncSrcFailCnt[u32RealChanID]);
-    socp_printf("socp ISR ÖĞ½øÈë±àÂëÔ´Í¨µÀ°üÍ·´íÎóÖĞ¶Ï´ÎÊı              : 0x%x\n",
+    socp_printf("socp ISR ä¸­è¿›å…¥ç¼–ç æºé€šé“åŒ…å¤´é”™è¯¯ä¸­æ–­æ¬¡æ•°              : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32SocpEncSrcIsrHeadIntCnt[u32RealChanID]);
-    socp_printf("socp ÈÎÎñÖĞ»Øµ÷±àÂëÔ´Í¨µÀ°üÍ·´íÎóÖĞ¶Ï´¦Àíº¯Êı´ÎÊı      : 0x%x\n",
+    socp_printf("socp ä»»åŠ¡ä¸­å›è°ƒç¼–ç æºé€šé“åŒ…å¤´é”™è¯¯ä¸­æ–­å¤„ç†å‡½æ•°æ¬¡æ•°      : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32SocpEncSrcTskHeadCbOriCnt[u32RealChanID]);
-    socp_printf("socp »Øµ÷±àÂëÔ´Í¨µÀ°üÍ·´íÎóÖĞ¶Ï´¦Àíº¯Êı³É¹¦µÄ´ÎÊı      : 0x%x\n",
+    socp_printf("socp å›è°ƒç¼–ç æºé€šé“åŒ…å¤´é”™è¯¯ä¸­æ–­å¤„ç†å‡½æ•°æˆåŠŸçš„æ¬¡æ•°      : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32SocpEncSrcTskHeadCbCnt[u32RealChanID]);
-    socp_printf("socp ISR ÖĞ½øÈë±àÂëÔ´Í¨µÀRd Íê³ÉÖĞ¶Ï´ÎÊı               : 0x%x\n",
+    socp_printf("socp ISR ä¸­è¿›å…¥ç¼–ç æºé€šé“Rd å®Œæˆä¸­æ–­æ¬¡æ•°               : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32SocpEncSrcIsrRdIntCnt[u32RealChanID]);
-    socp_printf("socp ÈÎÎñÖĞ»Øµ÷±àÂëÔ´Í¨µÀRd Íê³ÉÖĞ¶Ï´¦Àíº¯Êı´ÎÊı       : 0x%x\n",
+    socp_printf("socp ä»»åŠ¡ä¸­å›è°ƒç¼–ç æºé€šé“Rd å®Œæˆä¸­æ–­å¤„ç†å‡½æ•°æ¬¡æ•°       : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32SocpEncSrcTskRdCbOriCnt[u32RealChanID]);
-    socp_printf("socp »Øµ÷±àÂëÔ´Í¨µÀRd Íê³ÉÖĞ¶Ï´¦Àíº¯Êı³É¹¦µÄ´ÎÊı       : 0x%x\n",
+    socp_printf("socp å›è°ƒç¼–ç æºé€šé“Rd å®Œæˆä¸­æ–­å¤„ç†å‡½æ•°æˆåŠŸçš„æ¬¡æ•°       : 0x%x\n",
            (s32)sSocpAddDebugEncSrc->u32SocpEncSrcTskRdCbCnt[u32RealChanID]);
 
     return BSP_OK;
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû   : socp_show_enc_src_chan_add
+* å‡½ æ•° å   : socp_show_enc_src_chan_add
 *
-* ¹¦ÄÜÃèÊö  : ´òÓ¡ËùÓĞ±àÂëÔ´Í¨µÀĞÅÏ¢
+* åŠŸèƒ½æè¿°  : æ‰“å°æ‰€æœ‰ç¼–ç æºé€šé“ä¿¡æ¯
 *
-* ÊäÈë²ÎÊı  : ÎŞ
+* è¾“å…¥å‚æ•°  : æ— 
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ   : ÎŞ
+* è¿” å› å€¼   : æ— 
 *****************************************************************************/
 void  socp_show_enc_src_chan_all(void)
 {
@@ -3964,15 +3964,15 @@ void  socp_show_enc_src_chan_all(void)
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû   : socp_show_enc_dst_chan_cur
+* å‡½ æ•° å   : socp_show_enc_dst_chan_cur
 *
-* ¹¦ÄÜÃèÊö  : ´òÓ¡±àÂëÄ¿µÄÍ¨µÀĞÅÏ¢
+* åŠŸèƒ½æè¿°  : æ‰“å°ç¼–ç ç›®çš„é€šé“ä¿¡æ¯
 *
-* ÊäÈë²ÎÊı  : Í¨µÀID
+* è¾“å…¥å‚æ•°  : é€šé“ID
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ   : ÎŞ
+* è¿” å› å€¼   : æ— 
 *****************************************************************************/
 u32 socp_show_enc_dst_chan_cur(u32 u32UniqueId)
 {
@@ -3984,28 +3984,28 @@ u32 socp_show_enc_dst_chan_cur(u32 u32UniqueId)
 
     SOCP_CHECK_CHAN_TYPE(u32ChanType, SOCP_CODER_DEST_CHAN);
 
-    socp_printf("================== ±àÂëÄ¿µÄÍ¨µÀ 0x%x  ÊôĞÔ:=================\n", u32UniqueId);
-    socp_printf("Í¨µÀID                 :%d\n", g_strSocpStat.sEncDstChan[u32RealId].u32ChanID);
-    socp_printf("Í¨µÀÅäÖÃ×´Ì¬           :%d\n", g_strSocpStat.sEncDstChan[u32RealId].u32SetStat);
-    socp_printf("Í¨µÀbuffer ÆğÊ¼µØÖ·    :0x%x\n", g_strSocpStat.sEncDstChan[u32RealId].sEncDstBuf.Start);
-    socp_printf("Í¨µÀbuffer ½áÊøµØÖ·    :0x%x\n", g_strSocpStat.sEncDstChan[u32RealId].sEncDstBuf.End);
-    socp_printf("Í¨µÀbuffer ¶ÁÖ¸Õë      :0x%x\n", g_strSocpStat.sEncDstChan[u32RealId].sEncDstBuf.u32Read);
-    socp_printf("Í¨µÀbuffer Ğ´Ö¸Õë      :0x%x\n", g_strSocpStat.sEncDstChan[u32RealId].sEncDstBuf.u32Write);
-    socp_printf("Í¨µÀbuffer ³¤¶È        :0x%x\n", g_strSocpStat.sEncDstChan[u32RealId].sEncDstBuf.u32Length);
+    socp_printf("================== ç¼–ç ç›®çš„é€šé“ 0x%x  å±æ€§:=================\n", u32UniqueId);
+    socp_printf("é€šé“ID                 :%d\n", g_strSocpStat.sEncDstChan[u32RealId].u32ChanID);
+    socp_printf("é€šé“é…ç½®çŠ¶æ€           :%d\n", g_strSocpStat.sEncDstChan[u32RealId].u32SetStat);
+    socp_printf("é€šé“buffer èµ·å§‹åœ°å€    :0x%x\n", g_strSocpStat.sEncDstChan[u32RealId].sEncDstBuf.Start);
+    socp_printf("é€šé“buffer ç»“æŸåœ°å€    :0x%x\n", g_strSocpStat.sEncDstChan[u32RealId].sEncDstBuf.End);
+    socp_printf("é€šé“buffer è¯»æŒ‡é’ˆ      :0x%x\n", g_strSocpStat.sEncDstChan[u32RealId].sEncDstBuf.u32Read);
+    socp_printf("é€šé“buffer å†™æŒ‡é’ˆ      :0x%x\n", g_strSocpStat.sEncDstChan[u32RealId].sEncDstBuf.u32Write);
+    socp_printf("é€šé“buffer é•¿åº¦        :0x%x\n", g_strSocpStat.sEncDstChan[u32RealId].sEncDstBuf.u32Length);
 
     return BSP_OK;
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû   : socp_show_enc_dst_chan_add
+* å‡½ æ•° å   : socp_show_enc_dst_chan_add
 *
-* ¹¦ÄÜÃèÊö  : ´òÓ¡±àÂëÄ¿µÄÍ¨µÀÀÛ¼ÆÍ³¼ÆÖµ
+* åŠŸèƒ½æè¿°  : æ‰“å°ç¼–ç ç›®çš„é€šé“ç´¯è®¡ç»Ÿè®¡å€¼
 *
-* ÊäÈë²ÎÊı  : Í¨µÀID
+* è¾“å…¥å‚æ•°  : é€šé“ID
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ   : ÎŞ
+* è¿” å› å€¼   : æ— 
 *****************************************************************************/
 u32 socp_show_enc_dst_chan_add(u32 u32UniqueId)
 {
@@ -4019,57 +4019,57 @@ u32 socp_show_enc_dst_chan_add(u32 u32UniqueId)
     u32RealChanID = SOCP_REAL_CHAN_ID(u32UniqueId);
     sSocpAddDebugEncDst = &g_stSocpDebugInfo.sSocpDebugEncDst;
 
-    socp_printf("================== ±àÂëÄ¿µÄÍ¨µÀ 0x%x  ÀÛ¼ÆÍ³¼ÆÖµ:=================\n", u32UniqueId);
-    socp_printf("socp×¢²á±àÂëÄ¿µÄÍ¨µÀÒì³£´¦Àíº¯ÊıµÄ´ÎÊı                 : 0x%x\n",
+    socp_printf("================== ç¼–ç ç›®çš„é€šé“ 0x%x  ç´¯è®¡ç»Ÿè®¡å€¼:=================\n", u32UniqueId);
+    socp_printf("socpæ³¨å†Œç¼–ç ç›®çš„é€šé“å¼‚å¸¸å¤„ç†å‡½æ•°çš„æ¬¡æ•°                 : 0x%x\n",
            (s32)sSocpAddDebugEncDst->u32SocpRegEventEncDstCnt[u32RealChanID]);
-    socp_printf("socp±àÂëÄ¿µÄÍ¨µÀ×¢²á¶ÁÊı¾İ»Øµ÷º¯Êı³É¹¦µÄ´ÎÊı           : 0x%x\n",
+    socp_printf("socpç¼–ç ç›®çš„é€šé“æ³¨å†Œè¯»æ•°æ®å›è°ƒå‡½æ•°æˆåŠŸçš„æ¬¡æ•°           : 0x%x\n",
            (s32)sSocpAddDebugEncDst->u32SocpRegReadCBEncDstCnt[u32RealChanID]);
-    socp_printf("socp±àÂëÄ¿µÄÍ¨µÀ³¢ÊÔ»ñµÃ¶Ábuffer µÄ´ÎÊı                : 0x%x\n",
+    socp_printf("socpç¼–ç ç›®çš„é€šé“å°è¯•è·å¾—è¯»buffer çš„æ¬¡æ•°                : 0x%x\n",
            (s32)sSocpAddDebugEncDst->u32SocpGetReadBufEncDstEtrCnt[u32RealChanID]);
-    socp_printf("socp±àÂëÄ¿µÄÍ¨µÀ»ñµÃ¶Ábuffer³É¹¦µÄ´ÎÊı                 : 0x%x\n",
+    socp_printf("socpç¼–ç ç›®çš„é€šé“è·å¾—è¯»bufferæˆåŠŸçš„æ¬¡æ•°                 : 0x%x\n",
            (s32)sSocpAddDebugEncDst->u32SocpGetReadBufEncDstSucCnt[u32RealChanID]);
-    socp_printf("socp±àÂëÄ¿µÄÍ¨µÀ³¢ÊÔ¸üĞÂ¶ÁbufferÖ¸ÕëµÄ´ÎÊı             : 0x%x\n",
+    socp_printf("socpç¼–ç ç›®çš„é€šé“å°è¯•æ›´æ–°è¯»bufferæŒ‡é’ˆçš„æ¬¡æ•°             : 0x%x\n",
            (s32)sSocpAddDebugEncDst->u32socp_read_doneEncDstEtrCnt[u32RealChanID]);
-    socp_printf("socp±àÂëÄ¿µÄÍ¨µÀ¸üĞÂ¶ÁbufferÖ¸Õë³É¹¦µÄ´ÎÊı             : 0x%x\n",
+    socp_printf("socpç¼–ç ç›®çš„é€šé“æ›´æ–°è¯»bufferæŒ‡é’ˆæˆåŠŸçš„æ¬¡æ•°             : 0x%x\n",
            (s32)sSocpAddDebugEncDst->u32socp_read_doneEncDstSucCnt[u32RealChanID]);
-    socp_printf("socp±àÂëÄ¿µÄÍ¨µÀ¸üĞÂ¶ÁbufferÖ¸ÕëÊ§°ÜµÄ´ÎÊı             : 0x%x\n",
+    socp_printf("socpç¼–ç ç›®çš„é€šé“æ›´æ–°è¯»bufferæŒ‡é’ˆå¤±è´¥çš„æ¬¡æ•°             : 0x%x\n",
            (s32)sSocpAddDebugEncDst->u32socp_read_doneEncDstFailCnt[u32RealChanID]);
-    socp_printf("socp±àÂëÄ¿µÄÍ¨µÀ¸üĞÂ¶ÁbufferÖ¸ÕëÒÆ¶¯0 ×Ö½Ú³É¹¦µÄ´ÎÊı   : 0x%x\n",
+    socp_printf("socpç¼–ç ç›®çš„é€šé“æ›´æ–°è¯»bufferæŒ‡é’ˆç§»åŠ¨0 å­—èŠ‚æˆåŠŸçš„æ¬¡æ•°   : 0x%x\n",
            (s32)sSocpAddDebugEncDst->u32socp_read_doneZeroEncDstCnt[u32RealChanID]);
-    socp_printf("socp±àÂëÄ¿µÄÍ¨µÀ¸üĞÂ¶ÁbufferÖ¸ÕëÒÆ¶¯·Ç0 ×Ö½Ú³É¹¦µÄ´ÎÊı : 0x%x\n",
+    socp_printf("socpç¼–ç ç›®çš„é€šé“æ›´æ–°è¯»bufferæŒ‡é’ˆç§»åŠ¨é0 å­—èŠ‚æˆåŠŸçš„æ¬¡æ•° : 0x%x\n",
            (s32)sSocpAddDebugEncDst->u32socp_read_doneValidEncDstCnt[u32RealChanID]);
-    socp_printf("socpISR ÖĞ½øÈë±àÂëÄ¿µÄÍ¨µÀ´«ÊäÍê³ÉÖĞ¶Ï´ÎÊı             : 0x%x\n",
+    socp_printf("socpISR ä¸­è¿›å…¥ç¼–ç ç›®çš„é€šé“ä¼ è¾“å®Œæˆä¸­æ–­æ¬¡æ•°             : 0x%x\n",
            (s32)sSocpAddDebugEncDst->u32SocpEncDstIsrTrfIntCnt[u32RealChanID]);
-    socp_printf("socpÈÎÎñÖĞ»Øµ÷±àÂëÄ¿µÄÍ¨µÀ´«ÊäÍê³ÉÖĞ¶Ï´¦Àíº¯Êı´ÎÊı     : 0x%x\n",
+    socp_printf("socpä»»åŠ¡ä¸­å›è°ƒç¼–ç ç›®çš„é€šé“ä¼ è¾“å®Œæˆä¸­æ–­å¤„ç†å‡½æ•°æ¬¡æ•°     : 0x%x\n",
            (s32)sSocpAddDebugEncDst->u32SocpEncDstTskTrfCbOriCnt[u32RealChanID]);
-    socp_printf("socp»Øµ÷±àÂëÄ¿µÄÍ¨µÀ´«ÊäÍê³ÉÖĞ¶Ï´¦Àíº¯Êı³É¹¦µÄ´ÎÊı     : 0x%x\n",
+    socp_printf("socpå›è°ƒç¼–ç ç›®çš„é€šé“ä¼ è¾“å®Œæˆä¸­æ–­å¤„ç†å‡½æ•°æˆåŠŸçš„æ¬¡æ•°     : 0x%x\n",
            (s32)sSocpAddDebugEncDst->u32SocpEncDstTskTrfCbCnt[u32RealChanID]);
-    socp_printf("socpISR ÖĞ½øÈë±àÂëÄ¿µÄÍ¨µÀbuf Òç³öÖĞ¶Ï´ÎÊı             : 0x%x\n",
+    socp_printf("socpISR ä¸­è¿›å…¥ç¼–ç ç›®çš„é€šé“buf æº¢å‡ºä¸­æ–­æ¬¡æ•°             : 0x%x\n",
            (s32)sSocpAddDebugEncDst->u32SocpEncDstIsrOvfIntCnt[u32RealChanID]);
-    socp_printf("socpÈÎÎñÖĞ»Øµ÷±àÂëÄ¿µÄÍ¨µÀbuf Òç³öÖĞ¶Ï´¦Àíº¯Êı´ÎÊı    : 0x%x\n",
+    socp_printf("socpä»»åŠ¡ä¸­å›è°ƒç¼–ç ç›®çš„é€šé“buf æº¢å‡ºä¸­æ–­å¤„ç†å‡½æ•°æ¬¡æ•°    : 0x%x\n",
            (s32)sSocpAddDebugEncDst->u32SocpEncDstTskOvfCbOriCnt[u32RealChanID]);
-    socp_printf("socp»Øµ÷±àÂëÄ¿µÄÍ¨µÀbuf Òç³öÖĞ¶Ï´¦Àíº¯Êı³É¹¦µÄ´ÎÊı    : 0x%x\n",
+    socp_printf("socpå›è°ƒç¼–ç ç›®çš„é€šé“buf æº¢å‡ºä¸­æ–­å¤„ç†å‡½æ•°æˆåŠŸçš„æ¬¡æ•°    : 0x%x\n",
            (s32)sSocpAddDebugEncDst->u32SocpEncDstTskOvfCbCnt[u32RealChanID]);
-    socp_printf("socpISR ÖĞ½øÈë±àÂëÄ¿µÄÍ¨µÀbufãĞÖµÒç³öÖĞ¶Ï´ÎÊı          : 0x%x\n",
+    socp_printf("socpISR ä¸­è¿›å…¥ç¼–ç ç›®çš„é€šé“bufé˜ˆå€¼æº¢å‡ºä¸­æ–­æ¬¡æ•°          : 0x%x\n",
            (s32)sSocpAddDebugEncDst->u32SocpEncDstIsrThresholdOvfIntCnt[u32RealChanID]);
-    socp_printf("socpÈÎÎñÖĞ»Øµ÷±àÂëÄ¿µÄÍ¨µÀbufãĞÖµÒç³öÖĞ¶Ï´¦Àíº¯Êı´ÎÊı  : 0x%x\n",
+    socp_printf("socpä»»åŠ¡ä¸­å›è°ƒç¼–ç ç›®çš„é€šé“bufé˜ˆå€¼æº¢å‡ºä¸­æ–­å¤„ç†å‡½æ•°æ¬¡æ•°  : 0x%x\n",
            (s32)sSocpAddDebugEncDst->u32SocpEncDstTskThresholdOvfCbOriCnt[u32RealChanID]);
-    socp_printf("socp»Øµ÷±àÂëÄ¿µÄÍ¨µÀbufãĞÖµÒç³öÖĞ¶Ï´¦Àíº¯Êı³É¹¦µÄ´ÎÊı  : 0x%x\n",
+    socp_printf("socpå›è°ƒç¼–ç ç›®çš„é€šé“bufé˜ˆå€¼æº¢å‡ºä¸­æ–­å¤„ç†å‡½æ•°æˆåŠŸçš„æ¬¡æ•°  : 0x%x\n",
            (s32)sSocpAddDebugEncDst->u32SocpEncDstTskThresholdOvfCbCnt[u32RealChanID]);
 
     return BSP_OK;
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû   : socp_show_enc_dst_chan_all
+* å‡½ æ•° å   : socp_show_enc_dst_chan_all
 *
-* ¹¦ÄÜÃèÊö  : ´òÓ¡±àÂëÄ¿µÄÍ¨µÀĞÅÏ¢
+* åŠŸèƒ½æè¿°  : æ‰“å°ç¼–ç ç›®çš„é€šé“ä¿¡æ¯
 *
-* ÊäÈë²ÎÊı  : ÎŞ
+* è¾“å…¥å‚æ•°  : æ— 
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ   : ÎŞ
+* è¿” å› å€¼   : æ— 
 *****************************************************************************/
 void socp_show_enc_dst_chan_all(void)
 {
@@ -4087,15 +4087,15 @@ void socp_show_enc_dst_chan_all(void)
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû   : socp_show_dec_src_chan_cur
+* å‡½ æ•° å   : socp_show_dec_src_chan_cur
 *
-* ¹¦ÄÜÃèÊö  : ´òÓ¡½âÂëÔ´Í¨µÀĞÅÏ¢
+* åŠŸèƒ½æè¿°  : æ‰“å°è§£ç æºé€šé“ä¿¡æ¯
 *
-* ÊäÈë²ÎÊı  : Í¨µÀID
+* è¾“å…¥å‚æ•°  : é€šé“ID
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ   : ÎŞ
+* è¿” å› å€¼   : æ— 
 *****************************************************************************/
 u32 socp_show_dec_src_chan_cur(u32 u32UniqueId)
 {
@@ -4107,30 +4107,30 @@ u32 socp_show_dec_src_chan_cur(u32 u32UniqueId)
 
     SOCP_CHECK_CHAN_TYPE(u32ChanType, SOCP_DECODER_SRC_CHAN);
 
-    socp_printf("================== ½âÂëÔ´Í¨µÀ 0x%x  ÊôĞÔ:=================\n", u32UniqueId);
-    socp_printf("Í¨µÀID                 :%d\n", g_strSocpStat.sDecSrcChan[u32RealId].u32ChanID);
-    socp_printf("Í¨µÀÅäÖÃ×´Ì¬           :%d\n", g_strSocpStat.sDecSrcChan[u32RealId].u32SetStat);
-    socp_printf("Í¨µÀÊ¹ÄÜ×´Ì¬           :%d\n", g_strSocpStat.sDecSrcChan[u32RealId].u32ChanEn);
-    socp_printf("Í¨µÀÄ£Ê½               :%d\n", g_strSocpStat.sDecSrcChan[u32RealId].eChnMode);
-    socp_printf("Í¨µÀbuffer ÆğÊ¼µØÖ·    :0x%x\n", g_strSocpStat.sDecSrcChan[u32RealId].sDecSrcBuf.Start);
-    socp_printf("Í¨µÀbuffer ½áÊøµØÖ·    :0x%x\n", g_strSocpStat.sDecSrcChan[u32RealId].sDecSrcBuf.End);
-    socp_printf("Í¨µÀbuffer ¶ÁÖ¸Õë      :0x%x\n", g_strSocpStat.sDecSrcChan[u32RealId].sDecSrcBuf.u32Read);
-    socp_printf("Í¨µÀbuffer Ğ´Ö¸Õë      :0x%x\n", g_strSocpStat.sDecSrcChan[u32RealId].sDecSrcBuf.u32Write);
-    socp_printf("Í¨µÀbuffer ³¤¶È        :0x%x\n", g_strSocpStat.sDecSrcChan[u32RealId].sDecSrcBuf.u32Length);
+    socp_printf("================== è§£ç æºé€šé“ 0x%x  å±æ€§:=================\n", u32UniqueId);
+    socp_printf("é€šé“ID                 :%d\n", g_strSocpStat.sDecSrcChan[u32RealId].u32ChanID);
+    socp_printf("é€šé“é…ç½®çŠ¶æ€           :%d\n", g_strSocpStat.sDecSrcChan[u32RealId].u32SetStat);
+    socp_printf("é€šé“ä½¿èƒ½çŠ¶æ€           :%d\n", g_strSocpStat.sDecSrcChan[u32RealId].u32ChanEn);
+    socp_printf("é€šé“æ¨¡å¼               :%d\n", g_strSocpStat.sDecSrcChan[u32RealId].eChnMode);
+    socp_printf("é€šé“buffer èµ·å§‹åœ°å€    :0x%x\n", g_strSocpStat.sDecSrcChan[u32RealId].sDecSrcBuf.Start);
+    socp_printf("é€šé“buffer ç»“æŸåœ°å€    :0x%x\n", g_strSocpStat.sDecSrcChan[u32RealId].sDecSrcBuf.End);
+    socp_printf("é€šé“buffer è¯»æŒ‡é’ˆ      :0x%x\n", g_strSocpStat.sDecSrcChan[u32RealId].sDecSrcBuf.u32Read);
+    socp_printf("é€šé“buffer å†™æŒ‡é’ˆ      :0x%x\n", g_strSocpStat.sDecSrcChan[u32RealId].sDecSrcBuf.u32Write);
+    socp_printf("é€šé“buffer é•¿åº¦        :0x%x\n", g_strSocpStat.sDecSrcChan[u32RealId].sDecSrcBuf.u32Length);
 
     return BSP_OK;
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû   : socp_show_dec_src_chan_add
+* å‡½ æ•° å   : socp_show_dec_src_chan_add
 *
-* ¹¦ÄÜÃèÊö  : ´òÓ¡½âÂëÔ´Í¨µÀÀÛ¼ÆÍ³¼ÆÖµ
+* åŠŸèƒ½æè¿°  : æ‰“å°è§£ç æºé€šé“ç´¯è®¡ç»Ÿè®¡å€¼
 *
-* ÊäÈë²ÎÊı  : Í¨µÀID
+* è¾“å…¥å‚æ•°  : é€šé“ID
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ   : ÎŞ
+* è¿” å› å€¼   : æ— 
 *****************************************************************************/
 u32 socp_show_dec_src_chan_add(u32 u32UniqueId)
 {
@@ -4144,44 +4144,44 @@ u32 socp_show_dec_src_chan_add(u32 u32UniqueId)
     u32RealChanID = SOCP_REAL_CHAN_ID(u32UniqueId);
     sSocpAddDebugDecSrc = &g_stSocpDebugInfo.sSocpDebugDecSrc;
 
-    socp_printf("================== ½âÂëÔ´Í¨µÀ 0x%x  ÀÛ¼ÆÍ³¼ÆÖµ:=================\n", u32UniqueId);
-    socp_printf("socpÈí¸´Î»½âÂëÔ´Í¨µÀ³É¹¦µÄ´ÎÊı                     : 0x%x\n",
+    socp_printf("================== è§£ç æºé€šé“ 0x%x  ç´¯è®¡ç»Ÿè®¡å€¼:=================\n", u32UniqueId);
+    socp_printf("socpè½¯å¤ä½è§£ç æºé€šé“æˆåŠŸçš„æ¬¡æ•°                     : 0x%x\n",
            (s32)sSocpAddDebugDecSrc->u32SocpSoftResetDecSrcCnt[u32RealChanID]);
-    socp_printf("socpÆô¶¯½âÂëÔ´Í¨µÀ³É¹¦µÄ´ÎÊı                       : 0x%x\n",
+    socp_printf("socpå¯åŠ¨è§£ç æºé€šé“æˆåŠŸçš„æ¬¡æ•°                       : 0x%x\n",
            (s32)sSocpAddDebugDecSrc->u32SocpStartDecSrcCnt[u32RealChanID]);
-    socp_printf("socpÍ£Ö¹½âÂëÔ´Í¨µÀ³É¹¦µÄ´ÎÊı                       : 0x%x\n",
+    socp_printf("socpåœæ­¢è§£ç æºé€šé“æˆåŠŸçš„æ¬¡æ•°                       : 0x%x\n",
            (s32)sSocpAddDebugDecSrc->u32SocpStopDecSrcCnt[u32RealChanID]);
-    socp_printf("socp×¢²á½âÂëÔ´Í¨µÀÒì³£´¦Àíº¯ÊıµÄ´ÎÊı               : 0x%x\n",
+    socp_printf("socpæ³¨å†Œè§£ç æºé€šé“å¼‚å¸¸å¤„ç†å‡½æ•°çš„æ¬¡æ•°               : 0x%x\n",
            (s32)sSocpAddDebugDecSrc->u32SocpRegEventDecSrcCnt[u32RealChanID]);
-    socp_printf("socp½âÂëÔ´Í¨µÀ³¢ÊÔ»ñµÃĞ´bufferµÄ´ÎÊı               : 0x%x\n",
+    socp_printf("socpè§£ç æºé€šé“å°è¯•è·å¾—å†™bufferçš„æ¬¡æ•°               : 0x%x\n",
            (s32)sSocpAddDebugDecSrc->u32SocpGetWBufDecSrcEtrCnt[u32RealChanID]);
-    socp_printf("socp½âÂëÔ´Í¨µÀ»ñµÃĞ´buffer³É¹¦µÄ´ÎÊı               : 0x%x\n",
+    socp_printf("socpè§£ç æºé€šé“è·å¾—å†™bufferæˆåŠŸçš„æ¬¡æ•°               : 0x%x\n",
            (s32)sSocpAddDebugDecSrc->u32SocpGetWBufDecSrcSucCnt[u32RealChanID]);
-    socp_printf("socp½âÂëÔ´Í¨µÀ³¢ÊÔ¸üĞÂĞ´bufferÖ¸ÕëµÄ´ÎÊı           : 0x%x\n",
+    socp_printf("socpè§£ç æºé€šé“å°è¯•æ›´æ–°å†™bufferæŒ‡é’ˆçš„æ¬¡æ•°           : 0x%x\n",
            (s32)sSocpAddDebugDecSrc->u32socp_write_doneDecSrcEtrCnt[u32RealChanID]);
-    socp_printf("socp½âÂëÔ´Í¨µÀ¸üĞÂĞ´bufferÖ¸Õë³É¹¦µÄ´ÎÊı           : 0x%x\n",
+    socp_printf("socpè§£ç æºé€šé“æ›´æ–°å†™bufferæŒ‡é’ˆæˆåŠŸçš„æ¬¡æ•°           : 0x%x\n",
            (s32)sSocpAddDebugDecSrc->u32socp_write_doneDecSrcSucCnt[u32RealChanID]);
-    socp_printf("socp½âÂëÔ´Í¨µÀ¸üĞÂĞ´bufferÖ¸ÕëÊ§°ÜµÄ´ÎÊı           : 0x%x\n",
+    socp_printf("socpè§£ç æºé€šé“æ›´æ–°å†™bufferæŒ‡é’ˆå¤±è´¥çš„æ¬¡æ•°           : 0x%x\n",
            (s32)sSocpAddDebugDecSrc->u32socp_write_doneDecSrcFailCnt[u32RealChanID]);
-    socp_printf("socpISR ÖĞ½øÈë½âÂëÔ´Í¨µÀ´íÎóÖĞ¶Ï´ÎÊı               : 0x%x\n",
+    socp_printf("socpISR ä¸­è¿›å…¥è§£ç æºé€šé“é”™è¯¯ä¸­æ–­æ¬¡æ•°               : 0x%x\n",
            (s32)sSocpAddDebugDecSrc->u32SocpDecSrcIsrErrIntCnt[u32RealChanID]);
-    socp_printf("socpÈÎÎñÖĞ»Øµ÷½âÂëÔ´Í¨µÀ´íÎóÖĞ¶Ï´¦Àíº¯Êı´ÎÊı       : 0x%x\n",
+    socp_printf("socpä»»åŠ¡ä¸­å›è°ƒè§£ç æºé€šé“é”™è¯¯ä¸­æ–­å¤„ç†å‡½æ•°æ¬¡æ•°       : 0x%x\n",
            (s32)sSocpAddDebugDecSrc->u32SocpDecSrcTskErrCbOriCnt[u32RealChanID]);
-    socp_printf("socp»Øµ÷½âÂëÔ´Í¨µÀ´íÎóÖĞ¶Ï´¦Àíº¯Êı³É¹¦µÄ´ÎÊı       : 0x%x\n",
+    socp_printf("socpå›è°ƒè§£ç æºé€šé“é”™è¯¯ä¸­æ–­å¤„ç†å‡½æ•°æˆåŠŸçš„æ¬¡æ•°       : 0x%x\n",
            (s32)sSocpAddDebugDecSrc->u32SocpDecSrcTskErrCbCnt[u32RealChanID]);
     return BSP_OK;
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû   : socp_show_dec_src_chan_all
+* å‡½ æ•° å   : socp_show_dec_src_chan_all
 *
-* ¹¦ÄÜÃèÊö  : ´òÓ¡½âÂëÔ´Í¨µÀĞÅÏ¢
+* åŠŸèƒ½æè¿°  : æ‰“å°è§£ç æºé€šé“ä¿¡æ¯
 *
-* ÊäÈë²ÎÊı  : ÎŞ
+* è¾“å…¥å‚æ•°  : æ— 
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ   : ÎŞ
+* è¿” å› å€¼   : æ— 
 *****************************************************************************/
 void socp_show_dec_src_chan_all(void)
 {
@@ -4199,15 +4199,15 @@ void socp_show_dec_src_chan_all(void)
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû   : socp_show_dec_dst_chan_cur
+* å‡½ æ•° å   : socp_show_dec_dst_chan_cur
 *
-* ¹¦ÄÜÃèÊö  : ´òÓ¡½âÂëÄ¿µÄÍ¨µÀĞÅÏ¢
+* åŠŸèƒ½æè¿°  : æ‰“å°è§£ç ç›®çš„é€šé“ä¿¡æ¯
 *
-* ÊäÈë²ÎÊı  : Í¨µÀID
+* è¾“å…¥å‚æ•°  : é€šé“ID
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ   : ÎŞ
+* è¿” å› å€¼   : æ— 
 *****************************************************************************/
 u32 socp_show_dec_dst_chan_cur(u32 u32UniqueId)
 {
@@ -4219,29 +4219,29 @@ u32 socp_show_dec_dst_chan_cur(u32 u32UniqueId)
 
     SOCP_CHECK_CHAN_TYPE(u32ChanType, SOCP_DECODER_DEST_CHAN);
 
-    socp_printf("================== ½âÂëÄ¿µÄÍ¨µÀ 0x%x  ÊôĞÔ:=================\n", u32UniqueId); 
-    socp_printf("Í¨µÀID                 :%d\n", g_strSocpStat.sDecDstChan[u32RealId].u32ChanID);
-    socp_printf("Í¨µÀ·ÖÅä×´Ì¬           :%d\n", g_strSocpStat.sDecDstChan[u32RealId].u32AllocStat);
-    socp_printf("Í¨µÀÊ¹ÓÃÄ£ÀàĞÍ         :%d\n", g_strSocpStat.sDecDstChan[u32RealId].eDataType);
-    socp_printf("Í¨µÀbuffer ÆğÊ¼µØÖ·    :0x%x\n", g_strSocpStat.sDecDstChan[u32RealId].sDecDstBuf.Start);
-    socp_printf("Í¨µÀbuffer ½áÊøµØÖ·    :0x%x\n", g_strSocpStat.sDecDstChan[u32RealId].sDecDstBuf.End);
-    socp_printf("Í¨µÀbuffer ¶ÁÖ¸Õë      :0x%x\n", g_strSocpStat.sDecDstChan[u32RealId].sDecDstBuf.u32Read);
-    socp_printf("Í¨µÀbuffer Ğ´Ö¸Õë      :0x%x\n", g_strSocpStat.sDecDstChan[u32RealId].sDecDstBuf.u32Write);
-    socp_printf("Í¨µÀbuffer ³¤¶È        :0x%x\n", g_strSocpStat.sDecDstChan[u32RealId].sDecDstBuf.u32Length);
+    socp_printf("================== è§£ç ç›®çš„é€šé“ 0x%x  å±æ€§:=================\n", u32UniqueId); 
+    socp_printf("é€šé“ID                 :%d\n", g_strSocpStat.sDecDstChan[u32RealId].u32ChanID);
+    socp_printf("é€šé“åˆ†é…çŠ¶æ€           :%d\n", g_strSocpStat.sDecDstChan[u32RealId].u32AllocStat);
+    socp_printf("é€šé“ä½¿ç”¨æ¨¡ç±»å‹         :%d\n", g_strSocpStat.sDecDstChan[u32RealId].eDataType);
+    socp_printf("é€šé“buffer èµ·å§‹åœ°å€    :0x%x\n", g_strSocpStat.sDecDstChan[u32RealId].sDecDstBuf.Start);
+    socp_printf("é€šé“buffer ç»“æŸåœ°å€    :0x%x\n", g_strSocpStat.sDecDstChan[u32RealId].sDecDstBuf.End);
+    socp_printf("é€šé“buffer è¯»æŒ‡é’ˆ      :0x%x\n", g_strSocpStat.sDecDstChan[u32RealId].sDecDstBuf.u32Read);
+    socp_printf("é€šé“buffer å†™æŒ‡é’ˆ      :0x%x\n", g_strSocpStat.sDecDstChan[u32RealId].sDecDstBuf.u32Write);
+    socp_printf("é€šé“buffer é•¿åº¦        :0x%x\n", g_strSocpStat.sDecDstChan[u32RealId].sDecDstBuf.u32Length);
 
     return BSP_OK;
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû   : socp_show_dec_dst_chan_add
+* å‡½ æ•° å   : socp_show_dec_dst_chan_add
 *
-* ¹¦ÄÜÃèÊö  : ´òÓ¡½âÂëÄ¿µÄÍ¨µÀÀÛ¼ÆÍ³¼ÆÖµ
+* åŠŸèƒ½æè¿°  : æ‰“å°è§£ç ç›®çš„é€šé“ç´¯è®¡ç»Ÿè®¡å€¼
 *
-* ÊäÈë²ÎÊı  : Í¨µÀID
+* è¾“å…¥å‚æ•°  : é€šé“ID
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ   : ÎŞ
+* è¿” å› å€¼   : æ— 
 *****************************************************************************/
 u32 socp_show_dec_dst_chan_add(u32 u32UniqueId)
 {
@@ -4255,53 +4255,53 @@ u32 socp_show_dec_dst_chan_add(u32 u32UniqueId)
     u32RealChanID = SOCP_REAL_CHAN_ID(u32UniqueId);
     sSocpAddDebugDecDst = &g_stSocpDebugInfo.sSocpDebugDecDst;
 
-    socp_printf("================== ½âÂëÄ¿µÄÍ¨µÀ 0x%x  ÀÛ¼ÆÍ³¼ÆÖµ:=================\n", u32UniqueId);
-    socp_printf("socpÊÍ·Å½âÂëÄ¿µÄÍ¨µÀ³É¹¦µÄ´ÎÊı                         : 0x%x\n",
+    socp_printf("================== è§£ç ç›®çš„é€šé“ 0x%x  ç´¯è®¡ç»Ÿè®¡å€¼:=================\n", u32UniqueId);
+    socp_printf("socpé‡Šæ”¾è§£ç ç›®çš„é€šé“æˆåŠŸçš„æ¬¡æ•°                         : 0x%x\n",
            (s32)sSocpAddDebugDecDst->u32SocpFreeDecDstCnt[u32RealChanID]);
-    socp_printf("socp×¢²á½âÂëÄ¿µÄÍ¨µÀÒì³£´¦Àíº¯ÊıµÄ´ÎÊı                 : 0x%x\n",
+    socp_printf("socpæ³¨å†Œè§£ç ç›®çš„é€šé“å¼‚å¸¸å¤„ç†å‡½æ•°çš„æ¬¡æ•°                 : 0x%x\n",
            (s32)sSocpAddDebugDecDst->u32SocpRegEventDecDstCnt[u32RealChanID]);
-    socp_printf("socp½âÂëÄ¿µÄÍ¨µÀ×¢²á¶ÁÊı¾İ»Øµ÷º¯Êı³É¹¦µÄ´ÎÊı           : 0x%x\n",
+    socp_printf("socpè§£ç ç›®çš„é€šé“æ³¨å†Œè¯»æ•°æ®å›è°ƒå‡½æ•°æˆåŠŸçš„æ¬¡æ•°           : 0x%x\n",
            (s32)sSocpAddDebugDecDst->u32SocpRegReadCBDecDstCnt[u32RealChanID]);
-    socp_printf("socp½âÂëÄ¿µÄÍ¨µÀ³¢ÊÔ»ñµÃ¶ÁbufferµÄ´ÎÊı                 : 0x%x\n",
+    socp_printf("socpè§£ç ç›®çš„é€šé“å°è¯•è·å¾—è¯»bufferçš„æ¬¡æ•°                 : 0x%x\n",
            (s32)sSocpAddDebugDecDst->u32SocpGetReadBufDecDstEtrCnt[u32RealChanID]);
-    socp_printf("socp½âÂëÄ¿µÄÍ¨µÀ»ñµÃ¶Ábuffer³É¹¦µÄ´ÎÊı                 : 0x%x\n",
+    socp_printf("socpè§£ç ç›®çš„é€šé“è·å¾—è¯»bufferæˆåŠŸçš„æ¬¡æ•°                 : 0x%x\n",
            (s32)sSocpAddDebugDecDst->u32SocpGetReadBufDecDstSucCnt[u32RealChanID]);
-    socp_printf("socp½âÂëÄ¿µÄÍ¨µÀ³¢ÊÔ¸üĞÂ¶ÁbufferÖ¸ÕëµÄ´ÎÊı             : 0x%x\n",
+    socp_printf("socpè§£ç ç›®çš„é€šé“å°è¯•æ›´æ–°è¯»bufferæŒ‡é’ˆçš„æ¬¡æ•°             : 0x%x\n",
            (s32)sSocpAddDebugDecDst->u32socp_read_doneDecDstEtrCnt[u32RealChanID]);
-    socp_printf("socp½âÂëÄ¿µÄÍ¨µÀ¸üĞÂ¶ÁbufferÖ¸Õë³É¹¦µÄ´ÎÊı             : 0x%x\n",
+    socp_printf("socpè§£ç ç›®çš„é€šé“æ›´æ–°è¯»bufferæŒ‡é’ˆæˆåŠŸçš„æ¬¡æ•°             : 0x%x\n",
            (s32)sSocpAddDebugDecDst->u32socp_read_doneDecDstSucCnt[u32RealChanID]);
-    socp_printf("socp½âÂëÄ¿µÄÍ¨µÀ¸üĞÂ¶ÁbufferÖ¸ÕëÊ§°ÜµÄ´ÎÊı             : 0x%x\n",
+    socp_printf("socpè§£ç ç›®çš„é€šé“æ›´æ–°è¯»bufferæŒ‡é’ˆå¤±è´¥çš„æ¬¡æ•°             : 0x%x\n",
            (s32)sSocpAddDebugDecDst->u32socp_read_doneDecDstFailCnt[u32RealChanID]);
-    socp_printf("socp½âÂëÄ¿µÄÍ¨µÀ¸üĞÂ¶ÁbufferÖ¸ÕëÒÆ¶¯0 ×Ö½Ú³É¹¦µÄ´ÎÊı   : 0x%x\n",
+    socp_printf("socpè§£ç ç›®çš„é€šé“æ›´æ–°è¯»bufferæŒ‡é’ˆç§»åŠ¨0 å­—èŠ‚æˆåŠŸçš„æ¬¡æ•°   : 0x%x\n",
            (s32)sSocpAddDebugDecDst->u32socp_read_doneZeroDecDstCnt[u32RealChanID]);
-    socp_printf("socp½âÂëÄ¿µÄÍ¨µÀ¸üĞÂ¶ÁbufferÖ¸ÕëÒÆ¶¯·Ç0 ×Ö½Ú³É¹¦µÄ´ÎÊı : 0x%x\n",
+    socp_printf("socpè§£ç ç›®çš„é€šé“æ›´æ–°è¯»bufferæŒ‡é’ˆç§»åŠ¨é0 å­—èŠ‚æˆåŠŸçš„æ¬¡æ•° : 0x%x\n",
            (s32)sSocpAddDebugDecDst->u32socp_read_doneValidDecDstCnt[u32RealChanID]);
-    socp_printf("socpISR ÖĞ½øÈë½âÂëÄ¿µÄÍ¨µÀ´«ÊäÍê³ÉÖĞ¶Ï´ÎÊı             : 0x%x\n",
+    socp_printf("socpISR ä¸­è¿›å…¥è§£ç ç›®çš„é€šé“ä¼ è¾“å®Œæˆä¸­æ–­æ¬¡æ•°             : 0x%x\n",
            (s32)sSocpAddDebugDecDst->u32SocpDecDstIsrTrfIntCnt[u32RealChanID]);
-    socp_printf("socpÈÎÎñÖĞ »Øµ÷½âÂëÄ¿µÄÍ¨µÀ´«ÊäÍê³ÉÖĞ¶Ï´¦Àíº¯ÊıµÄ´ÎÊı  : 0x%x\n",
+    socp_printf("socpä»»åŠ¡ä¸­ å›è°ƒè§£ç ç›®çš„é€šé“ä¼ è¾“å®Œæˆä¸­æ–­å¤„ç†å‡½æ•°çš„æ¬¡æ•°  : 0x%x\n",
            (s32)sSocpAddDebugDecDst->u32SocpDecDstTskTrfCbOriCnt[u32RealChanID]);
-    socp_printf("socp»Øµ÷½âÂëÄ¿µÄÍ¨µÀ´«ÊäÍê³ÉÖĞ¶Ï´¦Àíº¯Êı³É¹¦µÄ´ÎÊı     : 0x%x\n",
+    socp_printf("socpå›è°ƒè§£ç ç›®çš„é€šé“ä¼ è¾“å®Œæˆä¸­æ–­å¤„ç†å‡½æ•°æˆåŠŸçš„æ¬¡æ•°     : 0x%x\n",
            (s32)sSocpAddDebugDecDst->u32SocpDecDstTskTrfCbCnt[u32RealChanID]);
-    socp_printf("socpISR ÖĞ½øÈë½âÂëÄ¿µÄÍ¨µÀbuf Òç³öÖĞ¶Ï´ÎÊı             : 0x%x\n",
+    socp_printf("socpISR ä¸­è¿›å…¥è§£ç ç›®çš„é€šé“buf æº¢å‡ºä¸­æ–­æ¬¡æ•°             : 0x%x\n",
            (s32)sSocpAddDebugDecDst->u32SocpDecDstIsrOvfIntCnt[u32RealChanID]);
-    socp_printf("socpÈÎÎñÖĞ »Øµ÷½âÂëÄ¿µÄÍ¨µÀbuf Òç³öÖĞ¶Ï´¦Àíº¯Êı´ÎÊı    : 0x%x\n",
+    socp_printf("socpä»»åŠ¡ä¸­ å›è°ƒè§£ç ç›®çš„é€šé“buf æº¢å‡ºä¸­æ–­å¤„ç†å‡½æ•°æ¬¡æ•°    : 0x%x\n",
            (s32)sSocpAddDebugDecDst->u32SocpDecDstTskOvfCbOriCnt[u32RealChanID]);
-    socp_printf("socp»Øµ÷½âÂëÄ¿µÄÍ¨µÀbuf Òç³öÖĞ¶Ï´¦Àíº¯Êı³É¹¦µÄ´ÎÊı     : 0x%x\n",
+    socp_printf("socpå›è°ƒè§£ç ç›®çš„é€šé“buf æº¢å‡ºä¸­æ–­å¤„ç†å‡½æ•°æˆåŠŸçš„æ¬¡æ•°     : 0x%x\n",
            (s32)sSocpAddDebugDecDst->u32SocpDecDstTskOvfCbCnt[u32RealChanID]);
 
     return BSP_OK;
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû   : socp_show_dec_dst_chan_all
+* å‡½ æ•° å   : socp_show_dec_dst_chan_all
 *
-* ¹¦ÄÜÃèÊö  : ´òÓ¡½âÂëÄ¿µÄÍ¨µÀĞÅÏ¢
+* åŠŸèƒ½æè¿°  : æ‰“å°è§£ç ç›®çš„é€šé“ä¿¡æ¯
 *
-* ÊäÈë²ÎÊı  : ÎŞ
+* è¾“å…¥å‚æ•°  : æ— 
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ   : ÎŞ
+* è¿” å› å€¼   : æ— 
 *****************************************************************************/
 void socp_show_dec_dst_chan_all(void)
 {
@@ -4319,15 +4319,15 @@ void socp_show_dec_dst_chan_all(void)
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû   : socp_debug_cnt_show
+* å‡½ æ•° å   : socp_debug_cnt_show
 *
-* ¹¦ÄÜÃèÊö  : ÏÔÊ¾debug ¼ÆÊıĞÅÏ¢
+* åŠŸèƒ½æè¿°  : æ˜¾ç¤ºdebug è®¡æ•°ä¿¡æ¯
 *
-* ÊäÈë²ÎÊı  : ÎŞ
+* è¾“å…¥å‚æ•°  : æ— 
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ   : ÎŞ
+* è¿” å› å€¼   : æ— 
 *****************************************************************************/
 void socp_debug_cnt_show(void)
 {
@@ -4344,7 +4344,7 @@ void socp_debug_set_trace(u32 v)
 }
 
 #define MALLOC_MAX_SIZE     0x100000
-#define MALLOC_MAX_INDEX    8           /*page_size Îª4K*/
+#define MALLOC_MAX_INDEX    8           /*page_size ä¸º4K*/
 #define SOCP_PAGE_SIZE      0x1000
 
 //__inline
@@ -4377,7 +4377,7 @@ void* socp_malloc(u32 u32Size)
     }
 
     index = 4;
-    /* ·ÖÅäÄÚ´æ */
+    /* åˆ†é…å†…å­˜ */
     pItem = (u8*)__get_free_pages(GFP_KERNEL,index);
     if(!pItem)
     {
@@ -4398,8 +4398,8 @@ s32 socp_free(void* pMem)
     return BSP_OK;
 }
 
-/* µÍ¹¦ºÄÏà¹Ø begin */
-/* µÍ¹¦ºÄ²¿·ÖÔİ²»ĞŞ¸Ä */
+/* ä½åŠŸè€—ç›¸å…³ begin */
+/* ä½åŠŸè€—éƒ¨åˆ†æš‚ä¸ä¿®æ”¹ */
 void BSP_SOCP_DrxRestoreRegAppOnly(void)
 {
     u32 i= 0;
@@ -4433,12 +4433,12 @@ void BSP_SOCP_DrxRestoreRegAppOnly(void)
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû  : bsp_socp_get_state
+* å‡½ æ•° å  : bsp_socp_get_state
 *
-* ¹¦ÄÜÃèÊö  : »ñÈ¡SOCP×´Ì¬
+* åŠŸèƒ½æè¿°  : è·å–SOCPçŠ¶æ€
 *
-* ·µ »Ø Öµ  : SOCP_IDLE    ¿ÕÏĞ
-*             SOCP_BUSY    Ã¦Âµ
+* è¿” å› å€¼  : SOCP_IDLE    ç©ºé—²
+*             SOCP_BUSY    å¿™ç¢Œ
 *****************************************************************************/
 SOCP_STATE_ENUM_UINT32 bsp_socp_get_state(void)
 {
@@ -4456,15 +4456,15 @@ SOCP_STATE_ENUM_UINT32 bsp_socp_get_state(void)
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû  : socp_is_encdst_chan_empty
+* å‡½ æ•° å  : socp_is_encdst_chan_empty
 *
-* ¹¦ÄÜÃèÊö  : SOCP±àÂëÄ¿µÄÍ¨µÀÊÇ·ñÓĞÊı¾İ
+* åŠŸèƒ½æè¿°  : SOCPç¼–ç ç›®çš„é€šé“æ˜¯å¦æœ‰æ•°æ®
 *
-* ÊäÈë²ÎÊı  : ÎŞ
+* è¾“å…¥å‚æ•°  : æ— 
 *
-* Êä³ö²ÎÊı  : ÎŞ
+* è¾“å‡ºå‚æ•°  : æ— 
 *
-* ·µ »Ø Öµ  : u32 0:ÎŞÊı¾İ ·Ç0:¶ÔÓ¦Í¨µÀÖÃÎ»
+* è¿” å› å€¼  : u32 0:æ— æ•°æ® é0:å¯¹åº”é€šé“ç½®ä½
 *****************************************************************************/
 u32 socp_is_encdst_chan_empty(void)
 {
@@ -4473,7 +4473,7 @@ u32 socp_is_encdst_chan_empty(void)
     u32 u32ReadPtr;
     u32 u32WritePtr;
 
-    /* ÅĞ¶ÏÄ¿µÄÍ¨µÀ¶ÁĞ´Ö¸ÕëÊÇ·ñÏàµÈ */
+    /* åˆ¤æ–­ç›®çš„é€šé“è¯»å†™æŒ‡é’ˆæ˜¯å¦ç›¸ç­‰ */
     for(i = 0; i < SOCP_MAX_ENCDST_CHN; i++)
     {
         SOCP_REG_READ(SOCP_REG_ENCDEST_BUFWPTR(i), u32WritePtr);
@@ -4495,15 +4495,15 @@ module_init(socp_init);
 
 
 /*****************************************************************************
-* º¯ Êı Ãû  : socp_set_clk_autodiv_enable
-* ¹¦ÄÜÃèÊö  : µ÷ÓÃclk½Ó¿Úclk_disable_unprepare½«bypassÖÃ0£¬¼´¿ª×Ô¶¯½µÆµ
-* ÊäÈë²ÎÊı  : ÎŞ
-* Êä³ö²ÎÊı  : ÎŞ
-* ·µ »Ø Öµ  : ÎŞ
-* ×¢    Òâ  :
-              clk_prepare_enable ½Ó¿ÚÓë clk_disable_unprepare ½Ó¿Ú±ØĞë³É¶ÔÊ¹ÓÃ
-              clkµÄ×Ô¶¯½µÆµÄ¬ÈÏ´¦ÓÚ´ò¿ª×´Ì¬£¬ËùÒÔ
-              ±ØĞëÏÈ½øĞĞ clk_prepare_enable ²ÅÄÜ½øĞĞ clk_disable_unprepare ²Ù×÷
+* å‡½ æ•° å  : socp_set_clk_autodiv_enable
+* åŠŸèƒ½æè¿°  : è°ƒç”¨clkæ¥å£clk_disable_unprepareå°†bypassç½®0ï¼Œå³å¼€è‡ªåŠ¨é™é¢‘
+* è¾“å…¥å‚æ•°  : æ— 
+* è¾“å‡ºå‚æ•°  : æ— 
+* è¿” å› å€¼  : æ— 
+* æ³¨    æ„  :
+              clk_prepare_enable æ¥å£ä¸ clk_disable_unprepare æ¥å£å¿…é¡»æˆå¯¹ä½¿ç”¨
+              clkçš„è‡ªåŠ¨é™é¢‘é»˜è®¤å¤„äºæ‰“å¼€çŠ¶æ€ï¼Œæ‰€ä»¥
+              å¿…é¡»å…ˆè¿›è¡Œ clk_prepare_enable æ‰èƒ½è¿›è¡Œ clk_disable_unprepare æ“ä½œ
 *****************************************************************************/
 void bsp_socp_set_clk_autodiv_enable(void)
 {
@@ -4511,29 +4511,29 @@ void bsp_socp_set_clk_autodiv_enable(void)
 
 
 /*****************************************************************************
-* º¯ Êı Ãû  : socp_set_clk_autodiv_disable
-* ¹¦ÄÜÃèÊö  : µ÷ÓÃclk½Ó¿Úclk_prepare_enable½«bypassÖÃ1£¬¼´¹Ø×Ô¶¯½µÆµ
-* ÊäÈë²ÎÊı  : ÎŞ
-* Êä³ö²ÎÊı  : ÎŞ
-* ·µ »Ø Öµ  : ÎŞ
-* ×¢    Òâ  :
-              clk_prepare_enable ½Ó¿ÚÓë clk_disable_unprepare ½Ó¿Ú±ØĞë³É¶ÔÊ¹ÓÃ
-              clkµÄ×Ô¶¯½µÆµÄ¬ÈÏ´¦ÓÚ´ò¿ª×´Ì¬£¬ËùÒÔ
-              ±ØĞëÏÈ½øĞĞ clk_prepare_enable ²ÅÄÜ½øĞĞ clk_disable_unprepare ²Ù×÷
+* å‡½ æ•° å  : socp_set_clk_autodiv_disable
+* åŠŸèƒ½æè¿°  : è°ƒç”¨clkæ¥å£clk_prepare_enableå°†bypassç½®1ï¼Œå³å…³è‡ªåŠ¨é™é¢‘
+* è¾“å…¥å‚æ•°  : æ— 
+* è¾“å‡ºå‚æ•°  : æ— 
+* è¿” å› å€¼  : æ— 
+* æ³¨    æ„  :
+              clk_prepare_enable æ¥å£ä¸ clk_disable_unprepare æ¥å£å¿…é¡»æˆå¯¹ä½¿ç”¨
+              clkçš„è‡ªåŠ¨é™é¢‘é»˜è®¤å¤„äºæ‰“å¼€çŠ¶æ€ï¼Œæ‰€ä»¥
+              å¿…é¡»å…ˆè¿›è¡Œ clk_prepare_enable æ‰èƒ½è¿›è¡Œ clk_disable_unprepare æ“ä½œ
 *****************************************************************************/
 void bsp_socp_set_clk_autodiv_disable(void)
 {
 }
 
 /*****************************************************************************
-* º¯ Êı Ãû  : bsp_socp_set_decode_timeout_register
+* å‡½ æ•° å  : bsp_socp_set_decode_timeout_register
 *
-* ¹¦ÄÜÃèÊö  :±à½âÂëÖĞ¶Ï³¬Ê±ÅäÖÃ¼Ä´æÆ÷Ñ¡Ôñ¡£
-                            1 - ±àÂëÍ¨µÀ²ÉÓÃINT_TIMEOUT(0x024)£»½âÂëÍ¨µÀ²ÉÓÃDEC_INT_TIMEOUT(0x20);
-                            0 - ±à½âÂëÍ¨µÀ¶¼²ÉÓÃINT_TIMEOUT(0x024)
+* åŠŸèƒ½æè¿°  :ç¼–è§£ç ä¸­æ–­è¶…æ—¶é…ç½®å¯„å­˜å™¨é€‰æ‹©ã€‚
+                            1 - ç¼–ç é€šé“é‡‡ç”¨INT_TIMEOUT(0x024)ï¼›è§£ç é€šé“é‡‡ç”¨DEC_INT_TIMEOUT(0x20);
+                            0 - ç¼–è§£ç é€šé“éƒ½é‡‡ç”¨INT_TIMEOUT(0x024)
 
 *
-* ·µ »Ø Öµ  :  ¿Õ
+* è¿” å› å€¼  :  ç©º
 *
 *
 *****************************************************************************/

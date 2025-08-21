@@ -111,10 +111,11 @@ static void sync_timer_fn(unsigned long data)
 
     pr_debug("sync_timer_fn enter.%pK\n", dev->share_para);
 
-    if (sync_isplogcat() < 0)
+    if (sync_isplogcat() < 0) {
         pr_err("[%s] Failed: sync_isplogcat.%pK\n", __func__, dev->share_para);
+    }
 
-	mod_timer(&dev->sync_timer, jiffies + msecs_to_jiffies(POLLING_TIME_NS));
+    mod_timer(&dev->sync_timer, jiffies + msecs_to_jiffies(POLLING_TIME_NS));
 }
 
 void wait_firmware_coredump(void)

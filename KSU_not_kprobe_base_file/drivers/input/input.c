@@ -1,4 +1,4 @@
-﻿/*
+/*
  * The input core
  *
  * Copyright (c) 1999-2002 Vojtech Pavlik
