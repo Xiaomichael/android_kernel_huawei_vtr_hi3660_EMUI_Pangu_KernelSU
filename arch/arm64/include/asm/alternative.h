@@ -191,13 +191,6 @@ void apply_alternatives(void *start, size_t length);
 .endm
 
 /*
- * Callback-based alternative epilogue
- */
-.macro alternative_cb_end
-662:
-.endm
-
-/*
  * Provides a trivial alternative or default sequence consisting solely
  * of NOPs. The number of NOPs is chosen automatically to match the
  * previous case.
