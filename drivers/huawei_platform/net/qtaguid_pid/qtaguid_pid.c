@@ -474,7 +474,10 @@ static int hash_pid_entry_num;
 
 static char *get_pr_name(char *buf)
 {
-	return get_task_comm(buf, current->group_leader);
+    char local_buf[TASK_COMM_LEN];
+    get_task_comm(local_buf, current->group_leader);
+    strncpy(buf, local_buf, TASK_COMM_LEN);
+    return buf;
 }
 
 static uid_t get_current_uid(void)

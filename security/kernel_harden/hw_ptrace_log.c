@@ -28,8 +28,8 @@
 void record_ptrace_info_before_return(long request, struct task_struct *child)
 {
 	struct task_struct *tracer;
-	char tcomm_child[sizeof(child->comm) + 8] = {0}; /*8 is reserved for unknown string*/
-	char tcomm_tracer[sizeof(child->comm) + 8] = {0};/*comm size is same within any task*/
+	char tcomm_child[TASK_COMM_LEN] = {0}; // 修改为固定大小 TASK_COMM_LEN
+	char tcomm_tracer[TASK_COMM_LEN] = {0}; // 修改为固定大小 TASK_COMM_LEN
 	static unsigned int  g_ptrace_log_counter = 0;
 
 	if (child == NULL)
@@ -45,24 +45,28 @@ void record_ptrace_info_before_return(long request, struct task_struct *child)
 	if (tracer) {
 		(void)get_task_comm(tcomm_tracer, tracer);
 	} else {
-		(void)strncpy(tcomm_tracer, "unknown", sizeof("unknown"));
+		// 使用更安全的方式复制字符串
+		strncpy(tcomm_tracer, "unknown", TASK_COMM_LEN - 1);
+		tcomm_tracer[TASK_COMM_LEN - 1] = '\0'; // 确保字符串以 null 结尾
 	}
 	rcu_read_unlock();
 	struct stp_item item;
-	char add_info[sizeof(tcomm_child) + sizeof(tcomm_tracer) + 1] = {0};
+	// 调整 add_info 的大小以适应新的缓冲区大小
+	char add_info[TASK_COMM_LEN * 2 + 1] = {0}; // 两个 TASK_COMM_LEN 加上一个结束符
 	(void)memset(&item, 0, sizeof(item));
 	item.id = item_info[PTRACE].id;
 	item.status = STP_RISK;
 	item.credible = STP_CREDIBLE;
 	item.version = 0;
 	(void)strncpy(item.name, item_info[PTRACE].name, STP_ITEM_NAME_LEN - 1);
-	(void)snprintf(add_info, sizeof(add_info) -1, "%s%s",tcomm_child, tcomm_tracer);
+	// 确保 snprintf 不会溢出
+	(void)snprintf(add_info, sizeof(add_info) - 1, "%s%s", tcomm_child, tcomm_tracer);
 	int ret = kernel_stp_upload(item, add_info);
 	if (ret != 0) {
-		pr_err("stp ptrace upload fail, child_cmdline=%s, tracer_cmdline=%s\n",tcomm_child,tcomm_tracer);
+		pr_err("stp ptrace upload fail, child_cmdline=%s, tracer_cmdline=%s\n", tcomm_child, tcomm_tracer);
 	}
 	else {
-		pr_err("stp ptrace upload succ, child_cmdline=%s, tracer_cmdline=%s\n",tcomm_child,tcomm_tracer);
+		pr_err("stp ptrace upload succ, child_cmdline=%s, tracer_cmdline=%s\n", tcomm_child, tcomm_tracer);
 	}
 
 	return;
