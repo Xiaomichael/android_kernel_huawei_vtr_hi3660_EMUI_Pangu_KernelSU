@@ -436,7 +436,7 @@ static inline int mptcp_direct_copy(const struct sk_buff *skb,
 	if (!skb_copy_datagram_msg(skb, 0, meta_tp->ucopy.msg, chunk)) {
 #ifdef CONFIG_HW_NETWORK_MEASUREMENT
 		if (unlikely(nm_sample_on(meta_sk)))
-			nm_nse(meta_sk, skb, 0, chunk, NM_TCP, NM_DOWNLINK, NM_FUNC_HTTP);
+			nm_nse(meta_sk, (struct sk_buff *)skb, 0, chunk, NM_TCP, NM_DOWNLINK, NM_FUNC_HTTP);
 #endif /* CONFIG_HW_NETWORK_MEASUREMENT */
 		meta_tp->ucopy.len -= chunk;
 		meta_tp->copied_seq += chunk;
@@ -998,10 +998,10 @@ static int mptcp_queue_skb(struct sock *sk)
 				break;
 		}
 
-		/* Quick ACK if more 3/4 of the receive window is filled */
-		if (after64(tp->mptcp->map_data_seq,
-			    rcv_nxt64 + 3 * (tcp_receive_window(meta_tp) >> 2)))
-			tcp_enter_quickack_mode(sk);
+			/* Quick ACK if more 3/4 of the receive window is filled */
+			if (after64(tp->mptcp->map_data_seq,
+				    rcv_nxt64 + 3 * (tcp_receive_window(meta_tp) >> 2)))
+				tcp_enter_quickack_mode(sk, 2);
 
 	} else {
 		/* Ready for the meta-rcv-queue */
