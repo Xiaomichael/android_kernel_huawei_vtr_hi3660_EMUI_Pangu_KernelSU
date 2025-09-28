@@ -1175,6 +1175,15 @@ void *vm_map_ram(struct page **pages, unsigned int count, int node, pgprot_t pro
 		vm_unmap_ram(mem, count);
 		return NULL;
 	}
+
+	/* KMEMLEAK修复：确保映射区域已初始化 */
+	/* KMEMLEAK fix: Make sure the mapped area is initialized */
+#ifdef CONFIG_DEBUG_KMEMLEAK
+	if (!(prot & __PG_UNINITIALIZED)) {
+		memset(mem, 0, size);
+	}
+#endif
+
 	return mem;
 }
 EXPORT_SYMBOL(vm_map_ram);
@@ -1662,6 +1671,14 @@ static void *__vmalloc_area_node(struct vm_struct *area, gfp_t gfp_mask,
 			area->nr_pages = i;
 			goto fail;
 		}
+
+		/* KMEMLEAK修复：调试模式下清零页面内容 */
+		/* KMEMLEAK fix: Clearing page content in debug mode */
+#ifdef CONFIG_DEBUG_KMEMLEAK
+		if (!(gfp_mask & __GFP_ZERO))
+			clear_highpage(page);
+#endif
+
 		area->pages[i] = page;
 		page_tracker_set_type(page, TRACK_VMALLOC, 0);
 		if (gfpflags_allow_blocking(gfp_mask))

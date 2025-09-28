@@ -204,6 +204,16 @@ static void *slob_new_pages(gfp_t gfp, int order, int node)
 
 	page_tracker_set_type(page, TRACK_SLAB, order);
 
+#ifdef CONFIG_DEBUG_KMEMLEAK
+    /* 确保新分配的页面在kmemleak调试模式下被清零 */
+	/* KMEMLEAK fix: Clear large memory allocation in debug mode */
+    if (!(gfp & __GFP_ZERO)) {
+        void *page_addr = page_address(page);
+        size_t page_size = PAGE_SIZE << order;
+        memset(page_addr, 0, page_size);
+    }
+#endif
+
 	return page_address(page);
 }
 
@@ -334,6 +344,13 @@ static void *slob_alloc(size_t size, gfp_t gfp, int align, int node)
 	}
 	if (unlikely((gfp & __GFP_ZERO) && b))
 		memset(b, 0, size);
+#ifdef CONFIG_DEBUG_KMEMLEAK
+    else if (b) {
+        /* 在kmemleak调试模式下，即使没有__GFP_ZERO也清零内存 */
+		/* In kmemleak debug mode, clear memory even without __GFP_ZERO */
+        memset(b, 0, size);
+    }
+#endif
 	return b;
 }
 
@@ -457,6 +474,14 @@ __do_kmalloc_node(size_t size, gfp_t gfp, int node, unsigned long caller)
 			gfp |= __GFP_COMP;
 		ret = slob_new_pages(gfp, order, node);
 
+#ifdef CONFIG_DEBUG_KMEMLEAK
+        /* 确保大内存分配在kmemleak模式下被清零 */
+		/* Ensure large memory allocations are cleared in kmemleak mode */
+        if (ret && !(gfp & __GFP_ZERO)) {
+            memset(ret, 0, PAGE_SIZE << order);
+        }
+#endif
+
 		trace_kmalloc_node(caller, ret,
 				   size, PAGE_SIZE << order, gfp, node);
 	}
@@ -554,6 +579,14 @@ static void *slob_alloc_node(struct kmem_cache *c, gfp_t flags, int node)
 					    PAGE_SIZE << get_order(c->size),
 					    flags, node);
 	}
+
+#ifdef CONFIG_DEBUG_KMEMLEAK
+    /* 确保SLAB分配在kmemleak模式下被清零 */
+	/* Ensure that SLAB allocations are cleared in kmemleak mode */
+    if (b && !(flags & __GFP_ZERO) && !c->ctor) {
+        memset(b, 0, c->size);
+    }
+#endif
 
 	if (b && c->ctor)
 		c->ctor(b);

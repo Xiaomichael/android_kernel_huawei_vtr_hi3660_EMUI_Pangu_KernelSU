@@ -1644,6 +1644,13 @@ static inline bool shuffle_freelist(struct kmem_cache *s, struct page *page)
 
 static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
 {
+#ifdef CONFIG_DEBUG_KMEMLEAK
+    /* Clear stale data from newly allocated slab to avoid kmemleak false positives */
+    if (!(s->flags & SLAB_POISON)) {
+        memset(start, 0, PAGE_SIZE << order);
+    }
+#endif
+
 	struct page *page;
 	struct kmem_cache_order_objects oo = s->oo;
 	gfp_t alloc_gfp;
@@ -2288,6 +2295,14 @@ redo:
 static void unfreeze_partials(struct kmem_cache *s,
 		struct kmem_cache_cpu *c)
 {
+#ifdef CONFIG_DEBUG_KMEMLEAK
+    /* Clear reused objects to avoid kmemleak false positives */
+    if (!new.frozen && !(s->flags & SLAB_POISON)) {
+        void *addr = page_address(page);
+        memset(addr, 0, PAGE_SIZE << compound_order(page));
+    }
+#endif
+
 #ifdef CONFIG_SLUB_CPU_PARTIAL
 	struct kmem_cache_node *n = NULL, *n2 = NULL;
 	struct page *page, *discard_page = NULL;

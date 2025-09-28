@@ -1841,6 +1841,15 @@ static void prep_new_page(struct page *page, unsigned int order, gfp_t gfp_flags
 
 	post_alloc_hook(page, order, gfp_flags);
 
+	if (!free_pages_prezeroed(poisoned)) {
+		/* 添加kmemleak调试模式下的自动清零 */
+		/* Added automatic zeroing in kmemleak debug mode */
+		if ((gfp_flags & __GFP_ZERO) || 
+		    (IS_ENABLED(CONFIG_DEBUG_KMEMLEAK) && !poisoned)) {
+			for (i = 0; i < (1 << order); i++)
+				clear_highpage(page + i);
+		}
+
 	if (!free_pages_prezeroed(poisoned) && (gfp_flags & __GFP_ZERO))
 		for (i = 0; i < (1 << order); i++)
 			clear_highpage(page + i);

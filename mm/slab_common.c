@@ -25,6 +25,16 @@
 
 #include "slab.h"
 
+#ifdef CONFIG_DEBUG_KMEMLEAK
+static inline void debug_kmemleak_zero_memory(void *addr, size_t size)
+{
+    if (IS_ENABLED(CONFIG_DEBUG_KMEMLEAK) && addr)
+        memset(addr, 0, size);
+}
+#else
+static inline void debug_kmemleak_zero_memory(void *addr, size_t size) {}
+#endif
+
 enum slab_state slab_state;
 LIST_HEAD(slab_caches);
 DEFINE_MUTEX(slab_mutex);
@@ -1042,6 +1052,14 @@ void *kmalloc_order(size_t size, gfp_t flags, unsigned int order)
 	flags |= __GFP_COMP;
 	page = alloc_pages(flags, order);
 	ret = page ? page_address(page) : NULL;
+
+    /* KMEMLEAK修复：调试模式下清零大内存分配 */
+	/* KMEMLEAK fix: Clear large memory allocation in debug mode */
+#ifdef CONFIG_DEBUG_KMEMLEAK
+    if (ret && !(flags & __GFP_ZERO))
+        debug_kmemleak_zero_memory(ret, PAGE_SIZE << order);
+#endif
+
 	kmemleak_alloc(ret, size, 1, flags);
 	kasan_kmalloc_large(ret, size, flags);
 	return ret;
@@ -1278,6 +1296,13 @@ static __always_inline void *__do_krealloc(const void *p, size_t new_size,
 	ret = kmalloc_track_caller(new_size, flags);
 	if (ret && p)
 		memcpy(ret, p, ks);
+
+    /* KMEMLEAK修复：新分配部分清零 */
+	/* KMEMLEAK Fix: New Allocation Partial Clearing */
+#ifdef CONFIG_DEBUG_KMEMLEAK
+    if (ret && new_size > ks && !(flags & __GFP_ZERO))
+        debug_kmemleak_zero_memory(ret + ks, new_size - ks);
+#endif
 
 	return ret;
 }

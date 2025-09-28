@@ -2703,6 +2703,16 @@ static struct page *cache_grow_begin(struct kmem_cache *cachep,
 	if (!page)
 		goto failed;
 
+#ifdef CONFIG_DEBUG_KMEMLEAK
+    /* 确保新分配的slab页面在kmemleak调试模式下被清零 */
+	/* Make sure the newly assigned slab page is cleared in kmemleak debug mode */
+    if (!(local_flags & __GFP_ZERO)) {
+        void *addr = page_address(page);
+        size_t size = PAGE_SIZE << cachep->gfporder;
+        memset(addr, 0, size);
+    }
+#endif
+
 	page_node = page_to_nid(page);
 	n = get_node(cachep, page_node);
 
@@ -2988,6 +2998,15 @@ static __always_inline int alloc_block(struct kmem_cache *cachep,
 		STATS_SET_HIGH(cachep);
 
 		ac->entry[ac->avail++] = slab_get_obj(cachep, page);
+
+#ifdef CONFIG_DEBUG_KMEMLEAK
+        /* 确保新分配对象在kmemleak模式下被清零 */
+		/* Ensure that new allocators are cleared in kmemleak mode */
+        if (!(flags & __GFP_ZERO) && !cachep->ctor) {
+            void *objp = ac->entry[ac->avail - 1];
+            memset(objp, 0, cachep->object_size);
+        }
+#endif		
 	}
 
 	return batchcount;
@@ -3028,6 +3047,16 @@ static void *cache_alloc_refill(struct kmem_cache *cachep, gfp_t flags)
 	/* See if we can refill from the shared array */
 	if (shared && transfer_objects(ac, shared, batchcount)) {
 		shared->touched = 1;
+#ifdef CONFIG_DEBUG_KMEMLEAK
+        /* 清零从共享数组转移的对象 */
+		/* Zero objects transferred from shared arrays */
+        if (!(flags & __GFP_ZERO) && !cachep->ctor) {
+            int i;
+            for (i = ac->avail - batchcount; i < ac->avail; i++) {
+                memset(ac->entry[i], 0, cachep->object_size);
+            }
+        }
+#endif
 		goto alloc_done;
 	}
 
