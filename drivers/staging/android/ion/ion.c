@@ -128,6 +128,9 @@ static struct ion_buffer *ion_buffer_create(struct ion_heap *heap,
 	int i, ret;
 	struct platform_device *hisi_ion_dev = get_hisi_ion_platform_device();
 
+	pr_info("ION_DEBUG: Creating buffer - heap_id: %u, len: %lu, flags: 0x%lx\n", 
+        heap->id, len, flags);
+
 	buffer = kzalloc(sizeof(*buffer), GFP_KERNEL);
 	if (!buffer)
 		return ERR_PTR(-ENOMEM);
@@ -459,6 +462,9 @@ struct ion_handle *ion_handle_get_by_id_nolock(struct ion_client *client,
 {
 	struct ion_handle *handle;
 
+	pr_debug("ION_DEBUG: Getting handle by id - client: %s, id: %d, lock held: %d\n",
+         client->name, id, mutex_is_locked(&client->lock));
+		 
 	handle = idr_find(&client->idr, id);
 	if (handle)
 		ion_handle_get(handle);
@@ -515,6 +521,9 @@ struct ion_handle *__ion_alloc(struct ion_client *client, size_t len,
 	struct ion_buffer *buffer = NULL;
 	struct ion_heap *heap;
 	int ret;
+
+	pr_info("ION_DEBUG: Allocating - client: %s, len: %zu, heap_mask: 0x%x\n",
+        client->name, len, heap_id_mask);
 
 	pr_debug("%s: len %zu align %zu heap_id_mask %u flags %x\n", __func__,
 		 len, align, heap_id_mask, flags);
@@ -1871,6 +1880,9 @@ static const struct file_operations debug_memtrack_fops = {
 	.llseek = seq_lseek,
 	.release = single_release,
 };
+
+// 修改：移除 static 关键字，与头文件声明保持一致
+// Fixed: Remove static keyword to match header file declaration
 struct ion_device *ion_device_create(long (*custom_ioctl)
 				     (struct ion_client *client,
 				      unsigned int cmd,
@@ -1895,28 +1907,32 @@ struct ion_device *ion_device_create(long (*custom_ioctl)
 		return ERR_PTR(ret);
 	}
 
+	/* 修改：添加调试文件系统创建错误处理 */
+	/* Modified: Added debug filesystem creation error handling */
 	idev->debug_root = debugfs_create_dir("ion", NULL);
-	if (!idev->debug_root) {
-		pr_err("ion: failed to create debugfs root directory.\n");
+	if (IS_ERR_OR_NULL(idev->debug_root)) {
+		pr_warn("ion: failed to create debugfs root directory, continuing without debug support\n");
+		idev->debug_root = NULL;
 		goto debugfs_done;
 	}
+	
 	idev->heaps_debug_root = debugfs_create_dir("heaps", idev->debug_root);
-	if (!idev->heaps_debug_root) {
-		pr_err("ion: failed to create debugfs heaps directory.\n");
-		goto debugfs_done;
+	if (IS_ERR_OR_NULL(idev->heaps_debug_root)) {
+		pr_warn("ion: failed to create debugfs heaps directory\n");
+		idev->heaps_debug_root = NULL;
 	}
-	idev->clients_debug_root = debugfs_create_dir("clients",
-						idev->debug_root);
-	if (!idev->clients_debug_root)
-		pr_err("ion: failed to create debugfs clients directory.\n");
+	
+	idev->clients_debug_root = debugfs_create_dir("clients", idev->debug_root);
+	if (IS_ERR_OR_NULL(idev->clients_debug_root))
+		pr_warn("ion: failed to create debugfs clients directory\n");
 
-	entry = proc_create_data("memtrack", 0664,
-				 NULL, &debug_memtrack_fops, idev);
+	/* 修改：添加proc文件创建错误处理 */
+	/* Modify: Add proc file creation error handling */
+	entry = proc_create_data("memtrack", 0664, NULL, &debug_memtrack_fops, idev);
 	if (!entry)
-		pr_err("Failed to create heap debug memtrack\n");
+		pr_warn("Failed to create heap debug memtrack, continuing without it\n");
 
 debugfs_done:
-
 	idev->custom_ioctl = custom_ioctl;
 	idev->buffers = RB_ROOT;
 	mutex_init(&idev->buffer_lock);
@@ -2120,4 +2136,3 @@ int hisi_ion_memory_info(bool verbose)
 
 	return 0;
 }
-

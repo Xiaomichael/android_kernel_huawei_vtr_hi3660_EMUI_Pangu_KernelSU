@@ -520,7 +520,7 @@ static int __squashfs_readpages(struct file *file, struct page *page,
 				return -1;
 
 			if (bsize == 0) {
-				res = squashfs_readpages_sparse(page,
+				res = squashfs_readpage_sparse(page,
 					readahead_pages, index, file_end,
 					mapping);
 			} else {
@@ -529,7 +529,7 @@ static int __squashfs_readpages(struct file *file, struct page *page,
 					page_index, block, bsize);
 			}
 		} else {
-			res = squashfs_readpages_fragment(page,
+			res = squashfs_readpage_fragment(page,
 				readahead_pages, mapping);
 		}
 		if (res)

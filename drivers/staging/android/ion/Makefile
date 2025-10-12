@@ -14,3 +14,6 @@ obj-$(CONFIG_ION_HISI) += hisi/
 obj-$(CONFIG_ION_HISI_SECCM) += ion_seccm_heap.o
 obj-$(CONFIG_ION_HISI_SECSG) += ion_secsg_heap.o ion_secsg_contig.o ion_secsg_scatter.o
 obj-$(CONFIG_ION_HISI_DMA_POOL) += ion_dma_pool_heap.o
+
+CONFIG_MODVERSIONS=y
+EXTRA_CFLAGS += -DMODVERSIONS
