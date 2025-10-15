@@ -17,6 +17,7 @@
 #include <linux/io.h>
 #include <linux/coresight.h>
 #include <linux/pm_runtime.h>
+#include <linux/delay.h>
 
 /*
  * Coresight management registers (0xf00-0xfcc)
@@ -123,5 +124,17 @@ extern int etm_writel_cp14(u32 off, u32 val);
 static inline int etm_readl_cp14(u32 off, unsigned int *val) { return 0; }
 static inline int etm_writel_cp14(u32 off, u32 val) { return 0; }
 #endif
+
+/**
+ * coresight_timeout - wait for a bit to change to a desired state
+ * @addr: base address of the component
+ * @offset: offset of the register to read
+ * @position: the bit number to check
+ * @value: the value the bit should have
+ *
+ * Returns 0 if the bit changes to the desired state within TIMEOUT_US,
+ * otherwise returns -ETIMEDOUT.
+ */
+int coresight_timeout(void __iomem *addr, u32 offset, int position, int value);
 
 #endif
