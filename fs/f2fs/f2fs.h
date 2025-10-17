@@ -801,6 +801,7 @@ enum {
 #define DEF_DIR_LEVEL		0
 
 struct f2fs_inode_info {
+	struct task_struct *task;
 	struct inode vfs_inode;		/* serve a vfs inode */
 	unsigned long i_flags;		/* keep an inode flags for ioctl */
 	unsigned char i_advise;		/* use to give file attribute hints */
