@@ -733,7 +733,6 @@ end:
 	of_node_put(trip);
 
 	return ret;
-	}
 }
 
 #ifdef CONFIG_HISI_IPA_THERMAL
