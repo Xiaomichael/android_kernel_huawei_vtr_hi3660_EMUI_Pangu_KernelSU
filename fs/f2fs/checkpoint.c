@@ -854,6 +854,10 @@ static struct page *validate_checkpoint(struct f2fs_sb_info *sbi,
 invalid_cp:
 	f2fs_put_page(cp_page_1, 1);
 	return NULL;
+
+invalid_cp1:
+	f2fs_put_page(cp_page_1, 1);
+	return NULL;
 }
 
 int get_valid_checkpoint(struct f2fs_sb_info *sbi)

@@ -2004,3 +2004,45 @@ out_free:
 	brelse(iloc.bh);
 	return error;
 }
+
+int ext4_try_to_evict_inline_data(handle_t *handle,
+				  struct inode *inode,
+				  int needed)
+{
+	int error;
+	struct ext4_xattr_ibody_find is = {
+		.s = { .not_found = -ENODATA, },
+	};
+	struct ext4_xattr_info i = {
+		.name_index = EXT4_XATTR_INDEX_SYSTEM,
+		.name = EXT4_XATTR_SYSTEM_DATA,
+	};
+
+	if (!ext4_has_inline_data(inode))
+		return 0;
+
+	error = ext4_get_inode_loc(inode, &is.iloc);
+	if (error)
+		return error;
+
+	error = ext4_xattr_ibody_find(inode, &i, &is);
+	if (error)
+		goto out;
+
+	if (is.s.not_found) {
+		error = 0;
+		goto out;
+	}
+
+	BUFFER_TRACE(is.iloc.bh, "get_write_access");
+	error = ext4_journal_get_write_access(handle, is.iloc.bh);
+	if (error)
+		goto out;
+
+	/* We need to evict the inline data and convert to extent */
+	error = ext4_convert_inline_data_to_extent(inode->i_mapping,
+						   inode, 0);
+out:
+	brelse(is.iloc.bh);
+	return error;
+}
