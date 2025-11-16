@@ -746,12 +746,10 @@ static int kdb_defcmd(int argc, const char **argv)
 	if (!s->help)
 		goto fail_help;
 	if (s->usage[0] == '"') {
-		strcpy(s->usage, argv[2]+1);
-		s->usage[strlen(s->usage)-1] = '\0';
+		strscpy(s->usage, argv[2]+1, strlen(argv[2]));
 	}
 	if (s->help[0] == '"') {
-		strcpy(s->help, argv[3]+1);
-		s->help[strlen(s->help)-1] = '\0';
+		strscpy(s->help, argv[3]+1, strlen(argv[3]));
 	}
 	++defcmd_set_count;
 	defcmd_in_progress = 1;
@@ -873,7 +871,7 @@ static void parse_grep(const char *str)
 		kdb_printf("search string too long\n");
 		return;
 	}
-	strcpy(kdb_grep_string, cp);
+	strscpy(kdb_grep_string, cp, KDB_GREP_STRLEN);
 	kdb_grepping_flag++;
 	return;
 }
