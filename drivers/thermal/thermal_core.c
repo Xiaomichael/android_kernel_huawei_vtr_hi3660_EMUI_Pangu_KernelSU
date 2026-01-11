@@ -802,22 +802,62 @@ static void thermal_zone_device_init(struct thermal_zone_device *tz)
 #ifdef CONFIG_HISI_IPA_THERMAL
 int nametoactor(const char* weight_attr_name)
 {
-    int actor_id = -1;
+	int actor_id = -1;
 
-    if (!strncmp(weight_attr_name, IPA_GPU_WEIGHT_NAME, sizeof(IPA_GPU_WEIGHT_NAME) - 1))
-        actor_id = IPA_GPU;
-    else if (!strncmp(weight_attr_name, IPA_CLUSTER0_WEIGHT_NAME, sizeof(IPA_CLUSTER0_WEIGHT_NAME) - 1))
-        actor_id = IPA_CLUSTER0;
-    else if (!strncmp(weight_attr_name, IPA_CLUSTER1_WEIGHT_NAME, sizeof(IPA_CLUSTER1_WEIGHT_NAME) - 1))
-        actor_id = IPA_CLUSTER1;
+	if (!strncmp(weight_attr_name, IPA_GPU_WEIGHT_NAME, sizeof(IPA_GPU_WEIGHT_NAME) - 1))
+		actor_id = IPA_GPU;
+	else if (!strncmp(weight_attr_name, IPA_CLUSTER0_WEIGHT_NAME, sizeof(IPA_CLUSTER0_WEIGHT_NAME) - 1))
+		actor_id = IPA_CLUSTER0;
+	else if (!strncmp(weight_attr_name, IPA_CLUSTER1_WEIGHT_NAME, sizeof(IPA_CLUSTER1_WEIGHT_NAME) - 1))
+		actor_id = IPA_CLUSTER1;
 #ifdef CONFIG_HISI_THERMAL_TRIPPLE_CLUSTERS
-    else if (!strncmp(weight_attr_name, IPA_CLUSTER2_WEIGHT_NAME, sizeof(IPA_CLUSTER2_WEIGHT_NAME) - 1))
-        actor_id = IPA_CLUSTER2;
+	else if (!strncmp(weight_attr_name, IPA_CLUSTER2_WEIGHT_NAME, sizeof(IPA_CLUSTER2_WEIGHT_NAME) - 1))
+		actor_id = IPA_CLUSTER2;
 #endif
-    else
-        actor_id = -1;
+	else
+		actor_id = -1;
 
-    return actor_id;
+	return actor_id;
+}
+
+void restore_actor_weights(struct thermal_zone_device *tz)
+{
+	struct thermal_instance *pos;
+	int actor_id = -1;
+
+	list_for_each_entry(pos, &tz->thermal_instances, tz_node) {
+		actor_id = nametoactor(pos->weight_attr_name);
+		if(actor_id != -1)
+			pos->weight = g_ipa_normal_weights[actor_id];
+	}
+}
+
+void update_actor_weights(struct thermal_zone_device *tz)
+{
+	struct thermal_instance *pos;
+	bool bGPUBounded = false;
+	struct thermal_cooling_device *cdev;
+	int actor_id = -1;
+
+	list_for_each_entry(pos, &tz->thermal_instances, tz_node) {
+		cdev = pos->cdev;
+		if (!strncmp(pos->weight_attr_name, IPA_GPU_WEIGHT_NAME,sizeof(IPA_GPU_WEIGHT_NAME) - 1) && cdev->bound_event) {
+			bGPUBounded = true;
+			break;
+		}
+	}
+
+	list_for_each_entry(pos, &tz->thermal_instances, tz_node) {
+		actor_id = nametoactor(pos->weight_attr_name);
+
+		if (bGPUBounded) {
+			if (actor_id != -1)
+				pos->weight = g_ipa_gpu_boost_weights[actor_id];
+		} else {
+			if (actor_id != -1)
+				pos->weight = g_ipa_normal_weights[actor_id];
+		}
+	}
 }
 #endif
 

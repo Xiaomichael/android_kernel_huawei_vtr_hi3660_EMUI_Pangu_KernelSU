@@ -102,6 +102,11 @@ static inline void thermal_gov_power_allocator_unregister(void) {}
 
 #ifdef CONFIG_HISI_IPA_THERMAL
 void update_pid_value(struct thermal_zone_device *);
+void update_actor_weights(struct thermal_zone_device *tz);
+void restore_actor_weights(struct thermal_zone_device *tz);
+int nametoactor(const char* weight_attr_name);
+bool thermal_of_get_cdev_type(struct thermal_zone_device *tzd,
+			struct thermal_cooling_device *cdev);
 #endif
 
 /* device tree support */
