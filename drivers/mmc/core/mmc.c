@@ -1964,11 +1964,11 @@ static int mmc_init_card(struct mmc_host *host, u32 ocr,
 	* and it can be turned on. Note that some eMMCs from Micron has been
 	* reported to need ~800 ms timeout, while enabling the cache after
 	* sudden power failure tests. Let's extend the timeout to a minimum of
-	* DEFAULT_CACHE_EN_TIMEOUT_MS and do it for all cards.
+	* MIN_CACHE_EN_TIMEOUT_MS and do it for all cards.
 	*/
 	if ((host->caps2 & MMC_CAP2_CACHE_CTRL) &&
 			(card->ext_csd.cache_size > 0) && (mmc_screen_test_cache_enable(card))) {
-		unsigned int timeout_ms = DEFAULT_CACHE_EN_TIMEOUT_MS;
+		unsigned int timeout_ms = MIN_CACHE_EN_TIMEOUT_MS;
 		
 		timeout_ms = max(card->ext_csd.generic_cmd6_time, timeout_ms);
 		err = mmc_switch(card, EXT_CSD_CMD_SET_NORMAL,
