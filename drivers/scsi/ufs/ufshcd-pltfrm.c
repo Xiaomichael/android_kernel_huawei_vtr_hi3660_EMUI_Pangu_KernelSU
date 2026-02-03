@@ -259,7 +259,6 @@ int ufshcd_pltfrm_probe(struct platform_device *pdev)
 	 * 这个函数可能用于初始化UFS通道配置
 	 * 暂时注释掉以避免编译错误
 	 */
-	 
 	/* ufshcd_init_lanes_per_dir(hba); */
 
 	err = ufshcd_init(hba, mmio_base, irq, timer_irq);
@@ -285,8 +284,6 @@ int ufshcd_pltfrm_probe(struct platform_device *pdev)
 out_disable_rpm:
 	pm_runtime_disable(&pdev->dev);
 	pm_runtime_set_suspended(&pdev->dev);
-dealloc_host:
-	ufshcd_dealloc_host(hba);
 out:
 	return err;
 }

@@ -280,6 +280,11 @@ extern void cpu_smt_check_topology(void);
 extern int cpuhp_smt_enable(void);
 extern int cpuhp_smt_disable(enum cpuhp_smt_control ctrlval);
 #else
+enum cpuhp_smt_control {
+    CPU_SMT_ENABLED,
+    CPU_SMT_DISABLED,
+    CPU_SMT_FORCE_DISABLED,
+};
 # define cpu_smt_control		(CPU_SMT_ENABLED)
 static inline void cpu_smt_disable(bool force) { }
 static inline void cpu_smt_check_topology_early(void) { }
