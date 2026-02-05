@@ -1175,6 +1175,7 @@ static inline u64 binder_clock(void)
         return 0;
 #endif
 }
+#endif
 
 static bool binder_has_work_ilocked(struct binder_thread *thread,
 				    bool do_proc_work)
