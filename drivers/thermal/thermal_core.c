@@ -596,6 +596,7 @@ static void thermal_zone_device_set_polling(struct thermal_zone_device *tz,
 				 msecs_to_jiffies(delay));
 	else
 		cancel_delayed_work_sync(&tz->poll_queue);
+#endif
 }
 
 static void monitor_thermal_zone(struct thermal_zone_device *tz)
