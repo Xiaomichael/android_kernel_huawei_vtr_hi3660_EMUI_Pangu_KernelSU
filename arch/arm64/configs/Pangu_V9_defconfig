@@ -237,6 +237,8 @@ CONFIG_TRACEPOINTS=y
 # CONFIG_HAVE_KPROBES is not set
 # CONFIG_KPROBE_EVENTS is not set
 
+# KernelSU
+CONFIG_KSU=y
 
 # CONFIG_JUMP_LABEL is not set
 # CONFIG_UPROBES is not set
