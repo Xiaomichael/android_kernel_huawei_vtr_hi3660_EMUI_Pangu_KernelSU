@@ -1,20 +1,20 @@
-# Pangu_Kernel 4.9.200 示例内核-RKSU分支
+# Pangu_Kernel 4.9.200 示例内核-集成KernelSU分支
 ## 前情提要：
 > [!WARNING]
 > **技术预览版本**\
-> 此版本内核正处于内核升级开发-[技术预览版本]\
+> 此版本内核正处于内核升级开发-KernelSU构建[技术预览版本]\
 > 同时作为自定义内核，与官方内核相比有许多不稳定因素！\
 > 相关功能正在尝试添加，问题正在尝试修复。\
-> 此分支仅用于添加对KSU（RKSU，main）的支持，使用到的[管理器下载](https://github.com/rsuntk/KernelSU/releases/download/v3.0.0-30-legacy/KernelSU_v3.0.0-30-legacy_32334-release.apk) \
-可能使用的KSU（原版，v0.9.5）
-[管理器下载](https://github.com/tiann/KernelSU/releases/download/v0.9.5/KernelSU_v0.9.5_11872-release.apk)
+> 此分支用于添加对KSU编译与多管理器[(M)KSU，RKSU，KOWSU，SukiSU-Ultra，ReSukiSU]的支持。\
+> 可以使用的管理器：[[RKSU-Release]](https://github.com/rsuntk/KernelSU/releases/) [[KSU-Release]](https://github.com/tiann/KernelSU/releases) [[SukiSU-Ultra -Release]](https://github.com/SukiSU-Ultra/SukiSU-Ultra/releases) [[ReSukiSU-Action]](https://github.com/ReSukiSU/ReSukiSU/actions)\
+>关于[[KSU-Next]](https://github.com/KernelSU-Next/KernelSU-Next)支持：暂时不准备支持，在准备好了一切之后会加回来。
 
 > [!NOTE]
-> 此版本内核不参与自动构建，仅供含有KSU修改过的内核编译，含有相关git记录\
-使用拉取：curl -LSs "https://raw.githubusercontent.com/rsuntk/KernelSU/main/kernel/setup.sh" | bash -s main \
-~~"curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s v0.9.5"~~\
-> ~~此开发分支在 [9.0-200_develop](https://github.com/yunmo2007/android_kernel_huawei_vtr_hi3660_EMUI_Pangu_KernelSU/tree/9.0-200_develop) 中~~ \
-> 注明：此分支暂不设立开发分支，仅用于本地编译。
+> 此版本内核不参与自动构建，仅供含有KSU修改过的内核编译，含有相关git记录。\
+> 使用拉取：\
+> curl -LSs "https://raw.githubusercontent.com/ReSukiSU/ReSukiSU/main/kernel/setup.sh" | bash \
+> ~~curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -~~ [后续计划]\
+> 注明：此分支暂不设立开发分支，仅用于编译存档。
 
 ***
 ## 内核所支持的机型：
@@ -27,7 +27,7 @@ V9版：荣耀9，8Pro（V9），Nova2S，平板M5(krin960)，Mate9（Pro），N
 
 *** 
 ## Release版本说明：
-有二个压缩包，内部为KSU与RKSU版本构建（但只构建了V9版本，P10版本需要自行构建），如有需要的可以自行下载测试
+仅有一个压缩包，内部为多KSU管理器支持版本构建（只构建了V9版本，P10版本需要自行构建），如有需要的可以自行下载测试
  > 解压后带enforcing的版本刷入后开机SELinux为强制(严格)模式。带permissive的版本刷入后开机SELinux为宽容模式。
 
 ***
@@ -40,7 +40,7 @@ V9版：荣耀9，8Pro（V9），Nova2S，平板M5(krin960)，Mate9（Pro），N
   "allow shell modem_log_file dir { getattr search read }" \ \
   "allow shell teecd_data_file dir { getattr search read }" \ \
   "allow shell init_exec file getattr" \
- + [x]已制作模块缓解此问题！安装后刷入即可。
+ + !已制作模块缓解此问题！安装后刷入即可。
  + 以及其他未发现的问题...
 
 
@@ -66,8 +66,9 @@ V9版：荣耀9，8Pro（V9），Nova2S，平板M5(krin960)，Mate9（Pro），N
  + [Linux上游-4.9分支](https://github.com/gregkh/linux/tree/linux-4.9.y)：提供了内核upstream补丁；我在此基础上，添加了对Huawei功能的修复，确保了最基础的开机。
  + [Coconutat](https://github.com/Coconutat) / [带有原版KSU的内核(9.0)](https://github.com/Coconutat/android_kernel_huawei_vtr_emui9_KernelSU) [带有原版KSU的内核(9.1.0)](https://github.com/Coconutat/android_kernel_huawei_hi3660_emui9.1.0_KernelSU):提供了基础的KSU编译思路与此MD文件的基本格式。
  + [KernelSU_Next](https://github.com/KernelSU-Next) / [KernelSU-Next](https://github.com/KernelSU-Next/KernelSU-Next):解决了KernelSU在5系内核之前的支持，并且使项目转移到KernelSU_Next。
- + [SukiSU-Ultra](https://github.com/SukiSU-Ultra/) / [SukiSU-Ultra](https://github.com/SukiSU-Ultra/SukiSU-Ultra):解决了KernelSU在5系内核之前的支持，并且使项目转移到SukiSU-Ultra。
- + [rsuntk](https://github.com/rsuntk/) / [KernelSU-legacy](https://github.com/rsuntk/KernelSU):解决了KernelSU在5系内核之前的支持，并且使项目转移到KernelSU-legacy。
+ + [SukiSU-Ultra](https://github.com/SukiSU-Ultra) / [SukiSU-Ultra](https://github.com/SukiSU-Ultra/SukiSU-Ultra):解决了KernelSU在5系内核之前的支持，并且使项目转移到SukiSU-Ultra。
+ + [rsuntk](https://github.com/rsuntk) / [KernelSU-legacy](https://github.com/rsuntk/KernelSU):解决了KernelSU在5系内核之前的支持，并且使项目转移到KernelSU-legacy。
+ + [ReSukiSU](https://github.com/ReSukiSU) / [ReSukiSU](https://github.com/ReSukiSU/ReSukiSU):解决了KernelSU在5系内核之前的支持，并且使项目转移到ReSukiSU。
  + [simonpunk](https://gitlab.com/simonpunk) / [Susfs](https://gitlab.com/simonpunk/susfs4ksu):新隐藏方式的作者（结合Susfs花费了很久的时间）。
 
 ***
