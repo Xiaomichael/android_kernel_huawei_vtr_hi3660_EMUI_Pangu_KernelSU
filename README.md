@@ -1,7 +1,8 @@
-# Pangu_Kernel 4.9.200 示例内核
+# Pangu_Kernel 4.9.200 示例内核-Develop分支
 ## 前情提要：
 > [!NOTE]
-> 如需使用补丁请将本仓库拉取到本地后cherry-pick相对应的commit id即可合并更新！
+> 此分支的页面将会经常更新！以展示最新的开发进度！\
+> 如需使用最近的补丁请将本仓库拉取到本地后cherry-pick相对应的commit id即可合并更新！
 
 > [!WARNING]
 > **技术预览版本**\
@@ -11,7 +12,7 @@
 
 > [!NOTE]
 > 此版本内核不参与自动构建，仅供内核实例展示，含有相关git记录\
-> 此开发分支在 [9.0-200_develop](https://github.com/yunmo2007/android_kernel_huawei_vtr_hi3660_EMUI_Pangu_KernelSU/tree/9.0-200_develop) 中
+> 此示例内核分支在 [9.0-200](https://github.com/yunmo2007/android_kernel_huawei_vtr_hi3660_EMUI_Pangu_KernelSU/tree/9.0-200) 中，此分支是其开发分支，用于此版本及以后的升级。
 
 ***
 ## 内核所支持的机型：
