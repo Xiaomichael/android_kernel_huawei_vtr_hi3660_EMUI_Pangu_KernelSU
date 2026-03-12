@@ -1,5 +1,8 @@
 # Pangu_Kernel 4.9.200 示例内核
 ## 前情提要：
+> [!NOTE]
+> 如需使用补丁请将本仓库拉取到本地后cherry-pick相对应的commit id即可合并更新！
+
 > [!WARNING]
 > **技术预览版本**\
 > 此版本内核正处于内核升级开发-[技术预览版本]\
@@ -40,7 +43,7 @@ V9版：荣耀9，8Pro（V9），Nova2S，平板M5(krin960)，Mate9（Pro），N
 
 # 额外文档
 + 一些过往忽略的补丁
-1. 补丁忽略说明[文件](https://github.com/yunmo2007/android_kernel_huawei_vtr_hi3660_EMUI_Pangu_KernelSU/blob/9.0-200_develop/Ignored_patches.md)
+1. 补丁忽略说明[文件](https://github.com/yunmo2007/android_kernel_huawei_vtr_hi3660_EMUI_Pangu_KernelSU/blob/9.0-200/Ignored_patches.md)
 + 感谢原作者提供的思路（这两篇并不是我写的但是还是表示感谢）
 1. 关于刷机的一些教程:[Wiki](https://github.com/Coconutat/HuaweiP10-GSI-And-Modify-Tutorial/wiki)  
 2. 适配华为EMUI9/9.1.0内核的教程:[Wiki](https://github.com/Coconutat/HuaweiP10-GSI-And-Modify-Or-Support-KernelSU-Tutorial/wiki/7.KernelSU%E9%80%82%E9%85%8DEMUI9%E6%88%969.1.0%E7%B3%BB%E7%BB%9F%E7%9A%84%E5%86%85%E6%A0%B8)  
