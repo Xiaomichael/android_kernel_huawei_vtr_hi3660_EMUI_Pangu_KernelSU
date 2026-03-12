@@ -14,7 +14,7 @@
 > 使用拉取：\
 > curl -LSs "https://raw.githubusercontent.com/ReSukiSU/ReSukiSU/main/kernel/setup.sh" | bash \
 > ~~curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -~~ [后续计划]\
-> 注明：此分支暂不设立开发分支，仅用于编译存档。
+> 此示例内核-集成KernelSU分支在 [9.0-200-KSU_develop](https://github.com/yunmo2007/android_kernel_huawei_vtr_hi3660_EMUI_Pangu_KernelSU/tree/9.0-200-KSU_develop) 中
 
 ***
 ## 内核所支持的机型：
@@ -46,7 +46,7 @@ V9版：荣耀9，8Pro（V9），Nova2S，平板M5(krin960)，Mate9（Pro），N
 
 # 额外文档
 + 一些过往忽略的补丁
-1. 补丁忽略说明[文件](https://github.com/yunmo2007/android_kernel_huawei_vtr_hi3660_EMUI_Pangu_KernelSU/blob/9.0-200_KSU/Ignored_patches.md)
+1. 补丁忽略说明[文件](https://github.com/yunmo2007/android_kernel_huawei_vtr_hi3660_EMUI_Pangu_KernelSU/blob/9.0-200-KSU/Ignored_patches.md)
 + 感谢原作者提供的思路（这两篇并不是我写的但是还是表示感谢）
 1. 关于刷机的一些教程:[Wiki](https://github.com/Coconutat/HuaweiP10-GSI-And-Modify-Tutorial/wiki)  
 2. 适配华为EMUI9/9.1.0内核的教程:[Wiki](https://github.com/Coconutat/HuaweiP10-GSI-And-Modify-Or-Support-KernelSU-Tutorial/wiki/7.KernelSU%E9%80%82%E9%85%8DEMUI9%E6%88%969.1.0%E7%B3%BB%E7%BB%9F%E7%9A%84%E5%86%85%E6%A0%B8)  
