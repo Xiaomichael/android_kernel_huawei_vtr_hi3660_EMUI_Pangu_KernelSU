@@ -1579,6 +1579,11 @@ static void configfs_composite_unbind(struct usb_gadget *gadget)
 	spin_unlock_irqrestore(&gi->spinlock, flags);
 }
 
+#ifdef CONFIG_USB_CONFIGFS_UEVENT
+static int android_setup(struct usb_gadget *gadget, const struct usb_ctrlrequest *ctrl);
+static void android_disconnect(struct usb_gadget *gadget);
+#endif
+
 static int configfs_composite_setup(struct usb_gadget *gadget,
 		const struct usb_ctrlrequest *ctrl)
 {
@@ -1809,7 +1814,7 @@ static void android_disconnect(struct usb_gadget *gadget)
 
 	composite_disconnect(gadget);
 }
-#endif
+#endif /* CONFIG_USB_CONFIGFS_UEVENT */
 
 static const struct usb_gadget_driver configfs_driver_template = {
     .bind           = configfs_composite_bind,
