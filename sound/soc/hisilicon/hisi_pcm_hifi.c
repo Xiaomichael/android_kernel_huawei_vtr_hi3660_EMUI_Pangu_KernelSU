@@ -1871,7 +1871,7 @@ static int preallocate_dma_buffer(struct snd_pcm *pcm, int stream)
 	buf->private_data = NULL;
 	buf->addr = g_pcm_dma_buf_config[pcm->device][stream].pcm_dma_buf_base;
 	buf->bytes = g_pcm_dma_buf_config[pcm->device][stream].pcm_dma_buf_len;
-	buf->area = ioremap(buf->addr, buf->bytes);
+	buf->area = ioremap_wc(buf->addr, buf->bytes);
 
 	if (!buf->area) {
 		loge("dma buf area error\n");
