@@ -188,7 +188,7 @@ static int __dwc3_set_mode(struct dwc3 *dwc)
 	return ret;
 }
 
-static int dwc3_set_mode(struct dwc3 *dwc, u32 mode)
+int dwc3_set_mode(struct dwc3 *dwc, u32 mode)
 {
 	unsigned long flags;
 	int ret;

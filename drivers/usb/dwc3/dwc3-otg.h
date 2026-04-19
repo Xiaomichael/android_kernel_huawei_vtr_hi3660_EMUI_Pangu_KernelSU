@@ -80,6 +80,7 @@ extern struct dwc3_otg *dwc_otg_handler;
 int dwc3_otg_init(struct dwc3 *dwc);
 void dwc3_otg_exit(struct dwc3 *dwc);
 int dwc3_otg_work(struct dwc3_otg *dwc_otg, int evt);
+int dwc3_set_mode(struct dwc3 *dwc, u32 mode);
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 9, 0))
 int dwc3_otg_resume(struct dwc3 *dwc);
 int dwc3_otg_suspend(struct dwc3 *dwc);
@@ -105,6 +106,9 @@ static inline int dwc3_otg_suspend(struct dwc3 *dwc)
 	return 0;
 }
 #endif
+static inline void dwc3_set_mode(struct dwc3 *dwc, u32 mode)
+{
+}
 #endif
 
 #endif /* __DRIVERS_USB_DWC3_OTG_H */
