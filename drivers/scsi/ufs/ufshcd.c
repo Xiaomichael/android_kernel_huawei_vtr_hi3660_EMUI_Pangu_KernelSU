@@ -1012,6 +1012,11 @@ static bool ufshcd_is_unipro_pa_params_tuning_req(struct ufs_hba *hba)
 		return false;
 }
 
+static inline void ufshcd_release(struct ufs_hba *hba)
+{
+	pm_runtime_put_sync(hba->dev);
+}
+
 #ifdef CONFIG_HISI_SCSI_UFS_DUMP
 static inline void ufshcd_dump_scsi_command(struct ufs_hba *hba, unsigned int task_tag)
 {
