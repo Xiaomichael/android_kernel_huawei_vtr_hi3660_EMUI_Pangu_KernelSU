@@ -463,7 +463,6 @@ static void hkadc_sample_temp(struct work_struct *work)
                 temp = temp * 1000;
             if (ret)
                 temp = DEFAULT_SHELL_TEMP;
-            put_thermal_zone(tz);
         }
 
 #ifdef CONFIG_HISI_SHELL_TEMP_DEBUG
@@ -519,7 +518,6 @@ static int fill_sensor_coef(struct hisi_shell_t *hisi_shell, struct device_node 
         } else if (!IS_ERR(tz = thermal_zone_get_zone_by_name(ptr_type))) {
             pr_info("%s, %s, terminal sensor\n", __func__, hisi_shell->tz_dev->type);
             shell_sensor->sensor_type = TYPE_TERMINAL;
-            put_thermal_zone(tz);
         } else {
             pr_err("%s, %s, %s, sensor id get err\n", __func__, hisi_shell->tz_dev->type, ptr_type);
             shell_sensor->sensor_type = TYPE_UNKNOWN;

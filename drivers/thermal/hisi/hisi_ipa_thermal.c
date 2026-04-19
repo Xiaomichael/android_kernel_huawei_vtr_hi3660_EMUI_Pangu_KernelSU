@@ -637,7 +637,7 @@ static unsigned long get_temperature_scale(int temp)
     int capacitance[5] = {0};
 
     for (i = 0; i < 4; i++) {
-        ret = kstrtoint(caps->temperature_scale_capacitance[i], 10, &capacitance[i]);
+        ret = kstrtoint(g_caps.temperature_scale_capacitance[i], 10, &capacitance[i]);
         if (ret) {
             pr_warn("%s: kstrtoint failed for index %d\n", __func__, i);
             capacitance[i] = 0;
@@ -646,7 +646,7 @@ static unsigned long get_temperature_scale(int temp)
         t_exp *= temp;
     }
 
-    ret = kstrtoint(caps->temperature_scale_capacitance[4], 10, &capacitance[4]);
+    ret = kstrtoint(g_caps.temperature_scale_capacitance[4], 10, &capacitance[4]);
     if (ret) {
         pr_warn("%s: kstrtoint failed for denominator\n", __func__);
         return 0;
