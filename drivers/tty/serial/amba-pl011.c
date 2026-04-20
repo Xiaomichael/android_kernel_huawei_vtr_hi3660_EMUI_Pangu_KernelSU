@@ -78,6 +78,7 @@
 #define UART_DR_ERROR		(UART011_DR_OE|UART011_DR_BE|UART011_DR_PE|UART011_DR_FE)
 #define UART_DUMMY_DR_RX	(1 << 16)
 
+#ifndef CONFIG_HISI_AMBA_PL011
 static u16 pl011_std_offsets[REG_ARRAY_SIZE] = {
 	[REG_DR] = UART01x_DR,
 	[REG_FR] = UART01x_FR,
@@ -93,7 +94,9 @@ static u16 pl011_std_offsets[REG_ARRAY_SIZE] = {
 	[REG_ICR] = UART011_ICR,
 	[REG_DMACR] = UART011_DMACR,
 };
-#ifdef CONFIG_HISI_AMBA_PL011
+#endif
+
+#ifndef CONFIG_HISI_AMBA_PL011
 /* There is by now at least one vendor with differing details, so handle it */
 struct vendor_data {
 	const u16		*reg_offset;
@@ -113,7 +116,7 @@ struct vendor_data {
 };
 #endif
 
-#ifdef CONFIG_HISI_AMBA_PL011
+#ifndef CONFIG_HISI_AMBA_PL011
 static unsigned int get_fifosize_arm(struct amba_device *dev)
 {
 	return amba_rev(dev) < 3 ? 16 : 32;

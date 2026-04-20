@@ -25,7 +25,7 @@ struct uart_amba_port *amba_ports[UART_NR];
 static int console_fifo_enable_status = -1;
 int console_uart_name_is_ttyAMA = 0;
 
-static u16 pl011_std_offsets[REG_ARRAY_SIZE] = {
+u16 pl011_std_offsets[REG_ARRAY_SIZE] = {
 	[REG_DR] = UART01x_DR,
 	[REG_FR] = UART01x_FR,
 	[REG_LCRH_RX] = UART011_LCRH,
@@ -41,7 +41,7 @@ static u16 pl011_std_offsets[REG_ARRAY_SIZE] = {
 	[REG_DMACR] = UART011_DMACR,
 };
 
-static struct vendor_data vendor_arm = {
+struct vendor_data vendor_arm = {
 	.reg_offset		= pl011_std_offsets,
 	.ifls			= UART011_IFLS_RX2_8|UART011_IFLS_TX4_8 | (4<<6),
 	.fr_busy		= UART01x_FR_BUSY,
