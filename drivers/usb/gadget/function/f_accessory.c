@@ -42,8 +42,6 @@
 #include <linux/configfs.h>
 #include <linux/usb/composite.h>
 
-#include "function-hisi/f_accessory_hisi.c"
-
 #define MAX_INST_NAME_LEN        40
 #define BULK_BUFFER_SIZE    16384
 #define ACC_STRING_SIZE     256

@@ -30,8 +30,6 @@
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 
-#include "function-hisi/f_audio_source_hisi.c"
-
 #define SAMPLE_RATE 44100
 #define FRAMES_PER_MSEC (SAMPLE_RATE / 1000)
 
