@@ -28,7 +28,7 @@ static int is_encryption_context_consistent_with_policy(struct inode *inode,
 	if (!inode->i_sb->s_cop->get_context)
 		return 0;
 
-	res = inode->i_sb->s_cop->get_context(inode, &ctx, sizeof(ctx));
+	res = inode->i_sb->s_cop->get_context(inode, &ctx, sizeof(ctx), NULL);
 	if (res != sizeof(ctx))
 		return 0;
 
@@ -79,7 +79,7 @@ static int create_encryption_context_from_policy(struct inode *inode,
 				FS_KEY_DESC_PREFIX, FS_KEY_DESC_PREFIX_SIZE);
 	if (IS_ERR(keyring_key)) {
 		if (inode->i_sb->s_cop->key_prefix) {
-			u8 *prefix = inode->i_sb->s_cop->key_prefix;
+			const u8 *prefix = inode->i_sb->s_cop->key_prefix;
 			int prefix_size;
 
 			prefix_size = strlen(prefix);
