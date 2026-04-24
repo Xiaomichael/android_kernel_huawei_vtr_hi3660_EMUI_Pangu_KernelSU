@@ -207,6 +207,11 @@ repeat:
 			leader->exit_state = EXIT_DEAD;
 	}
 
+	/* backport: task is fully dead, pid has been freed */
+	task_lock(p);
+	p->flags |= PF_EXITPIDONE;
+	task_unlock(p);
+
 	write_unlock_irq(&tasklist_lock);
 	release_thread(p);
 	call_rcu(&p->rcu, delayed_put_task_struct);
@@ -868,6 +873,13 @@ void __noreturn do_exit(long code)
 	 * Make sure we are holding no locks:
 	 */
 	debug_check_no_locks_held();
+
+ 	/*
+	 * We can do this unlocked here. The futex code uses this flag
+	 * just to verify whether the pi state cleanup has been done
+	 * or not. In the worst case it loops once more.
+	 */
+	tsk->flags |= PF_EXITPIDONE;
 
 	if (tsk->io_context)
 		exit_io_context(tsk);

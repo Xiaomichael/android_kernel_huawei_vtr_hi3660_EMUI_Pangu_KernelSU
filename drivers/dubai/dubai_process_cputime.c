@@ -86,7 +86,7 @@ struct dubai_cputime {
 	char name[NAME_LEN];
 } __packed;
 
-static struct dubai_thread_entry {
+struct dubai_thread_entry {
 	pid_t pid;
 	cputime_t utime;
 	cputime_t stime;
@@ -98,7 +98,7 @@ static struct dubai_thread_entry {
 	struct list_head node;
 };
 
-static struct dubai_proc_entry {
+struct dubai_proc_entry {
 	pid_t tgid;
 	uid_t uid;
 	cputime_t utime;
@@ -116,7 +116,7 @@ static struct dubai_proc_entry {
 	struct hlist_node hash;
 };
 
-static struct dubai_cputime_transmit {
+struct dubai_cputime_transmit {
 	long long timestamp;
 	int type;
 	int count;
