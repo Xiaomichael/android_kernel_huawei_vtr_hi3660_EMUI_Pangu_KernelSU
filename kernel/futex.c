@@ -783,7 +783,9 @@ static int cmpxchg_futex_value_locked(u32 *curval, u32 __user *uaddr,
 	int ret;
 
 	pagefault_disable();
+	uaccess_enable();	/* required after futex atomic ops stopped doing it */
 	ret = futex_atomic_cmpxchg_inatomic(curval, uaddr, uval, newval);
+	uaccess_disable();
 	pagefault_enable();
 
 	return ret;
@@ -1746,7 +1748,9 @@ static int futex_atomic_op_inuser(unsigned int encoded_op, u32 __user *uaddr)
 	if (!access_ok(VERIFY_WRITE, uaddr, sizeof(u32)))
 		return -EFAULT;
 
+	uaccess_enable();
 	ret = arch_futex_atomic_op_inuser(op, oparg, &oldval, uaddr);
+	uaccess_disable();
 	if (ret)
 		return ret;
 
