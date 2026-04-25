@@ -10,8 +10,8 @@
 #include <linux/types.h>
 #include <linux/bug.h>
 #include <linux/errno.h>
+#include <linux/restart_block.h>
 
-struct restart_block;
 struct timespec;
 struct compat_timespec;
 
