@@ -1,5 +1,3 @@
-
-
 #include <linux/fs.h>
 struct configfs_dirent {
 	atomic_t		s_count;
@@ -53,9 +51,7 @@ static inline void gadget_unlink_functions(struct gadget_info *gi)
 		list_for_each_entry(item,
 				&gi->configs_group.cg_children, ci_entry) {
 			pr_info("unlink %s\n", item->ci_name);
-			mutex_unlock(&gi->lock);
 			gadget_config_unlink_functions(item->ci_dentry);
-			mutex_lock(&gi->lock);
 		}
 	}
 }

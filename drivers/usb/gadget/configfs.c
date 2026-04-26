@@ -99,6 +99,8 @@ struct gadget_info {
 	char qw_sign[OS_STRING_QW_SIGN_LEN];
 	spinlock_t spinlock;
 	bool unbind;
+	struct delayed_work bind_work;
+	char *pending_udc_name;
 #ifdef CONFIG_USB_CONFIGFS_UEVENT
 	bool connected;
 	bool sw_connected;
@@ -315,6 +317,34 @@ static int unregister_gadget(struct gadget_info *gi)
 	return 0;
 }
 
+static void configfs_try_udc_bind(struct work_struct *w)
+{
+    struct gadget_info *gi = container_of(to_delayed_work(w),
+                                          struct gadget_info, bind_work);
+    int ret;
+
+    mutex_lock(&gi->lock);
+    if (!gi->pending_udc_name) {
+        mutex_unlock(&gi->lock);
+        return;
+    }
+
+    gi->composite.gadget_driver.udc_name = gi->pending_udc_name;
+    ret = usb_gadget_probe_driver(&gi->composite.gadget_driver);
+    if (ret == -ENODEV) {
+        gi->composite.gadget_driver.udc_name = NULL;  /* 重要：避免残留 */
+        schedule_delayed_work(&gi->bind_work, msecs_to_jiffies(500));
+    } else {
+        if (ret) {
+            pr_err("bind retry failed %d\n", ret);
+            kfree(gi->pending_udc_name);
+            gi->composite.gadget_driver.udc_name = NULL;
+        }
+        gi->pending_udc_name = NULL;  /* 成功或非ENODEV错误都结束 */
+    }
+    mutex_unlock(&gi->lock);
+}
+
 #ifdef CONFIG_HISI_USB_CONFIGFS
 #include "configfs_unlink_funs.c"
 #endif
@@ -338,27 +368,34 @@ static ssize_t gadget_dev_desc_UDC_store(struct config_item *item,
 	mutex_lock(&gi->lock);
 
 	if (!strlen(name) || strcmp(name, "none") == 0) {
+		cancel_delayed_work(&gi->bind_work);
+		kfree(gi->pending_udc_name);
+		gi->pending_udc_name = NULL;
+
 		ret = unregister_gadget(gi);
 		if (ret && ret != -ENODEV)
 			goto err;
 
-#ifdef CONFIG_HISI_USB_CONFIGFS
-		gadget_unlink_functions(gi);
-#endif
-
 		kfree(name);
-	} else {
-		if (gi->composite.gadget_driver.udc_name) {
-			ret = -EBUSY;
-			goto err;
-		}
-		gi->composite.gadget_driver.udc_name = name;
-		ret = usb_gadget_probe_driver(&gi->composite.gadget_driver);
-		if (ret) {
-			gi->composite.gadget_driver.udc_name = NULL;
-			goto err;
-		}
-	}
+    } else {
+        if (gi->composite.gadget_driver.udc_name) {
+            ret = -EBUSY;
+            goto err;
+        }
+        gi->composite.gadget_driver.udc_name = name;
+        ret = usb_gadget_probe_driver(&gi->composite.gadget_driver);
+        if (ret == -ENODEV) {
+            // UDC 尚未就绪，移交自动重试
+			// UDC is not ready, handover auto-retry
+            gi->pending_udc_name = name;       // name 已分配，让重试机制接管 //name is assigned to let the retry mechanism take over
+            gi->composite.gadget_driver.udc_name = NULL;
+            schedule_delayed_work(&gi->bind_work, msecs_to_jiffies(500));
+            ret = 0;  // 对用户态返回成功，实际由内核完成 //The user state is returned successfully, and it is actually completed by the kernel
+        } else if (ret) {
+            gi->composite.gadget_driver.udc_name = NULL;
+            goto err;
+        }
+    }
 	mutex_unlock(&gi->lock);
 	return len;
 err:
@@ -413,6 +450,9 @@ static inline struct usb_function_instance *to_usb_function_instance(
 static void gadget_info_attr_release(struct config_item *item)
 {
 	struct gadget_info *gi = to_gadget_info(item);
+
+	cancel_delayed_work_sync(&gi->bind_work);
+	kfree(gi->pending_udc_name);
 
 	WARN_ON(!list_empty(&gi->cdev.configs));
 	WARN_ON(!list_empty(&gi->string_list));
@@ -1580,6 +1620,8 @@ static void configfs_composite_unbind(struct usb_gadget *gadget)
 	usb_ep_autoconfig_reset(cdev->gadget);
 	spin_lock_irqsave(&gi->spinlock, flags);
 	cdev->gadget = NULL;
+	cdev->deactivations = 0;
+	gadget->deactivated = 0;   
 	set_gadget_data(gadget, NULL);
 #ifdef CONFIG_HISI_USB_CONFIGFS
 	cdev->req = NULL;
@@ -2017,6 +2059,9 @@ static struct config_group *gadgets_make(
 	gi->composite.suspend = NULL;
 	gi->composite.resume = NULL;
 	gi->composite.max_speed = USB_SPEED_SUPER_PLUS;
+
+	INIT_DELAYED_WORK(&gi->bind_work, configfs_try_udc_bind);
+	gi->pending_udc_name = NULL;
 
 	spin_lock_init(&gi->spinlock);
 	mutex_init(&gi->lock);
