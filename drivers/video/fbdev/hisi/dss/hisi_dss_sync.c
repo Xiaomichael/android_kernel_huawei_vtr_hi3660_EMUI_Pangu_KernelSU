@@ -427,6 +427,7 @@ int hisi_dss_get_sync_fence_fd(struct hisi_dss_fence *fence)
 	struct sync_file *sync_file;
 
 	if (!fence) {
+		pr_err("%s: fence is NULL\n", __func__);
 		HISI_FB_ERR("invalid parameters\n");
 		return -EINVAL;
 	}

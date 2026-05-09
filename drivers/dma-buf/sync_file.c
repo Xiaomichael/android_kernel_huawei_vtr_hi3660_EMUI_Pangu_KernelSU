@@ -84,6 +84,11 @@ struct sync_file *sync_file_create(struct fence *fence)
 {
 	struct sync_file *sync_file;
 
+    if (!fence) {
+        pr_err("%s: fence is NULL\n", __func__);
+        return NULL;
+    }
+
 	sync_file = sync_file_alloc();
 	if (!sync_file)
 		return NULL;
