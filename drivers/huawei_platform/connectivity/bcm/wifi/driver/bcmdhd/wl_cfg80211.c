@@ -9150,6 +9150,7 @@ wl_cfg80211_send_action_frame(struct wiphy *wiphy, struct net_device *dev,
 	bool ack = false;
 	u8 category, action;
 	s32 tx_retry;
+	unsigned long start_tx = 0;
 	struct p2p_config_af_params config_af_params;
 #ifdef VSDB
 	ulong off_chan_started_jiffies = 0;
@@ -9387,6 +9388,7 @@ wl_cfg80211_send_action_frame(struct wiphy *wiphy, struct net_device *dev,
 	wl_cfgp2p_need_wait_actfrmae(cfg, action_frame->data, action_frame->len, true);
 
 	dwell_jiffies = jiffies;
+	start_tx = jiffies;
 #endif
 	/* Now send a tx action frame */
 	int ret_tmp = wl_cfgp2p_tx_action_frame(cfg, dev, af_params, bssidx);
@@ -9397,10 +9399,12 @@ wl_cfg80211_send_action_frame(struct wiphy *wiphy, struct net_device *dev,
 
 	/* if failed, retry it. tx_retry_max value is configure by .... */
 	while ((ack == false) && (tx_retry++ < config_af_params.max_tx_retry) &&
-			!dwell_overflow) {
+		!dwell_overflow &&
+		(jiffies_to_msecs(jiffies - start_tx) < 2000)) {
 #else
 	/* if failed, retry it. tx_retry_max value is configure by .... */
-	while ((ack == false) && (tx_retry++ < config_af_params.max_tx_retry)) {
+	while ((ack == false) && (tx_retry++ < config_af_params.max_tx_retry) &&
+		(jiffies_to_msecs(jiffies - start_tx) < 2000)) {
 #endif
 #ifdef VSDB
 		if (af_params->channel) {
