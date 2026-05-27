@@ -1181,14 +1181,6 @@ void *vm_map_ram(struct page **pages, unsigned int count, int node, pgprot_t pro
 		return NULL;
 	}
 
-	/* KMEMLEAK修复：确保映射区域已初始化 */
-	/* KMEMLEAK fix: Make sure the mapped area is initialized */
-#ifdef CONFIG_DEBUG_KMEMLEAK
-	if (!(prot & __PG_UNINITIALIZED)) {
-		memset(mem, 0, size);
-	}
-#endif
-
 	return mem;
 }
 EXPORT_SYMBOL(vm_map_ram);
