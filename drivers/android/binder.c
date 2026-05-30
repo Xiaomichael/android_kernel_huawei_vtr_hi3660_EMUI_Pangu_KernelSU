@@ -3200,6 +3200,9 @@ static void binder_transaction(struct binder_proc *proc,
 			if (target_node && target_proc == proc) {
 				binder_user_error("%d:%d got transaction to context manager from process owning it\n",
 						  proc->pid, thread->pid);
+				pr_err_ratelimited("binder: %d:%d tried to send transaction to itself (node %d, ptr %llx, cookie %llx)\n",
+					proc->pid, thread->pid, target_node->debug_id,
+					(u64)target_node->ptr, (u64)target_node->cookie);
 				return_error = BR_FAILED_REPLY;
 				return_error_param = -EINVAL;
 				return_error_line = __LINE__;
@@ -3791,58 +3794,7 @@ static int binder_thread_write(struct binder_proc *proc,
 				return -EFAULT;
 			ptr += sizeof(uint32_t);
 
-			/*
-			 * Handle special case for handle 0 (context manager).
-			 * Upstream fix: prevent context manager from
-			 * incrementing its own ref and avoid UAF.
-			 */
-			if (target == 0 && context->binder_context_mgr_node &&
-			    (cmd == BC_INCREFS || cmd == BC_ACQUIRE)) {
-				if (context->binder_context_mgr_node->proc == proc) {
-					binder_user_error("%d:%d context manager tried to acquire desc 0\n",
-							  proc->pid, thread->pid);
-					return -EINVAL;
-				}
-				binder_proc_lock(proc);
-				ref = binder_get_ref_for_node_olocked(proc,
-						context->binder_context_mgr_node, NULL);
-				if (ref) {
-					rdata = ref->data;
-					if (rdata.desc != target) {
-						binder_user_error("%d:%d tried to acquire reference to desc 0, got %d instead\n",
-							proc->pid, thread->pid, rdata.desc);
-					}
-					/* Perform the increment operation */
-					if (increment) {
-						ret = binder_inc_ref_olocked(ref, strong, NULL);
-						if (!ret)
-							rdata = ref->data; /* update rdata after inc */
-					} else {
-						/* decrement on handle 0 not expected here */
-						ret = -EINVAL;
-					}
-				} else {
-					ret = -EINVAL;
-				}
-				binder_proc_unlock(proc);
-			} else {
-				/* Normal handle: look up ref and apply inc/dec */
-				binder_proc_lock(proc);
-				ref = binder_get_ref_olocked(proc, target, strong);
-				if (ref) {
-					rdata = ref->data;
-					if (increment)
-						ret = binder_inc_ref_olocked(ref, strong, NULL);
-					else
-						ret = binder_dec_ref_olocked(ref, strong);
-					if (!ret)
-						rdata = ref->data; /* update after operation */
-				} else {
-					ret = -EINVAL;
-				}
-				binder_proc_unlock(proc);
-			}
-
+			/* Set debug_string based on command */
 			switch (cmd) {
 			case BC_INCREFS:
 				debug_string = "IncRefs";
@@ -3859,16 +3811,95 @@ static int binder_thread_write(struct binder_proc *proc,
 				break;
 			}
 
+			/*
+			 * Handle 0 is reserved for the context manager.
+			 * For any command targeting handle 0, we always obtain
+			 * the ref via binder_get_ref_for_node_olocked().
+			 * If the ref does not exist yet and we are incrementing,
+			 * we create a new ref.
+			 * This ensures the ref exists and avoids "invalid ref 0".
+			 */
+			if (target == 0 && context->binder_context_mgr_node) {
+				/* Reject operations from the context manager process itself */
+				if (context->binder_context_mgr_node->proc == proc) {
+					binder_user_error("%d:%d context manager tried to %s handle 0\n",
+							  proc->pid, thread->pid, debug_string);
+					ret = -EINVAL;
+					break;
+				}
+				binder_proc_lock(proc);
+				/* First try to get existing ref */
+				ref = binder_get_ref_for_node_olocked(proc,
+						context->binder_context_mgr_node, NULL);
+				if (!ref && increment) {
+					/* No ref yet, and we are incrementing -> create a new ref */
+					struct binder_ref *new_ref;
+					new_ref = kzalloc(sizeof(*new_ref), GFP_KERNEL);
+					if (!new_ref) {
+						binder_proc_unlock(proc);
+						ret = -ENOMEM;
+						break;
+					}
+					ref = binder_get_ref_for_node_olocked(proc,
+							context->binder_context_mgr_node, new_ref);
+					if (ref != new_ref) {
+						/* Another thread already created the ref, free our copy */
+						kfree(new_ref);
+					}
+					if (!ref) {
+						/* Should never happen, but handle gracefully */
+						binder_proc_unlock(proc);
+						binder_user_error("%d:%d %s failed: cannot get or create ref for context manager (handle 0)\n",
+								  proc->pid, thread->pid, debug_string);
+						ret = -EINVAL;
+						break;
+					}
+				}
+				if (ref) {
+					rdata = ref->data;
+					if (increment) {
+						ret = binder_inc_ref_olocked(ref, strong, NULL);
+						if (!ret)
+							rdata = ref->data; /* update after inc */
+					} else {
+						bool delete_ref = binder_dec_ref_olocked(ref, strong);
+						if (!delete_ref)
+							rdata = ref->data;
+						else
+							ret = 0; /* ref already freed, no further action */
+					}
+				} else {
+					/* ref is NULL and we are not incrementing (i.e., decrement on non-existent ref) */
+					binder_user_error("%d:%d %s failed: cannot get ref for context manager (handle 0)\n",
+							  proc->pid, thread->pid, debug_string);
+					ret = -EINVAL;
+				}
+				binder_proc_unlock(proc);
+			} else {
+				/* Normal handle: look up ref and apply inc/dec */
+				binder_proc_lock(proc);
+				ref = binder_get_ref_olocked(proc, target, strong);
+				if (ref) {
+					rdata = ref->data;
+					if (increment) {
+						ret = binder_inc_ref_olocked(ref, strong, NULL);
+						if (!ret)
+							rdata = ref->data;
+					} else {
+						bool delete_ref = binder_dec_ref_olocked(ref, strong);
+						if (!delete_ref)
+							rdata = ref->data;
+					}
+				} else {
+					ret = -EINVAL;
+				}
+				binder_proc_unlock(proc);
+			}
+
 			if (ret) {
 				binder_user_error("%d:%d %s %d refcount change on invalid ref %d ret %d\n",
-					proc->pid, thread->pid, debug_string,
-					strong, target, ret);
-				if (ref && !increment) {
-					/*
-					 * Decrement failed but ref might have been cleaned up.
-					 * Let the error path handle it without double free.
-					 */
-				}
+						  proc->pid, thread->pid, debug_string,
+						  strong, target, ret);
 				break;
 			}
 
