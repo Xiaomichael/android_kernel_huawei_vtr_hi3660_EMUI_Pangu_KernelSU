@@ -79,9 +79,9 @@ static void kernel_cpuid_notify_bl31(void *info)
 	if ( unlikely(0 == cpumask_test_cpu(cpu, &kernel_bl31_cpuid_notify_mask)) ) {
 		ret = __kernel_cpuid_notify_bl31((u64)cpu);
 		if (ret) {
-			BB_PRINT_ERR("[%s], cpu %d fail ret %llu\n", __func__, cpu, ret);
+			BB_PRINT_DBG("[%s], cpu %d fail ret %llu\n", __func__, cpu, ret);
 		} else {
-			BB_PRINT_PN("[%s], cpu %d success\n", __func__, cpu);
+			BB_PRINT_DBG("[%s], cpu %d success\n", __func__, cpu);
 			cpumask_set_cpu(cpu, &kernel_bl31_cpuid_notify_mask);
 		}
 	}

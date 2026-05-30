@@ -847,10 +847,15 @@ static void dwc3_ep0_inspect_setup(struct dwc3 *dwc,
 
 out:
 	if (ret < 0) {
-		dev_err(dwc->dev, "ep0 setup error, ret %d!\n", ret);
-		dev_err(dwc->dev, "ctrl: %02x %02x %04x %04x %04x\n",
-			    ctrl->bRequestType, ctrl->bRequest,
-			    ctrl->wValue, ctrl->wIndex, ctrl->wLength);
+		/* If standard requests are not supported, silent processing prevents printing errors */
+		if ((ctrl->bRequestType & USB_TYPE_MASK) == USB_TYPE_STANDARD) {
+			dev_dbg(dwc->dev, "Unsupported standard request, stall\n");
+		} else {
+			dev_err(dwc->dev, "ep0 setup error, ret %d!\n", ret);
+			dev_err(dwc->dev, "ctrl: %02x %02x %04x %04x %04x\n",
+				    ctrl->bRequestType, ctrl->bRequest,
+				    ctrl->wValue, ctrl->wIndex, ctrl->wLength);
+		}
 		dwc3_ep0_stall_and_restart(dwc);
 	}
 }
