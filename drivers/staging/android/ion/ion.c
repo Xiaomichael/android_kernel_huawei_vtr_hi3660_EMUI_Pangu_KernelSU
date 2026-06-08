@@ -803,8 +803,9 @@ int ion_map_iommu(struct ion_client *client, struct ion_handle *handle,
 
 	/* map tile format should be same as last time */
 	if (format->is_tile) {
-		pr_err("tile don't support any more!\n");
-		return -EINVAL;
+		pr_warn_ratelimited("tile request from %s (pid %d) - ignoring is_tile flag, fallback to linear mapping. Please update userspace.\n",
+							current->comm, current->pid);
+		format->is_tile = 0;
 	}
 
 	/* lock client */
