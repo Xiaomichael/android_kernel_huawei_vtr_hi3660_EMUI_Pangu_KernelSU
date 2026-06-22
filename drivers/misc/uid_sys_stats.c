@@ -1183,13 +1183,16 @@ static bool pid_group_leader_alive(const struct task_struct *task)
 		return true;
 
 	leader = task->group_leader;
-	if ((leader == NULL)
-		|| (leader->flags & PF_EXITING)
-		|| (leader->flags & PF_EXITPIDONE)
-		|| (leader->flags & PF_SIGNALED)
-		|| (pid_get_task_state(leader) >= TASK_STATE_DEAD)) {
+	if (!leader)
 		return false;
-	}
+
+	/* Check if the process is quitting or has exited */
+	if (leader->flags & PF_EXITING)
+		return false;
+	if (leader->exit_state)
+		return false;
+	if (pid_get_task_state(leader) >= TASK_STATE_DEAD)
+		return false;
 
 	return true;
 }
