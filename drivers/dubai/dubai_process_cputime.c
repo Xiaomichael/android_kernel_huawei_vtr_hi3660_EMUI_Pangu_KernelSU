@@ -170,22 +170,18 @@ static inline int dubai_get_task_state(const struct task_struct *task)
 static bool dubai_task_alive(const struct task_struct *task)
 {
 #ifdef CONFIG_HUAWEI_DUBAI_TASK_CPU_POWER
-	/*
-	 * if this task is exiting, we have already accounted for the
-	 * time and power.
-	 */
-	if (task->cpu_power == ULLONG_MAX)
-		return false;
+    /* If the task has exited, cpu_power will be set to ULLONG_MAX */
+    if (task == NULL || task->cpu_power == ULLONG_MAX)
+        return false;
+    return true;
 #else
-	if ((task == NULL)
-		|| (task->flags & PF_EXITING)
-		|| (task->flags & PF_EXITPIDONE)
-		|| (task->flags & PF_SIGNALED)
-		|| (dubai_get_task_state(task) >= TASK_STATE_DEAD))
-		return false;
+    if (task == NULL ||
+        (task->flags & PF_EXITING) ||
+        (task->flags & PF_SIGNALED) ||
+        dubai_get_task_state(task) >= TASK_STATE_DEAD)
+        return false;
+    return true;
 #endif
-	else
-		return true;
 }
 
 static void dubai_copy_name(char *to, const char *from)
