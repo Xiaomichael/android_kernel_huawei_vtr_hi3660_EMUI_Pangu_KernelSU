@@ -27,6 +27,8 @@
 
 			hisi,tsensor_adc_start_value = <116>;
 			hisi,tsensor_adc_end_value = <922>;
+			hisi,pvtsensor_adc_start_value = <116>;
+			hisi,pvtsensor_adc_end_value = <922>;
 			hisi_tsens_cluster0 {
 				temp_throttling = <0>;
 				temp_shutdown = <105>;

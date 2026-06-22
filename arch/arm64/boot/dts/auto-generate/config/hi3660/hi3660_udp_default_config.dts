@@ -891,7 +891,7 @@
 
 	pmx12: pinmux@fff118b8 {
 		compatible = "pinconf-single", "pinctrl-singlei2";
-		reg = <0x0 0xfff118b8 0x0 0x4>;
+		reg = <0x0 0xfff118b8 0x0 0x1000>;
 		//ranges;
 		pinctrl-single,register-width = <32>;
 	};
