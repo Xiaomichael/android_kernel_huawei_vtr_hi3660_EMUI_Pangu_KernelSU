@@ -1465,6 +1465,10 @@ static struct binder_node *binder_get_node_ilocked(struct binder_proc *proc,
 		else if (ptr > node->ptr)
 			n = n->rb_right;
 		else {
+            /* Added: If a node has lost its proc (releasing), it will be considered invalid */
+            if (unlikely(!node->proc)) {
+                return NULL;
+            }
 			/*
 			 * take an implicit weak reference
 			 * to ensure node stays alive until
@@ -2150,6 +2154,13 @@ static int binder_inc_ref_for_node(struct binder_proc *proc,
 	struct binder_ref *new_ref = NULL;
 	int ret = 0;
 
+    /* New checks to prevent incoming invalid pointers */
+    if (unlikely(!proc || !node)) {
+        pr_err_ratelimited("binder: %s: invalid proc=%pK node=%pK\n",
+                           __func__, proc, node);
+        return -EINVAL;
+    }
+
 	binder_proc_lock(proc);
 	ref = binder_get_ref_for_node_olocked(proc, node, NULL);
 	if (!ref) {
@@ -2672,6 +2683,11 @@ static int binder_translate_binder(struct flat_binder_object *fp,
 		if (!node)
 			return -ENOMEM;
 	}
+    /* Added: Check if the node is still valid (proc is not null) */
+    if (unlikely(!node->proc)) {
+        binder_put_node(node);
+        return -EINVAL;
+    }
 	if (fp->cookie != node->cookie) {
 		binder_user_error("%d:%d sending u%016llx node %d, cookie mismatch %016llx != %016llx\n",
 				  proc->pid, thread->pid, (u64)fp->binder,
