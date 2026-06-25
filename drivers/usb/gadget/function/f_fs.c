@@ -762,8 +762,17 @@ static void ffs_user_copy_worker(struct work_struct *work)
 {
 	struct ffs_io_data *io_data = container_of(work, struct ffs_io_data,
 						   work);
+	struct kiocb *kiocb = READ_ONCE(io_data->kiocb);
 	int ret = io_data->req_status;
-	bool kiocb_has_eventfd = io_data->kiocb->ki_flags & IOCB_EVENTFD;
+
+	/* If the request was cancelled, kiocb is NULL, just clean up */
+	if (unlikely(!kiocb)) {
+		if (io_data->read)
+			kfree(io_data->to_free);
+		kfree(io_data->buf);
+		kfree(io_data);
+		return;
+	}
 
 	if (io_data->read && ret > 0) {
 		mm_segment_t oldfs = get_fs();
@@ -775,9 +784,9 @@ static void ffs_user_copy_worker(struct work_struct *work)
 		set_fs(oldfs);
 	}
 
-	io_data->kiocb->ki_complete(io_data->kiocb, ret, ret);
+	kiocb->ki_complete(kiocb, ret, ret);
 
-	if (io_data->ffs->ffs_eventfd && !kiocb_has_eventfd)
+	if (io_data->ffs->ffs_eventfd && !(kiocb->ki_flags & IOCB_EVENTFD))
 		eventfd_signal(io_data->ffs->ffs_eventfd, 1);
 
 	if (io_data->read)
@@ -1102,12 +1111,16 @@ static int ffs_aio_cancel(struct kiocb *kiocb)
 
 	ENTER();
 
-	spin_lock_irqsave(&epfile->ffs->eps_lock, flags);
+ 	spin_lock_irqsave(&epfile->ffs->eps_lock, flags);
 
-	if (likely(io_data && io_data->ep && io_data->req))
-		value = usb_ep_dequeue(io_data->ep, io_data->req);
-	else
-		value = -EINVAL;
+ 	if (likely(io_data && io_data->ep && io_data->req)) {
+ 		value = usb_ep_dequeue(io_data->ep, io_data->req);
+		if (value == 0) {
+			/* Mark kiocb as cancelled so the completion worker skips it */
+			WRITE_ONCE(io_data->kiocb, NULL);
+		}
+	} else
+ 		value = -EINVAL;
 
 	spin_unlock_irqrestore(&epfile->ffs->eps_lock, flags);
 

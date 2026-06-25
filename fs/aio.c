@@ -1089,6 +1089,12 @@ out:
 static void aio_complete(struct kiocb *kiocb, long res, long res2)
 {
 	struct aio_kiocb *iocb = container_of(kiocb, struct aio_kiocb, common);
+
+	if (unlikely(!kiocb)) {
+		pr_warn_once("aio_complete called with NULL kiocb\n");
+		return;
+	}
+
 	struct kioctx	*ctx = iocb->ki_ctx;
 	struct aio_ring	*ring;
 	struct io_event	*ev_page, *event;
