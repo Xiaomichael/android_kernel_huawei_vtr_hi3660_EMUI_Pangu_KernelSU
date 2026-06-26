@@ -446,6 +446,14 @@ int ext4_htree_store_dirent(struct file *dir_file, __u32 hash,
 	struct dir_private_info *info;
 	int len;
 
+	/* Prevents corrupted directory entries from causing abnormally large allocations */
+	if (unlikely(!ent_name || ent_name->len == 0 || ent_name->len > EXT4_NAME_LEN)) {
+		struct inode *inode = file_inode(dir_file);
+		EXT4_ERROR_INODE(inode, "bad ent_name->len %d in htree store",
+				 ent_name ? ent_name->len : -1);
+		return -EFSCORRUPTED;
+	}
+
 	info = dir_file->private_data;
 	p = &info->root.rb_node;
 
