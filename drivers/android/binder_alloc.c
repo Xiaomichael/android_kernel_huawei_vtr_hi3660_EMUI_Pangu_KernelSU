@@ -503,6 +503,9 @@ static struct binder_buffer *binder_alloc_new_buf_locked(
 	return buffer;
 
 err_alloc_buf_struct_failed:
+	/* Reinsert the original buffer to prevent free trees from losing memory blocks */
+	binder_insert_free_buffer(alloc, buffer);
+
 	binder_update_page_range(alloc, 0,
 				 (void *)PAGE_ALIGN((uintptr_t)buffer->data),
 				 end_page_addr);
