@@ -2233,10 +2233,15 @@ static void dw_mci_tasklet_func(unsigned long priv)
 					continue;
 				}
 
-				send_stop_abort(host, data);
-				dw_mci_stop_dma(host);
-				state = STATE_SENDING_STOP;
-				break;
+				if (cmd_data && cmd != cmd_data->stop) {
+					send_stop_abort(host, data);
+					dw_mci_stop_dma(host);
+					state = STATE_SENDING_STOP;
+					break;
+				}
+
+				dw_mci_request_end(host, host->mrq);
+				goto unlock;
 			}
 
 			if (!host->mrq->data || cmd->error) {
