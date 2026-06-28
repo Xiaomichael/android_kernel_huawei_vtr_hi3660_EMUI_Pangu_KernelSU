@@ -132,6 +132,7 @@ extern void dw_mci_timeout_timer(unsigned long data);
 extern void dw_mci_work_routine_card(struct work_struct *work);
 extern bool mci_wait_reset(struct device *dev, struct dw_mci *host);
 static int mci_send_cmd(struct dw_mci_slot *slot, u32 cmd, u32 arg);
+extern u32 dw_mci_prep_stop_abort(struct dw_mci *host, struct mmc_command *cmd);
 
 
 static bool dw_mci_ctrl_reset(struct dw_mci *host, u32 reset)
@@ -1461,12 +1462,27 @@ static void __dw_mci_start_request(struct dw_mci *host,
 
 	dw_mci_start_command(host, cmd, cmdflags);
 
-	if (mrq->stop)
-		host->stop_cmdr = dw_mci_prepare_command(slot->mmc, mrq->stop);
-	else {
-		if (data)
-			host->stop_cmdr = dw_mci_prep_stop(host, cmd);
+	if (cmd->opcode == SD_SWITCH_VOLTAGE) {
+		unsigned long irqflags;
+
+		/*
+		 * Databook says to fail after 2ms w/ no response, but evidence
+		 * shows that sometimes the cmd11 interrupt takes over 130ms.
+		 * We'll set to 500ms, plus an extra jiffy just in case jiffies
+		 * is just about to roll over.
+		 *
+		 * We do this whole thing under spinlock and only if the
+		 * command hasn't already completed (indicating the the irq
+		 * already ran so we don't want the timeout).
+		 */
+		spin_lock_irqsave(&host->irq_lock, irqflags);
+		if (!test_bit(EVENT_CMD_COMPLETE, &host->pending_events))
+			mod_timer(&host->cmd11_timer,
+				jiffies + msecs_to_jiffies(500) + 1);
+		spin_unlock_irqrestore(&host->irq_lock, irqflags);
 	}
+
+	host->stop_cmdr = dw_mci_prep_stop_abort(host, cmd);
 }
 
 static void dw_mci_start_request(struct dw_mci *host,
@@ -2125,9 +2141,21 @@ static void dw_mci_set_peri_08v(struct dw_mci *host)
 }
 #endif
 
+void dw_mci_reset(struct dw_mci *host)
+{
+    dw_mci_ctrl_reset(host, SDMMC_CTRL_RESET | SDMMC_CTRL_FIFO_RESET | SDMMC_CTRL_DMA_RESET);
+}
+
+static void send_stop_abort(struct dw_mci *host, struct mmc_data *data)
+{
+    struct mmc_command *stop = data->stop ? data->stop : &host->stop_abort;
+    dw_mci_start_command(host, stop, host->stop_cmdr);
+}
+
 static void dw_mci_tasklet_func(unsigned long priv)
 {
 	struct dw_mci *host = (struct dw_mci *)priv;
+	struct mmc_request *mrq = host->mrq;
 	struct mmc_data	*data;
 	struct mmc_command *cmd;
 	enum dw_mci_state state;
@@ -2229,11 +2257,48 @@ static void dw_mci_tasklet_func(unsigned long priv)
 			/* fall through */
 
 		case STATE_SENDING_DATA:
-			ret = pro_state_send_data(host, data, state);
-			if (1 == ret)
+			/*
+			 * We could get a data error and never a transfer
+			 * complete so we'd better check for it here.
+			 *
+			 * Note that we don't really care if we also got a
+			 * transfer complete; stopping the DMA and sending an
+			 * abort won't hurt.
+			 */
+			if (test_and_clear_bit(EVENT_DATA_ERROR,
+					       &host->pending_events)) {
+				dw_mci_stop_dma(host);
+				if (!(host->data_status & (SDMMC_INT_DRTO |
+							   SDMMC_INT_EBE)))
+					send_stop_abort(host, data);
+				state = STATE_DATA_ERROR;
 				break;
+			}
 
 			set_bit(EVENT_XFER_COMPLETE, &host->completed_events);
+
+			/*
+			 * Handle an EVENT_DATA_ERROR that might have shown up
+			 * before the transfer completed.  This might not have
+			 * been caught by the check above because the interrupt
+			 * could have gone off between the previous check and
+			 * the check for transfer complete.
+			 *
+			 * Technically this ought not be needed assuming we
+			 * get a DATA_COMPLETE eventually (we'll notice the
+			 * error and end the request), but it shouldn't hurt.
+			 *
+			 * This has the advantage of sending the stop command.
+			 */
+			if (test_and_clear_bit(EVENT_DATA_ERROR,
+					       &host->pending_events)) {
+				dw_mci_stop_dma(host);
+				if (!(host->data_status & (SDMMC_INT_DRTO |
+							   SDMMC_INT_EBE)))
+					send_stop_abort(host, data);
+				state = STATE_DATA_ERROR;
+				break;
+			}
 			prev_state = state = STATE_DATA_BUSY;
 			/* fall through */
 
@@ -2351,10 +2416,21 @@ static void dw_mci_tasklet_func(unsigned long priv)
 			/* fall through */
 
 		case STATE_SENDING_STOP:
-			ret = pro_state_send_stop(host);
-			if (1 == ret)
+			if (!test_and_clear_bit(EVENT_CMD_COMPLETE, &host->pending_events))
 				break;
 
+			if (mrq->cmd->error && mrq->data)
+				dw_mci_reset(host);
+
+			host->cmd = NULL;
+			host->data = NULL;
+
+			if (!mrq->sbc && mrq->stop)
+				dw_mci_command_complete(host, mrq->stop);
+			else
+				host->cmd_status = 0;
+
+			dw_mci_request_end(host, mrq);
 			goto unlock;
 
 		case STATE_DATA_ERROR:
@@ -3616,6 +3692,7 @@ int dw_mci_probe(struct dw_mci *host)
                             dw_mci_dto_timer, (unsigned long)host);
 
 	spin_lock_init(&host->lock);
+	spin_lock_init(&host->irq_lock);
 	INIT_LIST_HEAD(&host->queue);
 
 	/*
@@ -3936,6 +4013,21 @@ int sd_need_retry(struct mmc_card *card, int retry)
 			return 1;
 	}
 	return 0;
+}
+
+void dw_mci_cmd11_timer(unsigned long data)
+{
+    struct dw_mci *host = (struct dw_mci *)data;
+    unsigned long irqflags;
+
+    spin_lock_irqsave(&host->irq_lock, irqflags);
+    if (!test_bit(EVENT_CMD_COMPLETE, &host->pending_events)) {
+        dev_err(host->dev, "CMD11 timeout\n");
+        host->cmd_status = SDMMC_INT_RTO;
+        set_bit(EVENT_CMD_COMPLETE, &host->pending_events);
+        tasklet_schedule(&host->tasklet);
+    }
+    spin_unlock_irqrestore(&host->irq_lock, irqflags);
 }
 
 module_init(dw_mci_init);

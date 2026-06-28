@@ -260,6 +260,7 @@
 extern int dw_mci_probe(struct dw_mci *host);
 extern void dw_mci_remove(struct dw_mci *host);
 extern void dw_mci_set_cd(struct dw_mci *host);
+extern void dw_mci_cmd11_timer(unsigned long data);
 
 #ifdef CONFIG_PM
 extern int dw_mci_suspend(struct dw_mci *host);

@@ -2903,6 +2903,7 @@ int dw_mci_hs_probe(struct platform_device *pdev)
 {
 	const struct dw_mci_drv_data *drv_data = NULL;
 	const struct of_device_id *match = NULL;
+	struct dw_mci *host;
 	int err;
 
 #if defined(CONFIG_HISI_DEBUG_FS)
@@ -2921,6 +2922,9 @@ int dw_mci_hs_probe(struct platform_device *pdev)
 	err = dw_mci_pltfm_register(pdev, drv_data);
 	if (err)
 		return err;
+
+    host = platform_get_drvdata(pdev);
+    setup_timer(&host->cmd11_timer, dw_mci_cmd11_timer, (unsigned long)host);
 
 	/*when sdio1 used for via modem, disable pm runtime*/
 	if (!of_property_read_bool(pdev->dev.of_node, "modem_sdio_enable")) {
@@ -3315,7 +3319,7 @@ bool dw_mci_wait_reset(struct device *dev, struct dw_mci *host,
 	return false;
 }
 
-static int mci_send_cmd(struct dw_mci_slot *slot, u32 cmd, u32 arg)
+static int dw_mci_hi3xxx_send_cmd(struct dw_mci_slot *slot, u32 cmd, u32 arg)
 {
 	struct dw_mci *host = slot->host;
 	unsigned long timeout = jiffies + msecs_to_jiffies(100);
@@ -3355,7 +3359,7 @@ void dw_mci_ciu_reset(struct device *dev, struct dw_mci *host)
 		if(!dw_mci_wait_reset(dev, host, SDMMC_CTRL_RESET))
 			dev_info(dev,"dw_mci_wait_reset failed\n");
 
-		mci_send_cmd(slot, SDMMC_CMD_UPD_CLK |
+		dw_mci_hi3xxx_send_cmd(slot, SDMMC_CMD_UPD_CLK |
 			SDMMC_CMD_PRV_DAT_WAIT, 0);
 	}
 }
@@ -3425,6 +3429,11 @@ u32 dw_mci_prep_stop(struct dw_mci *host, struct mmc_command *cmd)
 	return cmdr;
 }
 
+u32 dw_mci_prep_stop_abort(struct dw_mci *host, struct mmc_command *cmd)
+{
+    return dw_mci_prep_stop(host, cmd);
+}
+
 bool dw_mci_wait_data_busy(struct dw_mci *host, struct mmc_request *mrq)
 {
 	u32 status;
@@ -3449,7 +3458,7 @@ bool dw_mci_wait_data_busy(struct dw_mci *host, struct mmc_request *mrq)
 
 	/* After CTRL Reset, Should be needed clk val to CIU */
 	if (host->cur_slot)
-		mci_send_cmd(host->cur_slot,
+		dw_mci_hi3xxx_send_cmd(host->cur_slot,
 			SDMMC_CMD_UPD_CLK | SDMMC_CMD_PRV_DAT_WAIT, 0);
 
 	timeout = jiffies + msecs_to_jiffies(500);
@@ -3467,15 +3476,13 @@ bool dw_mci_wait_data_busy(struct dw_mci *host, struct mmc_request *mrq)
 	return false;
 }
 
-void dw_mci_set_cd(struct dw_mci *host){
-
-	if(host == NULL)
-		return;
-
-	if(host->slot[0] && host->slot[0]->mmc){
-		dev_dbg(&host->slot[0]->mmc->class_dev,"sdio_present = %d\n",host->slot[0]->mmc->sdio_present);
-		host->slot[0]->mmc->sdio_present = 1;
-	}
+void dw_mci_set_cd(struct dw_mci *host)
+{
+    if (!host || !host->slot[0] || !host->slot[0]->mmc)
+        return;
+    host->slot[0]->mmc->sdio_present = 1;
+    dev_dbg(&host->slot[0]->mmc->class_dev, "sdio_present = %d\n",
+            host->slot[0]->mmc->sdio_present);
 }
 
 int dw_mci_start_signal_voltage_switch(struct mmc_host *mmc,
