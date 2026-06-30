@@ -23,6 +23,7 @@
 #include <linux/export.h>
 #include <linux/hid.h>
 #include <linux/module.h>
+#include <linux/mm.h>
 #include <linux/uio.h>
 #include <asm/unaligned.h>
 
@@ -218,11 +219,11 @@ struct ffs_io_data {
 	char *buf;
 
 	struct mm_struct *mm;
+	struct usb_request *req;
+	int req_status;
 	struct work_struct work;
 
 	struct usb_ep *ep;
-	struct usb_request *req;
-	int req_status;
 
 	struct ffs_data *ffs;
 };
@@ -763,6 +764,7 @@ static void ffs_user_copy_worker(struct work_struct *work)
 	struct ffs_io_data *io_data = container_of(work, struct ffs_io_data,
 						   work);
 	struct kiocb *kiocb = READ_ONCE(io_data->kiocb);
+	struct mm_struct *mm = io_data->mm;
 	int ret = io_data->req_status;
 
 	/* If the request was cancelled, kiocb is NULL, just clean up */
@@ -774,17 +776,35 @@ static void ffs_user_copy_worker(struct work_struct *work)
 		return;
 	}
 
+	/* Check if mm is still valid */
+	if (mm && !mmget_not_zero(mm)) {
+		/*
+		 * Process has exited, mm is invalid, and data cannot be copied.
+		 * But kiocb may still work, and we complete it with -EFAULT.
+		 * Note: If kiocb has already been released (canceled), it will be set to NULL,
+		 * But here kiocb is not null, meaning it has not been canceled yet, and we can safely call ki_complete.
+		 */
+		ret = -EFAULT;
+		goto complete;
+	}
+
 	if (io_data->read && ret > 0) {
 		mm_segment_t oldfs = get_fs();
 
 		set_fs(USER_DS);
-		use_mm(io_data->mm);
+		use_mm(mm);
 		ret = ffs_copy_to_iter(io_data->buf, ret, &io_data->data);
-		unuse_mm(io_data->mm);
+		unuse_mm(mm);
 		set_fs(oldfs);
 	}
 
-	kiocb->ki_complete(kiocb, ret, ret);
+	/* Release mm reference */
+	if (mm)
+		mmput(mm);
+
+complete:
+	if (kiocb)
+		kiocb->ki_complete(kiocb, ret, ret);
 
 	if (io_data->ffs->ffs_eventfd && !(kiocb->ki_flags & IOCB_EVENTFD))
 		eventfd_signal(io_data->ffs->ffs_eventfd, 1);
@@ -1148,6 +1168,7 @@ static ssize_t ffs_epfile_write_iter(struct kiocb *kiocb, struct iov_iter *from)
 	p->kiocb = kiocb;
 	p->data = *from;
 	p->mm = current->mm;
+	atomic_inc(&p->mm->mm_users);
 
 	kiocb->private = p;
 
@@ -1157,10 +1178,16 @@ static ssize_t ffs_epfile_write_iter(struct kiocb *kiocb, struct iov_iter *from)
 	res = ffs_epfile_io(kiocb->ki_filp, p);
 	if (res == -EIOCBQUEUED)
 		return res;
-	if (p->aio)
+	if (p->aio) {
+		if (p->mm)
+			mmput(p->mm);
 		kfree(p);
-	else
+	} else {
 		*from = p->data;
+		if (p->mm)
+			mmput(p->mm);
+	}
+
 	return res;
 }
 
@@ -1183,9 +1210,14 @@ static ssize_t ffs_epfile_read_iter(struct kiocb *kiocb, struct iov_iter *to)
 
 	p->read = true;
 	p->kiocb = kiocb;
+	p->mm = current->mm;
+	if (p->mm)
+		atomic_inc(&p->mm->mm_users);
 	if (p->aio) {
 		p->to_free = dup_iter(&p->data, to, GFP_KERNEL);
 		if (!p->to_free) {
+			if (p->mm)
+				mmput(p->mm);
 			kfree(p);
 			return -ENOMEM;
 		}
@@ -1193,7 +1225,6 @@ static ssize_t ffs_epfile_read_iter(struct kiocb *kiocb, struct iov_iter *to)
 		p->data = *to;
 		p->to_free = NULL;
 	}
-	p->mm = current->mm;
 
 	kiocb->private = p;
 
@@ -1205,10 +1236,14 @@ static ssize_t ffs_epfile_read_iter(struct kiocb *kiocb, struct iov_iter *to)
 		return res;
 
 	if (p->aio) {
+		if (p->mm)
+			mmput(p->mm);
 		kfree(p->to_free);
 		kfree(p);
 	} else {
 		*to = p->data;
+		if (p->mm)
+			mmput(p->mm);
 	}
 	return res;
 }
@@ -1219,6 +1254,12 @@ ffs_epfile_release(struct inode *inode, struct file *file)
 	struct ffs_epfile *epfile = inode->i_private;
 
 	ENTER();
+
+	/*
+	 * If this is the last file opened, make sure all AIO work is complete.
+	 * Avoid having a working queue accessing it after FFS is released.
+	 */
+	flush_workqueue(epfile->ffs->io_completion_wq);
 
 	__ffs_epfile_read_buffer_free(epfile);
 	ffs_data_closed(epfile->ffs);
@@ -1645,6 +1686,9 @@ static void ffs_data_put(struct ffs_data *ffs)
 
 static void ffs_data_closed(struct ffs_data *ffs)
 {
+	/* Ensure all AIO work is completed to avoid use-after-free */
+	flush_workqueue(ffs->io_completion_wq);
+
 	ENTER();
 
 	if (atomic_dec_and_test(&ffs->opened)) {
