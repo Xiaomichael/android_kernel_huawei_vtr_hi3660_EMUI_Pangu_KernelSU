@@ -779,13 +779,15 @@ static void ffs_user_copy_worker(struct work_struct *work)
 	/* Check if mm is still valid */
 	if (mm && !mmget_not_zero(mm)) {
 		/*
-		 * Process has exited, mm is invalid, and data cannot be copied.
-		 * But kiocb may still work, and we complete it with -EFAULT.
-		 * Note: If kiocb has already been released (canceled), it will be set to NULL,
-		 * But here kiocb is not null, meaning it has not been canceled yet, and we can safely call ki_complete.
+		 * Process has exited, mm is invalid. No one is waiting for
+		 * this completion, so just clean up and return without calling
+		 * ki_complete.
 		 */
-		ret = -EFAULT;
-		goto complete;
+		if (io_data->read)
+			kfree(io_data->to_free);
+		kfree(io_data->buf);
+		kfree(io_data);
+		return;
 	}
 
 	if (io_data->read && ret > 0) {
