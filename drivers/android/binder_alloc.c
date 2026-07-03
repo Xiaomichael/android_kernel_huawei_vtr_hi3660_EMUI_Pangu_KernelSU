@@ -19,6 +19,7 @@
 
 #include <asm/cacheflush.h>
 #include <linux/list.h>
+#include <linux/ratelimit.h>
 #include <linux/mm.h>
 #include <linux/module.h>
 #include <linux/rtmutex.h>
@@ -180,6 +181,13 @@ struct binder_buffer *binder_alloc_prepare_to_free(struct binder_alloc *alloc,
 						   uintptr_t user_ptr)
 {
 	struct binder_buffer *buffer;
+
+	/* Prevent accessing alloc after vma has been cleared (process died) */
+	if (!alloc->vma) {
+		pr_err_ratelimited("binder: %s: vma already cleared for pid %d\n",
+				   __func__, alloc->pid);
+		return ERR_PTR(-ESRCH);
+	}
 
 	mutex_lock(&alloc->mutex);
 	buffer = binder_alloc_prepare_to_free_locked(alloc, user_ptr);

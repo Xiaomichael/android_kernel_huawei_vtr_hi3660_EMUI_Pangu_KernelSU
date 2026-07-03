@@ -4017,6 +4017,11 @@ static int binder_thread_write(struct binder_proc *proc,
 			if (get_user(data_ptr, (binder_uintptr_t __user *)ptr))
 				return -EFAULT;
 			ptr += sizeof(binder_uintptr_t);
+	
+			/* Hold proc reference to prevent free during operation */
+			binder_inner_proc_lock(proc);
+			proc->tmp_ref++;
+			binder_inner_proc_unlock(proc);
 
 			buffer = binder_alloc_prepare_to_free(&proc->alloc,
 							      data_ptr);
@@ -4032,6 +4037,7 @@ static int binder_thread_write(struct binder_proc *proc,
 						proc->pid, thread->pid,
 						(u64)data_ptr);
 				}
+				binder_proc_dec_tmpref(proc);
 				break;
 			}
 			binder_debug(BINDER_DEBUG_FREE_BUFFER,
@@ -4066,6 +4072,7 @@ static int binder_thread_write(struct binder_proc *proc,
 			trace_binder_transaction_buffer_release(buffer);
 			binder_transaction_buffer_release(proc, buffer, NULL);
 			binder_alloc_free_buf(&proc->alloc, buffer);
+			binder_proc_dec_tmpref(proc);
 			break;
 		}
 
