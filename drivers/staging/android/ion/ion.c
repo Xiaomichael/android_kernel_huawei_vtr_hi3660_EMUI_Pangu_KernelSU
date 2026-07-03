@@ -880,35 +880,42 @@ static void do_iommu_unmap(struct kref *kref)
 	kfree(map);
 }
 
-void ion_unmap_iommu(struct ion_client *client, struct ion_handle *handle)
+int ion_unmap_iommu(struct ion_client *client, struct ion_handle *handle)
 {
-	struct ion_iommu_map *iommu_map;
-	struct ion_buffer *buffer;
+    struct ion_iommu_map *iommu_map;
+    struct ion_buffer *buffer;
+    int ret = 0;
 
-	mutex_lock(&client->lock);
+    mutex_lock(&client->lock);
+    if (!ion_handle_validate(client, handle)) {
+        pr_err("%s: invalid handle passed to iommu unmap.\n", __func__);
+        ret = -EINVAL;
+        goto out;
+    }
 
-	/* check if the handle belongs to client. */
-	if (!ion_handle_validate(client, handle)) {
-		pr_err("%s: invalid handle passed to iommu unmap.\n", __func__);
-		mutex_unlock(&client->lock);
-		return;
-	}
+    buffer = handle->buffer;
+    mutex_lock(&buffer->lock);
+    iommu_map = buffer->iommu_map;
+    if (!iommu_map) {
+        /* Already unmapped, treat as success */
+        mutex_unlock(&buffer->lock);
+        ret = 0;
+        goto out;
+    }
 
-	buffer = handle->buffer;
+    if (buffer->dmap_cnt > 0) {
+        pr_warn("%s: buffer still has dma mappings (%d), cannot unmap iommu\n",
+                __func__, buffer->dmap_cnt);
+        ret = -EBUSY;
+        mutex_unlock(&buffer->lock);
+        goto out;
+    }
 
-	mutex_lock(&buffer->lock);
-
-	iommu_map = buffer->iommu_map;
-	if (!iommu_map) {
-		WARN(1, "This buffer have not been map iommu\n");
-		goto out;
-	}
-
-	kref_put(&iommu_map->ref, do_iommu_unmap);
-
+    kref_put(&iommu_map->ref, do_iommu_unmap);
+    mutex_unlock(&buffer->lock);
 out:
-	mutex_unlock(&buffer->lock);
-	mutex_unlock(&client->lock);
+    mutex_unlock(&client->lock);
+    return ret;
 }
 EXPORT_SYMBOL(ion_unmap_iommu);
 
@@ -1377,6 +1384,12 @@ static struct dma_buf *__ion_share_dma_buf(struct ion_client *client,
 	}
 	buffer = handle->buffer;
 	ion_buffer_get(buffer);
+
+	mutex_lock(&buffer->lock);
+	if (buffer->iommu_map)
+		kref_get(&buffer->iommu_map->ref);
+	mutex_unlock(&buffer->lock);
+
 	if (lock_client)
 		mutex_unlock(&client->lock);
 

@@ -207,68 +207,46 @@ long ion_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		break;
 	}
 
-case ION_IOC_MAP_IOMMU:
-{
-    struct ion_handle *handle;
-    int ret;
-    
-    /* 添加锁检查 */
-	/* Add lock check */
-    if (!mutex_trylock(&client->lock)) {
-        pr_err("%s: client lock busy, cannot map iommu\n", __func__);
-        return -EBUSY;
-    }
-    
-    handle = ion_handle_get_by_id_nolock(client, data.map_iommu.handle);
-    if (IS_ERR(handle)) {
-        ret = PTR_ERR(handle);
-        mutex_unlock(&client->lock);
-        break;
-    }
-    
-    /* 临时释放锁 */
-	/* Temporary Release Lock */
-    mutex_unlock(&client->lock);
-    ret = ion_map_iommu(client, handle, &data.map_iommu.format);
-    
-    /* 重新获取锁进行清理 */
-	/* Reacquire the lock to clean up */
-    mutex_lock(&client->lock);
-    ion_handle_put_nolock(handle);
-    mutex_unlock(&client->lock);
-    break;
-}
-case ION_IOC_UNMAP_IOMMU:
-{
-    struct ion_handle *handle;
-    int ret;
-    
-    /* 添加锁检查 */
-	/* Add lock check */
-    if (!mutex_trylock(&client->lock)) {
-        pr_err("%s: client lock busy, cannot map iommu\n", __func__);
-        return -EBUSY;
-    }
-    
-    handle = ion_handle_get_by_id_nolock(client, data.map_iommu.handle);
-    if (IS_ERR(handle)) {
-        ret = PTR_ERR(handle);
-        mutex_unlock(&client->lock);
-        break;
-    }
-    
-    /* 临时释放锁 */
-	/* Temporary Release Lock */
-    mutex_unlock(&client->lock);
-    ret = ion_map_iommu(client, handle, &data.map_iommu.format);
-    
-    /* 重新获取锁进行清理 */
-	/* Reacquire the lock to clean up */
-    mutex_lock(&client->lock);
-    ion_handle_put_nolock(handle);
-    mutex_unlock(&client->lock);
-    break;
-}
+	case ION_IOC_MAP_IOMMU:
+	{
+		struct ion_handle *handle;
+
+		mutex_lock(&client->lock);
+		handle = ion_handle_get_by_id_nolock(client, data.map_iommu.handle);
+		mutex_unlock(&client->lock);
+
+		if (IS_ERR(handle)) {
+			pr_err("%s: map iommu but handle invalid!\n", __func__);
+			return PTR_ERR(handle);
+		}
+
+		ret = ion_map_iommu(client, handle, &data.map_iommu.format);
+		ion_handle_put(handle);
+		break;
+	}
+	case ION_IOC_UNMAP_IOMMU:
+	{
+		struct ion_handle *handle;
+
+		mutex_lock(&client->lock);
+		handle = ion_handle_get_by_id_nolock(client, data.map_iommu.handle);
+		mutex_unlock(&client->lock);
+
+		if (IS_ERR(handle)) {
+			pr_err("%s: unmap iommu but handle invalid!\n", __func__);
+			return PTR_ERR(handle);
+		}
+
+		ret = ion_unmap_iommu(client, handle);
+		if (ret == 0) {
+			data.map_iommu.format.iova_start = 0;
+			data.map_iommu.format.iova_size = 0;
+		} else {
+			pr_warn("%s: ion_unmap_iommu failed, ret=%d\n", __func__, ret);
+		}
+		ion_handle_put(handle);
+		break;
+	}
 
 	default:
 		pr_err("ion ENOTTY error %s %d\n", __func__, __LINE__);

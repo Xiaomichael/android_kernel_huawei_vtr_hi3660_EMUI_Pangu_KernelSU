@@ -169,7 +169,7 @@ int ion_map_iommu(struct ion_client *client, struct ion_handle *handle,
  * @client:	the client
  * @handle:	the handle
  */
-void ion_unmap_iommu(struct ion_client *client, struct ion_handle *handle);
+int ion_unmap_iommu(struct ion_client *client, struct ion_handle *handle);
 
 /**
  * ion_change_flags() - change buffer flags
