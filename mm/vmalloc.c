@@ -394,13 +394,17 @@ static struct vmap_area *alloc_vmap_area(unsigned long size,
 retry:
 	spin_lock(&vmap_area_lock);
 	/*
-	 * Invalidate cache if we have more permissive parameters.
-	 * cached_hole_size notes the largest hole noticed _below_
-	 * the vmap_area cached in free_vmap_cache: if size fits
-	 * into that hole, we want to scan from vstart to reuse
-	 * the hole instead of allocating above free_vmap_cache.
-	 * Note that __free_vmap_area may update free_vmap_cache
-	 * without updating cached_hole_size or cached_align.
+	 * If the cache is invalid or we have more permissive parameters,
+	 * reset it. cached_hole_size is the largest hole below free_vmap_cache,
+	 * if size fits into it, we should scan from vstart to reuse it.
+	 * Also record the current vstart and align to avoid incorrect cache.
+ 	 */
+	/*
+	 * The following variables are used to cache the free vmap area.
+	 * The cache is invalid when free_vmap_cache is NULL, or when the
+	 * parameters (size, vstart, align) are more permissive than the
+	 * cached ones. In that case we need to reset the cache and start
+	 * from scratch.
 	 */
 	if (!free_vmap_cache ||
 			size < cached_hole_size ||
@@ -408,11 +412,10 @@ retry:
 			align < cached_align) {
 nocache:
 		cached_hole_size = 0;
+		cached_vstart = vstart;
+		cached_align = align;
 		free_vmap_cache = NULL;
 	}
-	/* record if we encounter less permissive parameters */
-	cached_vstart = vstart;
-	cached_align = align;
 
 	/* find starting point for our search */
 	if (free_vmap_cache) {
@@ -528,13 +531,16 @@ static void __free_vmap_area(struct vmap_area *va)
 		} else {
 			struct vmap_area *cache;
 			cache = rb_entry(free_vmap_cache, struct vmap_area, rb_node);
-			if (va->va_start <= cache->va_start) {
+			if (va->va_start <= cache->va_start) 
 				free_vmap_cache = rb_prev(&va->rb_node);
-				/*
-				 * We don't try to update cached_hole_size or
-				 * cached_align, but it won't go very wrong.
-				 */
-			}
+			/*
+			 * We don't try to update cached_hole_size or cached_align,
+			 * but it won't go very wrong. However, to avoid stale
+			 * cache, we clear the cache after freeing this area.
+			 */
+			cached_hole_size = 0;
+			cached_vstart = 0;
+			cached_align = 0;
 		}
 	}
 	rb_erase(&va->rb_node, &vmap_area_root);
@@ -543,7 +549,7 @@ static void __free_vmap_area(struct vmap_area *va)
 
 	/*
 	 * Track the highest possible candidate for pcpu area
-	 * allocation.  Areas outside of vmalloc area can be returned
+	 * allocation. Areas outside of vmalloc area can be returned
 	 * here too, consider only end addresses which fall inside
 	 * vmalloc area proper.
 	 */
