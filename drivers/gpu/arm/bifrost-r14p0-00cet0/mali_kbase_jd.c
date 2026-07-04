@@ -164,6 +164,10 @@ static void kbase_jd_post_external_resources(struct kbase_jd_atom *katom)
 	KBASE_DEBUG_ASSERT(katom);
 	KBASE_DEBUG_ASSERT(katom->core_req & BASE_JD_REQ_EXTERNAL_RESOURCES);
 
+    /* If context is dying, skip resource unmapping; overall cleanup handles it */
+    if (kbase_ctx_flag(katom->kctx, KCTX_DYING))
+        return;
+
 #ifdef CONFIG_MALI_DMA_FENCE
 	kbase_dma_fence_signal(katom);
 #endif /* CONFIG_MALI_DMA_FENCE */
@@ -1249,6 +1253,30 @@ void kbase_jd_done_worker(struct work_struct *data)
 	base_jd_core_req core_req = katom->core_req;
 	enum kbase_atom_coreref_state coreref_state = katom->coreref_state;
 
+    /* Robustness checks: ensure katom and its context are still valid */
+    if (unlikely(!katom || !katom->kctx)) {
+        /* Nothing we can do, but avoid crash */
+        return;
+    }
+
+    kctx = katom->kctx;
+    jctx = &kctx->jctx;
+
+    /* If context is dying, complete atom manually without calling
+     * jd_done_nolock to avoid accessing freed region tracker.
+     * This also decrements job_nr so zapping can complete.
+     */
+    if (kbase_ctx_flag(kctx, KCTX_DYING)) {
+        mutex_lock(&jctx->lock);
+        katom->status = KBASE_JD_ATOM_STATE_UNUSED;
+        katom->event_code = BASE_JD_EVENT_JOB_CANCELLED;
+        jctx->job_nr--;
+        if (jctx->job_nr == 0)
+            wake_up(&jctx->zero_jobs_wait);
+        mutex_unlock(&jctx->lock);
+        return;
+    }
+
 	/* Soft jobs should never reach this function */
 	KBASE_DEBUG_ASSERT((katom->core_req & BASE_JD_REQ_SOFT_JOB) == 0);
 
@@ -1519,6 +1547,12 @@ void kbase_jd_done(struct kbase_jd_atom *katom, int slot_nr,
 
 	atomic_inc(&kctx->work_count);
 
+    /* If context is dying or workqueue already destroyed, skip scheduling work */
+    if (unlikely(!kctx->jctx.job_done_wq || kbase_ctx_flag(kctx, KCTX_DYING))) {
+        /* Atom will be completed during zapping or by worker safe path */
+        return;
+    }
+
 #ifdef CONFIG_HISI_DEBUG_FS
 	/* a failed job happened and is waiting for dumping*/
 	if (!katom->will_fail_event_code &&
@@ -1541,6 +1575,10 @@ void kbase_jd_cancel(struct kbase_device *kbdev, struct kbase_jd_atom *katom)
 	KBASE_DEBUG_ASSERT(NULL != katom);
 	kctx = katom->kctx;
 	KBASE_DEBUG_ASSERT(NULL != kctx);
+
+    /* If context dying or workqueue already destroyed, skip scheduling cancel work */
+    if (kbase_ctx_flag(kctx, KCTX_DYING) || !kctx->jctx.job_done_wq)
+        return;
 
 	KBASE_TRACE_ADD(kbdev, JD_CANCEL, kctx, katom, katom->jc, 0);
 
@@ -1655,9 +1693,10 @@ KBASE_EXPORT_TEST_API(kbase_jd_init);
 void kbase_jd_exit(struct kbase_context *kctx)
 {
 	KBASE_DEBUG_ASSERT(kctx);
-
-	/* Work queue is emptied by this */
-	destroy_workqueue(kctx->jctx.job_done_wq);
+    if (kctx->jctx.job_done_wq) {
+        destroy_workqueue(kctx->jctx.job_done_wq);
+        kctx->jctx.job_done_wq = NULL;
+    }
 }
 
 KBASE_EXPORT_TEST_API(kbase_jd_exit);

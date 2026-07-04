@@ -266,9 +266,25 @@ void kbase_destroy_context(struct kbase_context *kctx)
 	unsigned long flags;
 	struct page *p;
 
+    /* Mark context as dying to prevent further work from accessing
+     * resources that are about to be freed.
+     */
+    kbase_ctx_flag_set(kctx, KCTX_DYING);
+    smp_mb(); /* Ensure visibility to other CPUs */
+
 	KBASE_DEBUG_ASSERT(NULL != kctx);
 
 	kbdev = kctx->kbdev;
+
+    /* Stop new work from being scheduled and wait for existing work to finish.
+     * This must be done before any resource cleanup that the workers might touch.
+     */
+    if (kctx->jctx.job_done_wq) {
+        struct workqueue_struct *wq = kctx->jctx.job_done_wq;
+        kctx->jctx.job_done_wq = NULL;
+        destroy_workqueue(wq);
+    }
+
 	KBASE_DEBUG_ASSERT(NULL != kbdev);
 
 	spin_lock(&kbdev->ctx_list_head_lock);
