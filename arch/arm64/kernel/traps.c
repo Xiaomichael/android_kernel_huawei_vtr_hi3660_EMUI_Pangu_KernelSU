@@ -696,6 +696,20 @@ asmlinkage void bad_el0_sync(struct pt_regs *regs, int reason, unsigned int esr)
 	force_sig_info(info.si_signo, &info, current);
 }
 
+asmlinkage void do_el0_serror(struct pt_regs *regs, unsigned int esr)
+{
+    siginfo_t info;
+
+    pr_crit("SError from EL0, ESR=0x%08x, pc=%p\n", esr, (void *)regs->pc);
+
+    info.si_signo = SIGBUS;
+    info.si_errno = 0;
+    info.si_code  = BUS_ADRERR;
+    info.si_addr  = (void __user *)regs->pc;
+
+    force_sig_info(SIGBUS, &info, current);
+}
+
 void __pte_error(const char *file, int line, unsigned long val)
 {
 	pr_err("%s:%d: bad pte %016lx.\n", file, line, val);

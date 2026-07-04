@@ -641,10 +641,17 @@ END(vectors)
  */
 	.macro	inv_entry, el, reason, regsize = 64
 	kernel_entry \el, \regsize
+	.if	\el == 0 && \reason == BAD_ERROR
+	/* EL0 error (likely SError) -> send signal instead of panic */
+	mrs	x2, esr_el1
+	bl	do_el0_serror
+	b	ret_to_user
+	.else
 	mov	x0, sp
 	mov	x1, #\reason
 	mrs	x2, esr_el1
 	b	bad_mode
+	.endif
 	.endm
 
 el0_sync_invalid:
