@@ -466,6 +466,12 @@ void *crypto_create_tfm(struct crypto_alg *alg,
 	tfmsize = frontend->tfmsize;
 	total = tfmsize + sizeof(*tfm) + frontend->extsize(alg);
 
+	/* Check if total is overflowing */
+	if (total < tfmsize || total < sizeof(*tfm) || total < frontend->extsize(alg)) {
+		err = -ENOMEM;
+		goto out_err;
+	}
+
 	mem = kzalloc(total, GFP_KERNEL);
 	if (mem == NULL)
 		goto out_err;
