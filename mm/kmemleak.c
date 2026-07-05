@@ -73,6 +73,7 @@
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/list.h>
+#include <linux/ratelimit.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>
 #include <linux/delay.h>
@@ -111,6 +112,9 @@
 #include <linux/kmemcheck.h>
 #include <linux/kmemleak.h>
 #include <linux/memory_hotplug.h>
+
+/* global flag indicating whether an object overlap warning has occurred */
+static bool kmemleak_overlap_warning_occurred;
 
 /*
  * Kmemleak configuration and common defines.
@@ -600,15 +604,16 @@ static struct kmemleak_object *create_object(unsigned long ptr, size_t size,
 		else if (parent->pointer + parent->size <= ptr)
 			link = &parent->rb_node.rb_right;
 		else {
-			kmemleak_stop("Cannot insert 0x%lx into the object search tree (overlaps existing)\n",
-				      ptr);
+			pr_warn_ratelimited("kmemleak: overlapping object at 0x%lx (size %zu) with existing at 0x%lx (size %zu)\n",
+					    ptr, size, parent->pointer, parent->size);
+			dump_object_info(parent);
 			/*
 			 * No need for parent->lock here since "parent" cannot
 			 * be freed while the kmemleak_lock is held.
 			 */
 			dump_object_info(parent);
 			kmem_cache_free(object_cache, object);
-			object = NULL;
+			kmemleak_overlap_warning_occurred = true;
 			goto out;
 		}
 	}
@@ -1821,6 +1826,33 @@ static const struct file_operations kmemleak_fops = {
 	.release	= seq_release,
 };
 
+/* Debugfs file to show kmemleak status */
+static int kmemleak_status_show(struct seq_file *m, void *v)
+{
+	seq_printf(m, "overlap_warning: %s\n",
+		   kmemleak_overlap_warning_occurred ? "yes" : "no");
+	seq_printf(m, "kmemleak_enabled: %d\n", kmemleak_enabled);
+	seq_printf(m, "kmemleak_error: %d\n", kmemleak_error);
+	return 0;
+}
+
+static int kmemleak_status_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, kmemleak_status_show, NULL);
+}
+
+static const struct file_operations kmemleak_status_fops = {
+	.owner		= THIS_MODULE,
+	.open		= kmemleak_status_open,
+	.read		= seq_read,
+	.llseek		= seq_lseek,
+	.release	= single_release,
+};
+
+/*
+ * Cleanup work and disable logic
+ */
+
 static void __kmemleak_do_cleanup(void)
 {
 	struct kmemleak_object *object;
@@ -1867,6 +1899,10 @@ static void kmemleak_disable(void)
 	/* atomically check whether it was already invoked */
 	if (cmpxchg(&kmemleak_error, 0, 1))
 		return;
+
+	if (kmemleak_overlap_warning_occurred)
+		pr_info("Kmemleak disabled due to prior overlap warnings. "
+			"Memory leak detection is now OFF. This may cause unreported leaks, but improves stability.\n");
 
 	/* stop any memory operation tracing */
 	kmemleak_enabled = 0;
@@ -2018,6 +2054,15 @@ static int __init kmemleak_late_init(void)
 				     &kmemleak_fops);
 	if (!dentry)
 		pr_warn("Failed to create the debugfs kmemleak file\n");
+
+	/* Create status file for userspace query */
+	dentry = debugfs_create_file("kmemleak_status", S_IRUGO, NULL, NULL,
+				     &kmemleak_status_fops);
+	if (!dentry)
+		pr_warn("Failed to create the debugfs kmemleak_status file\n");
+	else
+		pr_info("Kmemleak status available at /sys/kernel/debug/kmemleak_status\n");
+	
 	mutex_lock(&scan_mutex);
 	start_scan_thread();
 	mutex_unlock(&scan_mutex);

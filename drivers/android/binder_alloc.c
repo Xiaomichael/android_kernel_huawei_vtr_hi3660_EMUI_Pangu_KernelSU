@@ -512,6 +512,8 @@ static struct binder_buffer *binder_alloc_new_buf_locked(
 
 err_alloc_buf_struct_failed:
 	/* Reinsert the original buffer to prevent free trees from losing memory blocks */
+	buffer->free = 1;   /* ensure free flag is set before reinsertion */
+
 	binder_insert_free_buffer(alloc, buffer);
 
 	binder_update_page_range(alloc, 0,
