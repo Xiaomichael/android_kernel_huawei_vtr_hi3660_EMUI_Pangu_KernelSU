@@ -448,10 +448,8 @@ struct sock {
 	__u32			sk_priority;
 	__u32			sk_mark;
 	kuid_t			sk_uid;
-	spinlock_t		sk_peer_lock;
 	struct pid		*sk_peer_pid;
 	const struct cred	*sk_peer_cred;
-
 	long			sk_rcvtimeo;
 	long			sk_sndtimeo;
 	struct timer_list	sk_timer;
@@ -496,6 +494,8 @@ struct sock {
 #ifdef CONFIG_HW_DPIMARK_MODULE
 	unsigned long	sk_born_stamp;
 #endif
+	/* moved to end to preserve offsets of preceding fields for pre-compiled modules */
+	spinlock_t		sk_peer_lock;
 };
 
 #define __sk_user_data(sk) ((*((void __rcu **)&(sk)->sk_user_data)))
